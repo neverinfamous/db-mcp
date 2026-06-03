@@ -297,6 +297,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
       ["sqlite_fts_search", "FtsSearchOutputSchema"],
       ["sqlite_fts_rebuild", "FtsRebuildOutputSchema"],
       ["sqlite_fts_match_info", "FtsSearchOutputSchema"],
+      ["sqlite_hybrid_search", "HybridSearchOutputSchema"],
 
       // JSON tools
       ["sqlite_json_diff", "JsonDiffOutputSchema"],
@@ -315,7 +316,6 @@ describe("Tool Output Schema Invariants (Native)", () => {
       ["sqlite_pragma_optimize", "PragmaOptimizeOutputSchema"],
       ["sqlite_pragma_table_info", "PragmaTableInfoOutputSchema"],
       ["sqlite_index_stats", "IndexStatsOutputSchema"],
-      ["sqlite_append_insight", "AppendInsightOutputSchema"],
       ["sqlite_dbstat", "DbstatOutputSchema"],
       ["sqlite_attach_database", "AttachDatabaseOutputSchema"],
       ["sqlite_detach_database", "DetachDatabaseOutputSchema"],
@@ -371,6 +371,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
         "AuditCleanupOutputSchema",
         "AuditDiffBackupOutputSchema",
         "AuditRestoreBackupOutputSchema",
+        "AuditSearchOutputSchema",
       ]);
 
       const orphans: string[] = [];

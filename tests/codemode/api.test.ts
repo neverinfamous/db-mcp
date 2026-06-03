@@ -223,6 +223,49 @@ describe("codemode api", () => {
         expect.any(Object),
       );
     });
+
+    it("should throw when positional arguments are not supported", async () => {
+      const noPosTool: ToolDefinition = {
+        name: "sqlite_unsupported_tool",
+        description: "Unsupported",
+        group: "core",
+        handler: vi.fn().mockResolvedValue({}),
+      };
+
+      const api = createSqliteApi([noPosTool]);
+
+      // Should throw for single primitive
+      await expect(api.core.unsupportedTool("value")).rejects.toThrow(
+        "Positional arguments are not supported for method: unsupportedTool",
+      );
+
+      // Should throw for multiple args
+      await expect(api.core.unsupportedTool("val1", "val2")).rejects.toThrow(
+        "Positional arguments are not supported for method: unsupportedTool",
+      );
+    });
+
+    it("should merge trailing options correctly for array mappings", async () => {
+      const arrTool: ToolDefinition = {
+        name: "sqlite_text_split", // Maps to 'split' where POSITIONAL_PARAM_MAP["split"] = ["table", "column", "delimiter"]
+        description: "Split",
+        group: "text",
+        handler: vi.fn().mockResolvedValue({}),
+      };
+
+      const api = createSqliteApi([arrTool]);
+      await api.text.split("users", "email", ",", { limit: 10 });
+
+      expect(arrTool.handler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          table: "users",
+          column: "email",
+          delimiter: ",",
+          limit: 10,
+        }),
+        expect.any(Object),
+      );
+    });
   });
 
   describe("getGroupMethods", () => {

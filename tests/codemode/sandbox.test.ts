@@ -175,6 +175,36 @@ describe("CodeModeSandbox", () => {
       expect(result.result).toBe("undefined");
     });
 
+    it("should reject invalid tool group names in bindings", async () => {
+      const result = await sandbox.execute("return 1;", {
+        "invalid-group-name!": () => {},
+      });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid tool group name");
+    });
+
+    it("should block 'with' statements during AST validation", async () => {
+      const result = await sandbox.execute(
+        "with (Math) { return max(1, 2); }",
+        {},
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("'with' statements are forbidden");
+    });
+
+    it("should block property access on forbidden globals during AST validation", async () => {
+      const result = await sandbox.execute("return process.env;", {});
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Access to 'process' is forbidden");
+    });
+
+    it("should block require property access during AST validation", async () => {
+      const result = await sandbox.execute("return require.main;", {});
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Access to 'require' is forbidden");
+    });
+
     it("should provide access to safe builtins", async () => {
       const result = await sandbox.execute(
         "return JSON.stringify({ a: 1 });",

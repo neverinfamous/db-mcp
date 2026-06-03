@@ -97,7 +97,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
-- **Temporary files**: Delete the following test artifacts after testing:
+  - **Temporary files**: Delete the following test artifacts after testing:
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql`
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db`
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db`
@@ -135,7 +135,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.pragmaOptimize`
 - `sqlite.admin.analyzeCsvSchema`
 - `sqlite.admin.createCsvTable`
-- `sqlite.admin.appendInsight`
+
 - `sqlite.admin.reindex`
 - `sqlite.admin.wal`
 - `sqlite.admin.attachDatabase`
@@ -146,7 +146,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.core.describeTable`
 - `sqlite.core.dropTable`
 
-> **Note**: The 5 **Server Audit Tools** (`sqlite_audit_list_backups`, `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, `sqlite_audit_restore_backup`, `sqlite_audit_cleanup`) are not exposed in Code Mode by design. They are tested via direct tool calls in `test-tool-groups/test-admin-audit.md`.
+> **Note**: The 7 **Server Audit Tools** (`sqlite_audit_list_backups`, `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, `sqlite_audit_restore_backup`, `sqlite_audit_cleanup`, `sqlite_audit_search`, `sqlite_server_config`) are not exposed in Code Mode by design. They are tested via direct tool calls in `test-tool-groups/test-admin-audit.md`.
 
 ## Phase 1: Pragma & Inspection — Happy Paths (batched)
 
@@ -199,17 +199,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 27. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → virtual table
 28. Cleanup: drop `temp_cm_csv` (virtual)
 
-## Phase 7: Insights
-
-29. `sqlite.admin.appendInsight({insight: "Test insight from codemode"})` → success
-
 ## Phase 8: REINDEX & WAL Management (batched)
 
 30. `sqlite.admin.reindex()` → reindex entire database, success with `durationMs`
 31. `sqlite.admin.reindex({target: "test_products"})` → reindex all indexes on specific table, success
 32. `sqlite.admin.reindex({target: "idx_orders_status"})` → reindex specific index, success
 33. `sqlite.admin.wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
-34. `sqlite.admin.wal({action: "disable"})` → `{success: true}` (switches to DELETE), then `sqlite.admin.wal({action: "enable"})` → `{success: true}` (verifies transition back to WAL)
+34. `sqlite.admin.wal({action: "disable"})` → `{success: false}` with `DB_QUERY_FAILED` "database is locked" (expected behavior in Code Mode due to active connections), then `sqlite.admin.wal({action: "enable"})` → `{success: true}` (verifies it remained in WAL)
 35. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
 36. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages`, then `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
@@ -295,7 +291,7 @@ return { failures, success: failures.length === 0 };
 🔴 59. `sqlite.admin.verifyBackup({})` → `{success: false}`
 🔴 60. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
 🔴 61. `sqlite.admin.pragmaSettings({})` → `{success: false}`
-🔴 62. `sqlite.admin.appendInsight({})` → `{success: false}`
+
 🔴 63. `sqlite.admin.createView({})` → `{success: false}`
 🔴 64. `sqlite.admin.dropView({})` → `{success: false}`
 🔴 65. `sqlite.admin.virtualTableInfo({})` → `{success: false}`

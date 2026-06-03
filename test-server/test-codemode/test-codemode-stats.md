@@ -272,7 +272,7 @@ return { failures, success: failures.length === 0, basicResult: basic };
 🔴 51. `sqlite.stats.statsDetectAnomalies({})` → `{success: false}`
 🔴 52. `sqlite.stats.statsDetectBloat({})` → `{success: false}` or success (no required params)
 🔴 53. `sqlite.stats.statsDetectSchemaRisks({})` → `{success: false}` or success (no required params)
-🔴 54. `sqlite.stats.statsSample({})` → `{success: false}` handler error
+🔴 54. `sqlite.stats.statsSample({})` → `{success: false}`
 🔴 55. `sqlite.stats.windowRowNumber({})` `[NATIVE ONLY]` → `{success: false}`
 🔴 56. `sqlite.stats.windowRank({})` `[NATIVE ONLY]` → `{success: false}`
 🔴 57. `sqlite.stats.windowLagLead({})` `[NATIVE ONLY]` → `{success: false}`

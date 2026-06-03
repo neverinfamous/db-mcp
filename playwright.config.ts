@@ -48,7 +48,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "node dist/cli.js --transport http --port 3000 --sqlite ./test-server/test.db --tool-filter +all --no-auth-enforcement",
+        "node dist/cli.js --transport http --port 3000 --sqlite ./test-server/test.db --tool-filter +all --no-auth-enforcement --audit-log ./test-server/audit.db",
       url: "http://localhost:3000/health",
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
@@ -56,13 +56,14 @@ export default defineConfig({
       stderr: "pipe",
       env: {
         ...process.env,
+        DB_ENCRYPTION_KEY: "",
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
       },
     },
     {
       command:
-        "node dist/cli.js --transport http --port 3001 --sqlite-native ./test-server/test.db --csv --spatialite --tool-filter +all --no-auth-enforcement",
+        "node dist/cli.js --transport http --port 3001 --sqlite-native ./test-server/test.db --csv --spatialite --tool-filter +all --no-auth-enforcement --audit-log ./test-server/audit.db",
       url: "http://localhost:3001/health",
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
@@ -70,6 +71,7 @@ export default defineConfig({
       stderr: "pipe",
       env: {
         ...process.env,
+        DB_ENCRYPTION_KEY: "",
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
         SPATIALITE_PATH:

@@ -137,18 +137,21 @@ All tools should return errors as structured objects instead of throwing. The ex
 1. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
 2. `sqlite.core.readQuery("SELECT name, price FROM test_products WHERE price > 500")` → 1 result: `Laptop Pro 15` (1299.99)
 3. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
-4. `sqlite.core.listTables()` → tables array includes `test_products`, `test_orders`, etc.
-5. `sqlite.core.describeTable("test_products")` → columns include `id` (INTEGER), `name` (TEXT), `price` (REAL)
-6. `sqlite.core.getIndexes({table: "test_orders"})` → includes `idx_orders_status`
+4. `sqlite.core.readQuery("SELECT * FROM test_users")` → should return JSON rows of test_users
+5. `sqlite.core.readQuery("SELECT * FROM test_measurements")` → return 50 rows (automatic limit) and `nextCursor` populated
+6. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements", cursor: "<nextCursor>"})` → return next batch of rows via opaque pagination
+7. `sqlite.core.listTables()` → tables array includes `test_products`, `test_orders`, etc.
+8. `sqlite.core.describeTable("test_products")` → columns include `id` (INTEGER), `name` (TEXT), `price` (REAL)
+9. `sqlite.core.getIndexes({table: "test_orders"})` → includes `idx_orders_status`
 
 **Convenience tools:**
 
-7. `sqlite.core.count({table: "test_products"})` → `{count: 16}`
-8. `sqlite.core.count({table: "test_products", column: "category", distinct: true})` → distinct category count
-9. `sqlite.core.exists({table: "test_products", whereClause: "price > 1000"})` → `{exists: true}`
-10. `sqlite.core.exists({table: "test_products", whereClause: "price > 99999"})` → `{exists: false}`
-11. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → `{rows: [{date_add_result: ...}]}`
-12. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → `{rows: [{date_diff_result: ...}]}`
+10. `sqlite.core.count({table: "test_products"})` → `{count: 16}`
+11. `sqlite.core.count({table: "test_products", column: "category", distinct: true})` → distinct category count
+12. `sqlite.core.exists({table: "test_products", whereClause: "price > 1000"})` → `{exists: true}`
+13. `sqlite.core.exists({table: "test_products", whereClause: "price > 99999"})` → `{exists: false}`
+14. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → `{rows: [{date_add_result: ...}]}`
+15. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → `{rows: [{date_diff_result: ...}]}`
 
 **Write tools (use temp tables):**
 
@@ -171,7 +174,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 **Parameter binding:**
 
 25. `sqlite.core.readQuery({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99)
-26. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → verify multi-parameter binding returns correct subset
+26. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → 4 results
 
 **Trigger & constraint introspection:**
 

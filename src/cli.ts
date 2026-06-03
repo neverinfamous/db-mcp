@@ -13,6 +13,8 @@ import type {
   DatabaseConfig,
   OAuthConfig,
 } from "./types/index.js";
+import fs from "node:fs";
+import yaml from "yaml";
 import {
   DEFAULT_AUDIT_LOG_MAX_SIZE_BYTES,
   DEFAULT_AUDIT_BACKUP_MAX_DATA_SIZE_BYTES,
@@ -23,7 +25,11 @@ import {
 /**
  * Parse command line arguments
  */
-function parseArgs(): Partial<McpServerConfig> {
+function parseArgs(): {
+  cliConfig: Partial<McpServerConfig>;
+  dumpConfig: boolean;
+  configPath?: string;
+} {
   const args = process.argv.slice(2);
   const config: Partial<McpServerConfig> = {};
   const databases: DatabaseConfig[] = [];
@@ -38,6 +44,12 @@ function parseArgs(): Partial<McpServerConfig> {
   let auditReads = false;
   let auditBackup = false;
   let auditBackupData = false;
+
+  // Track observability flags
+  let metricsExport: "prometheus" | undefined;
+
+  let dumpConfig = false;
+  let configPath: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -145,6 +157,20 @@ function parseArgs(): Partial<McpServerConfig> {
       if (lastDb?.options && "backend" in lastDb.options) {
         lastDb.options["spatialite"] = true;
       }
+    } else if (arg === "--encryption-key") {
+      const keyValue = args[++i];
+      if (keyValue) {
+        // Apply to already-added native database if exists
+        const lastDb = databases[databases.length - 1];
+        if (lastDb?.options && "backend" in lastDb.options) {
+          lastDb.options["encryptionKey"] = keyValue;
+        } else {
+          console.error(
+            "Error: --encryption-key must be specified after --sqlite-native",
+          );
+          process.exit(1);
+        }
+      }
     } else if (arg === "--audit-log") {
       const logPath = args[++i];
       if (logPath) {
@@ -158,6 +184,18 @@ function parseArgs(): Partial<McpServerConfig> {
       auditBackup = true;
     } else if (arg === "--audit-backup-data") {
       auditBackupData = true;
+    } else if (arg === "--metrics-export") {
+      const metricsValue = args[++i];
+      if (metricsValue === "prometheus") {
+        metricsExport = "prometheus";
+      }
+    } else if (arg === "--config" || arg === "-c") {
+      const pathValue = args[++i];
+      if (pathValue) {
+        configPath = pathValue;
+      }
+    } else if (arg === "--dump-config") {
+      dumpConfig = true;
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -166,6 +204,10 @@ function parseArgs(): Partial<McpServerConfig> {
 
   if (databases.length > 0) {
     config.databases = databases;
+  }
+
+  if (metricsExport) {
+    config.metricsExport = metricsExport;
   }
 
   // Build audit config if --audit-log was specified
@@ -188,7 +230,11 @@ function parseArgs(): Partial<McpServerConfig> {
     };
   }
 
-  return config;
+  return {
+    cliConfig: config,
+    dumpConfig,
+    ...(configPath !== undefined ? { configPath } : {}),
+  };
 }
 
 /**
@@ -225,6 +271,7 @@ Database Options:
 Extension Options (Native only):
   --csv                     Load CSV extension for CSV virtual tables
   --spatialite              Load SpatiaLite extension for GIS capabilities
+  --encryption-key <key>    Set SQLCipher encryption key for the database
 
 Audit Options:
   --audit-log <path>        Enable audit logging (JSONL file path, or "stderr")
@@ -234,8 +281,11 @@ Audit Options:
   --audit-backup-data       Include sample data rows in snapshots
 
 Server Options:
+  --config, -c <path>       Load configuration from YAML/JSON file
+  --dump-config             Print the resolved configuration and exit
   --name <name>             Server name (default: db-mcp)
   --version <version>       Server version (default: ${VERSION})
+  --metrics-export <type>   Export metrics at HTTP /metrics (e.g., prometheus)
   --tool-filter <filter>    Tool filter string. Supports:
                               Shortcuts: starter, analytics, search, spatial, minimal, full
                               Groups: core, json, text, fts5, stats, vector, geo, ...
@@ -253,8 +303,10 @@ Environment Variables:
   MCP_ENABLE_HSTS            Enable HSTS header (same as --enable-hsts)
   DB_MCP_TOOL_FILTER        Tool filter string
   SQLITE_DATABASE           SQLite database path
+  DB_ENCRYPTION_KEY         SQLCipher encryption key (Native only)
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
   SPATIALITE_PATH           Custom path to SpatiaLite extension binary
+  METRICS_EXPORT            Export metrics (e.g., prometheus)
   AUDIT_LOG                 Audit log file path (or "stderr")
   AUDIT_REDACT              Redact arguments (default: true, set false to include args)
   AUDIT_READS               Log reads (true/false)
@@ -264,7 +316,7 @@ Environment Variables:
 Examples:
   db-mcp --sqlite-native ./data.db
   db-mcp --sqlite-native ./data.db --tool-filter "starter"
-  db-mcp --transport http --port 3000 --auth-token my-secret --sqlite ./data.db
+  MCP_AUTH_TOKEN=my-secret db-mcp --transport http --port 3000 --sqlite ./data.db
   db-mcp --transport http --oauth-enabled --oauth-issuer http://keycloak:8080/realms/mcp --oauth-audience db-mcp --sqlite ./data.db
 
 For more information, visit: https://github.com/neverinfamous/db-mcp
@@ -355,6 +407,11 @@ function loadEnvConfig(): Partial<McpServerConfig> {
     databases.push({ type: "sqlite", connectionString: sqliteUri });
   }
 
+  // Metrics from environment
+  if (process.env["METRICS_EXPORT"] === "prometheus") {
+    config.metricsExport = "prometheus";
+  }
+
   if (databases.length > 0) {
     config.databases = databases;
   }
@@ -363,23 +420,73 @@ function loadEnvConfig(): Partial<McpServerConfig> {
 }
 
 /**
+ * Load configuration from a JSON or YAML file
+ */
+function loadConfigFile(configPath: string): Partial<McpServerConfig> {
+  try {
+    const fileContent = fs.readFileSync(configPath, "utf-8");
+    if (configPath.endsWith(".yaml") || configPath.endsWith(".yml")) {
+      return yaml.parse(fileContent) as Partial<McpServerConfig>;
+    } else {
+      return JSON.parse(fileContent) as Partial<McpServerConfig>;
+    }
+  } catch (error) {
+    logger.error(`Failed to load config file: ${configPath}`, {
+      error: error instanceof Error ? error : new Error(String(error)),
+      module: "CLI",
+    });
+    process.exit(1);
+  }
+}
+
+/**
  * Main entry point
  */
 async function main(): Promise<void> {
   try {
-    // Load configuration from environment, then CLI (CLI overrides env)
+    // Parse CLI args first to get config path and dump flag
+    const { cliConfig, dumpConfig, configPath } = parseArgs();
+
+    // Load config file if specified
+    const fileConfig = configPath ? loadConfigFile(configPath) : {};
+
+    // Load configuration from environment
     const envConfig = loadEnvConfig();
-    const cliConfig = parseArgs();
 
     const config: McpServerConfig = {
       ...DEFAULT_CONFIG,
+      ...fileConfig,
       ...envConfig,
       ...cliConfig,
       databases: [
+        ...(fileConfig.databases ?? []),
         ...(envConfig.databases ?? []),
         ...(cliConfig.databases ?? []),
       ],
     } as McpServerConfig;
+
+    if (dumpConfig) {
+      // Redact sensitive values before dumping
+      const safeConfig = JSON.parse(JSON.stringify(config)) as Record<
+        string,
+        unknown
+      >;
+      if (typeof safeConfig["authToken"] === "string") {
+        safeConfig["authToken"] = "***REDACTED***";
+      }
+      if (
+        typeof safeConfig["oauth"] === "object" &&
+        safeConfig["oauth"] !== null
+      ) {
+        const oauth = safeConfig["oauth"] as Record<string, unknown>;
+        if (typeof oauth["jwksUri"] === "string") {
+          oauth["jwksUri"] = "***REDACTED***";
+        }
+      }
+
+      process.stdout.write(JSON.stringify(safeConfig, null, 2) + "\n");
+      process.exit(0);
+    }
 
     // Security Check: Prevent unauthenticated production access
     if (
@@ -413,10 +520,30 @@ async function main(): Promise<void> {
     });
 
     // Register database adapters based on config.databases
+    const globalEncryptionKey = process.env["DB_ENCRYPTION_KEY"];
+
     for (const dbConfig of config.databases) {
       if (dbConfig.type === "sqlite") {
-        const options = dbConfig.options as { backend?: string } | undefined;
-        if (options?.backend === "better-sqlite3") {
+        const options = (dbConfig.options ?? {}) as {
+          backend?: string;
+          encryptionKey?: string;
+        };
+        if (globalEncryptionKey && !options.encryptionKey) {
+          if (options.backend === "better-sqlite3") {
+            options.encryptionKey = globalEncryptionKey;
+          }
+        }
+        dbConfig.options = options;
+
+        if (options.encryptionKey && options.backend !== "better-sqlite3") {
+          logger.error(
+            "FATAL: SQLCipher encryption is only supported with the native better-sqlite3 backend. Use --sqlite-native or specify backend: 'better-sqlite3' in config.",
+            { module: "CLI" },
+          );
+          process.exit(1);
+        }
+
+        if (options.backend === "better-sqlite3") {
           // Use native SQLite adapter with FTS5, window functions, transactions
           const { NativeSqliteAdapter } =
             await import("./adapters/sqlite-native/index.js");

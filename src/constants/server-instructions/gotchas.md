@@ -23,6 +23,7 @@
 19. **sqlite_batch_insert**: All rows must have the same keys — inconsistent column sets across rows will cause errors or unexpected NULLs
 20. **sqlite_schema_diff**: `baseline` and `target` accept either the string `"current"` (queries live DB) or an inline snapshot object from a prior `sqlite_schema_snapshot` call. At least one side must be `"current"` unless doing an offline comparison
 21. **sqlite_upsert**: Always specify `conflictColumns` — without it, falls back to `REPLACE` which deletes and re-inserts the row, potentially losing columns not included in `data`
+22. **Resource Subscriptions**: The `sqlite://schema` and `sqlite://health` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
 
 ## WASM vs Native
 
@@ -35,6 +36,7 @@
 | Backup/Restore/Dump/VacuumInto/Verify (5 tools)   | ✅                    | ❌          | Graceful error   |
 | R-Tree spatial indexing                           | ✅                    | ❌          | Graceful error   |
 | CSV virtual tables                                | ✅                    | ❌          | Graceful error   |
+| SQLCipher Encryption at Rest                      | ✅                    | ❌          | Graceful error   |
 | generate_series                                   | JS fallback           | JS fallback | —                |
 | dbstat                                            | ✅ native (per-table) | ❌          | JS (counts only) |
 | soundex()                                         | ✅ native             | ❌          | JS               |

@@ -98,6 +98,7 @@ describe("sandbox-factory", () => {
       expect(stats.available).toBe(5);
       expect(stats.inUse).toBe(0);
       expect(stats.max).toBe(5);
+      pool.dispose();
     });
   });
 

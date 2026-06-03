@@ -169,23 +169,30 @@ All tools should return errors as structured objects instead of throwing. The ex
 25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → results about databases
 26. `sqlite.text.ftsRebuild({table: "test_articles_fts"})` → success
 27. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → same results after rebuild (idempotent)
-28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
-29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
-30. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
+28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1})` → exactly 1 result, `nextCursor` provided
+29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1, cursor: "<nextCursor>"})` → next cursor chunk retrieved
+30. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
+31. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
+32. `sqlite.text.ftsSearch({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` → should gracefully handle malformed FTS syntax without crashing the parser
+33. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
+34. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0, 0, 0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error (COLUMN_NOT_FOUND)
+35. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error (COLUMN_NOT_FOUND)
+36. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 0})` → structured error (COLUMN_NOT_FOUND)
+37. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist and aren't overly large payloads
 
 ## Phase 7: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-31. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
-32. All 14 non-FTS text tools should work identically in WASM and Native
+38. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
+39. All 14 non-FTS text tools should work identically in WASM and Native
 
 ## Phase 8: Error Message Quality (batched)
 
-33. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
-34. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
-35. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
-36. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+40. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
+41. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
+42. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
+43. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
 
 ### Final Cleanup
 

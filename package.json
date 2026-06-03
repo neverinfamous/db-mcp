@@ -1,6 +1,6 @@
 {
   "name": "db-mcp",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "description": "SQLite MCP Server — Secure Database Administration & Observability with Code Mode. True V8 Isolate Sandbox Unifying 170+ Specialized Tools with Highly Optimized Payloads for 70–90% Token Savings. Includes Dynamic Tool Filtering, Dual-Transport HTTP/SSE, OAuth 2.1 Auth, Granular Access Control, Audit Logging, & Deterministic Error Handling.",
   "mcpName": "io.github.neverinfamous/db-mcp",
   "type": "module",
@@ -61,8 +61,8 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
-    "acorn": "^8.16.0",
     "@modelcontextprotocol/sdk": "1.29.0",
+    "acorn": "^8.16.0",
     "cors": "2.8.6",
     "express": "5.2.1",
     "express-rate-limit": "8.5.2",
@@ -72,6 +72,7 @@
     "redis": "^6.0.0",
     "sql.js": "1.14.1",
     "sqlite-parser": "^1.0.1",
+    "yaml": "^2.9.0",
     "zod": "^4.4.3",
     "zod-to-json-schema": "3.25.2"
   },
@@ -83,7 +84,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.4.0",
     "@types/sql.js": "^1.4.9",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^10.0.2",
     "globals": "^17.4.0",
     "node-addon-api": "^8.8.0",
@@ -91,17 +92,18 @@
     "tsup": "^8.5.1",
     "tsx": "^4.22.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.0",
-    "vitest": "^4.0.17"
+    "typescript-eslint": "^8.60.1",
+    "vitest": "^4.1.8"
   },
   "optionalDependencies": {
-    "better-sqlite3": "^12.10.0"
+    "better-sqlite3": "^12.10.0",
+    "better-sqlite3-multiple-ciphers": "^12.10.0"
   },
   "//overrides": "Transitive CVE patches. Review quarterly or when dockerfile-patch-drift.yml flags staleness.",
   "overrides": {
     "diff": "9.0.0",
     "@isaacs/brace-expansion": "5.0.1",
-    "tar": "7.5.15",
+    "tar": "7.5.16",
     "minimatch": "10.2.5",
     "brace-expansion": "5.0.6"
   }

@@ -17,12 +17,13 @@ export const INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 
 ## Quick Access
 
-| Purpose         | Action                     |
-| --------------- | -------------------------- |
-| Health check    | \`server_health\` tool       |
-| Server info     | \`server_info\` tool         |
-| Database schema | \`sqlite://schema\` resource |
-| Tool help       | \`sqlite://help\` resource   |
+| Purpose            | Action                     |
+| ------------------ | -------------------------- |
+| Health check       | \`server_health\` tool       |
+| Live server health | \`sqlite://health\` resource |
+| Server info        | \`server_info\` tool         |
+| Database schema    | \`sqlite://schema\` resource |
+| Tool help          | \`sqlite://help\` resource   |
 
 ## Built-in Tools
 
@@ -42,7 +43,7 @@ Only help resources for your enabled tool groups are registered.`;
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
   [
     "admin",
-    `# db-mcp Help — Database Administration (32N/31W tools) + Server Audit (5 tools)
+    `# db-mcp Help — Database Administration (31N/30W tools) + Server Audit (7 tools)
 
 ## Maintenance
 
@@ -67,14 +68,16 @@ sqlite_verify_backup({ backupPath: "/path/to/backup.db" }); // check integrity w
 sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replaces current database
 \`\`\`
 
-## Audit Backups
+## Server Management & Audit
 
 \`\`\`javascript
+sqlite_server_config({ action: "set", setting: "logLevel", value: "debug" }); // get or update runtime server configuration
 sqlite_audit_list_backups({ limit: 10, offset: 0 }); // list pre-mutation DDL snapshots
 sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific snapshot
 sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
 sqlite_audit_restore_backup({ filename: "snapshot_123.json", dryRun: true }); // restore schema from snapshot
 sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
+sqlite_audit_search({ query: "DROP TABLE", limit: 50 }); // search and filter structured audit logs
 \`\`\`
 
 ## PRAGMA
@@ -149,12 +152,6 @@ sqlite_create_csv_table({
   tableName: "csv_data",
   filePath: "/absolute/path/to/data.csv",
 });
-\`\`\`
-
-## Business Insights
-
-\`\`\`javascript
-sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to memo://insights
 \`\`\``,
   ],
   [
@@ -163,7 +160,7 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 
 ## Basic Queries
 
-- \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10" })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements
+- \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "..." })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports \`cursor\` for offset-based pagination (returns \`nextCursor\`). **Agent Tip:** Avoid \`SELECT *\` on wide tables with large text/JSON columns to conserve token context; use \`sqlite_describe_table\` first and select specific columns.
 - \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
 
 ## Tables & Schema
@@ -330,6 +327,7 @@ sqlite_spatialite_index({
 19. **sqlite_batch_insert**: All rows must have the same keys — inconsistent column sets across rows will cause errors or unexpected NULLs
 20. **sqlite_schema_diff**: \`baseline\` and \`target\` accept either the string \`"current"\` (queries live DB) or an inline snapshot object from a prior \`sqlite_schema_snapshot\` call. At least one side must be \`"current"\` unless doing an offline comparison
 21. **sqlite_upsert**: Always specify \`conflictColumns\` — without it, falls back to \`REPLACE\` which deletes and re-inserts the row, potentially losing columns not included in \`data\`
+22. **Resource Subscriptions**: The \`sqlite://schema\` and \`sqlite://health\` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
 
 ## WASM vs Native
 
@@ -342,6 +340,7 @@ sqlite_spatialite_index({
 | Backup/Restore/Dump/VacuumInto/Verify (5 tools)   | ✅                    | ❌          | Graceful error   |
 | R-Tree spatial indexing                           | ✅                    | ❌          | Graceful error   |
 | CSV virtual tables                                | ✅                    | ❌          | Graceful error   |
+| SQLCipher Encryption at Rest                      | ✅                    | ❌          | Graceful error   |
 | generate_series                                   | JS fallback           | JS fallback | —                |
 | dbstat                                            | ✅ native (per-table) | ❌          | JS (counts only) |
 | soundex()                                         | ✅ native             | ❌          | JS               |
@@ -443,6 +442,13 @@ sqlite_storage_analysis({ limit: 10 }); // top 10 tables only
 // Audit index effectiveness — find redundant, missing FK, unindexed large tables
 sqlite_index_audit({ excludeSystemTables: true });
 sqlite_index_audit({ table: "orders", minSeverity: "warning" }); // reduce payload
+// Run EXPLAIN QUERY PLAN on target queries to recommend composite/partial indexes
+sqlite_index_audit({
+  recommendComposite: true,
+  queriesToAnalyze: [
+    "SELECT * FROM orders WHERE user_id = 1 AND status = 'active'",
+  ],
+});
 
 // EXPLAIN QUERY PLAN with scan-type classification and optimization suggestions (SELECT/WITH only)
 sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
@@ -702,7 +708,7 @@ sqlite_window_moving_avg({
   ],
   [
     "text",
-    `# db-mcp Help — Text Processing & FTS5 (19N/14W: 14 text + 5 FTS5 [NATIVE ONLY])
+    `# db-mcp Help — Text Processing & FTS5 (20N/15W: 15 text + 5 FTS5 [NATIVE ONLY])
 
 ## Full-Text Search / FTS5 (5 tools, Native only)
 
@@ -722,6 +728,8 @@ sqlite_fts_search({
   table: "articles_fts",
   query: "machine learning",
   limit: 10,
+  includeFacets: true, // optionally return breakdown by technique
+  cursor: "...", // Optional offset-based cursor for pagination (returns nextCursor)
 });
 sqlite_fts_match_info({ table: "articles_fts", query: "machine learning" }); // bm25 ranking info
 
@@ -741,7 +749,7 @@ sqlite_fts_headline({
 
 ⚠️ FTS5 virtual tables (\`*_fts\`) and shadow tables (\`*_fts_*\`) are hidden from \`sqlite_list_tables\` for cleaner output
 
-## Text Processing (14 tools)
+## Text Processing (15 tools)
 
 \`\`\`javascript
 // Regex patterns: ⚠️ Double-escape backslashes (\\\\) when passing through JSON/MCP
@@ -827,6 +835,17 @@ sqlite_advanced_search({
   searchTerm: "laptop",
   techniques: ["exact", "fuzzy", "phonetic"],
   fuzzyThreshold: 0.4,
+  includeFacets: true,
+});
+
+// Hybrid Search — combines FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF)
+sqlite_hybrid_search({
+  table: "articles_fts",
+  query: "machine learning",
+  vectorColumn: "embedding",
+  queryVector: [0.1, 0.2, 0.3], // vector data from external embedding API
+  metric: "cosine",
+  limit: 10,
 });
 
 // Sentiment analysis — text analysis (can analyze raw text or database columns)

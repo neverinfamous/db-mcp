@@ -154,6 +154,17 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
               });
               state.transports.delete(sid);
               state.sessionOwners.delete(sid);
+
+              // Clean up subscriptions
+              if ("subscriptionManager" in server) {
+                (
+                  server as unknown as {
+                    subscriptionManager: {
+                      unsubscribeSession: (id: string) => void;
+                    };
+                  }
+                ).subscriptionManager.unsubscribeSession(sid);
+              }
             }
           };
 

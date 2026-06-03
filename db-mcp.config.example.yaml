@@ -1,0 +1,47 @@
+# db-mcp.config.example.yaml
+# Complete example configuration for db-mcp
+# Copy this file to db-mcp.config.yaml or pass it via --config
+
+# Basic Server Information
+name: "db-mcp"
+version: "4.0.0"
+
+# Transport configuration
+# Options: "stdio", "http", "sse"
+transport: "stdio"
+port: 3000
+
+# Security and Filtering
+# Define which tool groups are available to the client.
+# Valid options include: core, admin, introspection, json, text, stats, vector, geo, migration, codemode
+# Meta-groups include: starter, analytics, search, spatial, dev-schema, minimal, full
+toolFilter: "admin,core,introspection"
+
+# Database Connections
+# You can connect to multiple SQLite databases simultaneously.
+databases:
+  # Native adapter (requires better-sqlite3)
+  - type: sqlite
+    connectionString: ./data/production.db
+    options:
+      backend: "better-sqlite3"
+
+  # WASM adapter (default, uses sql.js)
+  - type: sqlite
+    connectionString: ./data/analytics.db
+
+# Audit Logging & Compliance
+audit:
+  enabled: true
+  logPath: "./logs/audit.db"
+  redact: true # Redact PII and secrets
+  auditReads: false # Set to true to also audit SELECT queries
+  backup:
+    enabled: true # Automatically backup DDL before destructive operations
+    includeData: false # Set to true to include sample data in backups
+    maxAgeDays: 30
+    maxCount: 100
+    maxDataSizeBytes: 10485760 # 10MB limit for captured data
+
+# Observability (Prometheus)
+metricsExport: "prometheus"

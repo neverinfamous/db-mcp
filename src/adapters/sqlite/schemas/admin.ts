@@ -119,17 +119,6 @@ export const PragmaCompileOptionsSchema = z.object({
 
 export const PragmaDatabaseListSchema = z.object({});
 
-export const AppendInsightSchema = z.object({
-  insight: z
-    .string()
-    .max(2000)
-    .regex(
-      /^[\x20-\x7E\n\r]*$/,
-      "Insight must contain only printable ASCII characters",
-    )
-    .describe("Business insight discovered from data analysis"),
-});
-
 export const VacuumSchema = z.object({
   analyze: z
     .boolean()
@@ -202,6 +191,39 @@ export const AuditDiffBackupSchema = z.object({
     .describe("Snapshot filename to compare against the live database schema"),
 });
 
+export const AuditSearchSchema = z.object({
+  tool: z.string().optional().describe("Filter by exact tool name"),
+  category: z
+    .enum(["read", "write", "admin", "auth", "error"])
+    .optional()
+    .describe("Filter by operation category"),
+  success: z.boolean().optional().describe("Filter by success status"),
+  requestId: z.string().optional().describe("Filter by exact request ID"),
+  fromTimestamp: z
+    .string()
+    .optional()
+    .describe("Filter by start timestamp (ISO 8601)"),
+  toTimestamp: z
+    .string()
+    .optional()
+    .describe("Filter by end timestamp (ISO 8601)"),
+  limit: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .optional()
+      .default(50)
+      .describe("Maximum number of entries to return (default 50)"),
+  ),
+  offset: z.preprocess(
+    coerceNumber,
+    z.number().int().min(0).optional().default(0).describe("Pagination offset"),
+  ),
+});
+
 export const SqlDumpSchema = z.object({
   outputPath: z
     .string()
@@ -257,6 +279,15 @@ export const AuditRestoreBackupOutputSchema = z
     ddl: z.string().optional(),
     dryRun: z.boolean().optional(),
     changesApplied: z.number().optional(),
+  })
+  .extend(ErrorResponseFields.shape);
+
+export const AuditSearchOutputSchema = z
+  .object({
+    success: z.boolean(),
+    entries: z.array(z.any()).optional(),
+    count: z.number().optional(),
+    totalCount: z.number().optional(),
   })
   .extend(ErrorResponseFields.shape);
 
@@ -428,14 +459,6 @@ export const PragmaTableInfoOutputSchema = z
   })
   .extend(ErrorResponseFields.shape);
 
-export const AppendInsightOutputSchema = z
-  .object({
-    success: z.boolean(),
-    message: z.string().optional(),
-    insightCount: z.number().optional(),
-  })
-  .extend(ErrorResponseFields.shape);
-
 export const AttachDatabaseOutputSchema = z
   .object({
     success: z.boolean(),
@@ -534,7 +557,6 @@ export type PragmaCompileOptionsInput = z.infer<
   typeof PragmaCompileOptionsSchema
 >;
 export type PragmaDatabaseListInput = z.infer<typeof PragmaDatabaseListSchema>;
-export type AppendInsightInput = z.infer<typeof AppendInsightSchema>;
 export type VacuumInput = z.infer<typeof VacuumSchema>;
 export type AttachDatabaseInput = z.infer<typeof AttachDatabaseSchema>;
 export type DetachDatabaseInput = z.infer<typeof DetachDatabaseSchema>;
@@ -542,5 +564,6 @@ export type VacuumIntoCopyInput = z.infer<typeof VacuumIntoCopySchema>;
 export type AuditListBackupsInput = z.infer<typeof AuditListBackupsSchema>;
 export type AuditRestoreBackupInput = z.infer<typeof AuditRestoreBackupSchema>;
 export type AuditDiffBackupInput = z.infer<typeof AuditDiffBackupSchema>;
+export type AuditSearchInput = z.infer<typeof AuditSearchSchema>;
 export type ReindexInput = z.infer<typeof ReindexSchema>;
 export type WalInput = z.infer<typeof WalSchema>;

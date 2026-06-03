@@ -24,6 +24,7 @@ export const ReadQueryOutputSchema = z
     success: z.boolean(),
     rowCount: z.number().optional(),
     rows: z.array(RowRecordSchema).optional(),
+    nextCursor: z.string().optional(),
     executionTimeMs: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -194,6 +195,7 @@ export const ReadQuerySchema = z.object({
     .array(z.unknown())
     .optional()
     .describe("Query parameters for prepared statements"),
+  cursor: z.string().optional().describe("Opaque cursor for pagination"),
 });
 
 export const WriteQuerySchema = z.object({

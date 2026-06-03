@@ -45,6 +45,7 @@ import {
 import type { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 import { runWithAuthContext } from "../../auth/auth-context.js";
 import type { AuthenticatedContext } from "../../auth/middleware/index.js";
+import { metrics } from "../../observability/metrics.js";
 
 const logger = createModuleLogger("HTTP");
 
@@ -218,6 +219,13 @@ export class HttpTransport {
     // Apply auth middleware before MCP endpoints
     applyAuthMiddleware(this.state);
     applyScopeEnforcementMiddleware(this.state);
+
+    if (this.state.config.metricsExport === "prometheus") {
+      this.state.app.get("/metrics", (_req, res) => {
+        res.set("Content-Type", "text/plain");
+        res.send(metrics.toPrometheus());
+      });
+    }
 
     // Bind authenticated context to AsyncLocalStorage for audit identity capture.
     // Must be AFTER auth middleware (which sets req.auth) and BEFORE endpoint

@@ -6,10 +6,10 @@
  * GROUP TOOLS (adapter-registered, accessible via Code Mode sqlite.help()):
  *   core: 21 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts, core/triggers.ts, core/constraints.ts, core/datetime.ts, core/alter-table.ts)
  *   json: 25 tools (json-operations/crud+query+transform+security+diff.ts, json-helpers/read+write.ts)
- *   text: 14 WASM / 19 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
+ *   text: 15 WASM / 20 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
  *   stats: 17 WASM / 23 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
- *   admin: 31 WASM / 32 Native (admin/backup+verify+pragma+reindex+wal.ts, virtual/views+vtable+extensions+analysis.ts; dump.ts is NATIVE ONLY)
+ *   admin: 30 WASM / 31 Native (admin/backup+verify+pragma+reindex+wal.ts, virtual/views+vtable+extensions+analysis.ts; dump.ts is NATIVE ONLY)
  *   transactions: 8 Native (native: transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts, native: spatialite/tools+analysis.ts)
  *   introspection: 10 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot+diff.ts, diagnostics/storage+indexes+query-plan.ts)
@@ -17,15 +17,15 @@
  *   codemode: 1 tool (codemode.ts)
  *   Subtotal: 139 WASM / 166 Native (excluding Code Mode)
  *
- * AUDIT TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
- *   5 tools (server/registration/audit-tools.ts)
+ * AUDIT & ADMIN TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
+ *   7 tools (server/registration/audit-tools.ts, admin-tools.ts)
  *
  * TOOL COUNT TAXONOMY:
- *   Group tools:  166 Native / 139 WASM  (Code Mode sqlite.help() base total)
- *   Audit tools:    5 Native /   5 WASM  (MCP-only)
- *   Inventory:    171 Native / 144 WASM  (Group + Audit)
- *   Built-in:       4 /   4              (server_info, health, adapters, + Code Mode injected)
- *   MCP total:    175 Native / 148 WASM  (tools/list response)
+ *   Group tools:  166 Native / 139 WASM  (10 groups excluding Code Mode)
+ *   Audit tools:    7 Native /   7 WASM  (MCP-only)
+ *   Inventory:    173 Native / 146 WASM  (Group + Audit)
+ *   Built-in:       4 /   4              (server_info, health, adapters, execute_code)
+ *   MCP total:    177 Native / 150 WASM  (tools/list response)
  */
 
 import type { ToolGroup, MetaGroup } from "../types/index.js";
@@ -108,7 +108,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "json_diff",
   ],
   text: [
-    // Text Tools (14 WASM)
+    // Text Tools (15 WASM)
     "regex_extract",
     "regex_match",
     "text_split",
@@ -122,6 +122,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "text_normalize",
     "text_validate",
     "advanced_search",
+    "hybrid_search",
     "text_sentiment",
     // FTS5 Tools (5 Native-only)
     "fts_create",
@@ -131,7 +132,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "fts_headline",
   ],
   stats: [
-    // Stats Tools (16 WASM)
+    // Stats Tools (13 WASM)
     "stats_basic",
     "stats_count",
     "stats_group_by",
@@ -173,7 +174,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "vector_distance",
   ],
   admin: [
-    // Admin Tools (15: backup.ts, verify.ts, pragma.ts, reindex.ts, wal.ts)
+    // Admin Tools (12: backup.ts, verify.ts, pragma.ts)
     "backup",
     "analyze",
     "integrity_check",
@@ -186,7 +187,6 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "pragma_optimize",
     "pragma_settings",
     "pragma_table_info",
-    "append_insight",
     // Virtual Table Tools (13: views.ts, vtable.ts, extensions.ts, analysis.ts)
     "generate_series",
     "create_view",
@@ -201,7 +201,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "analyze_csv_schema",
     "create_rtree_table",
     "create_series_table",
-    // Database management (5: pragma.ts, backup/create.ts, reindex.ts, wal.ts)
+    // Database management (6: pragma.ts, backup/create.ts, dump.ts, reindex.ts, wal.ts)
     "attach_database",
     "detach_database",
     "vacuum_into",
@@ -265,13 +265,13 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text (60 WASM / 65 Native)
+  // General development - Core + JSON + Text (61 WASM / 66 Native)
   starter: ["core", "json", "text", "codemode"],
 
   // Data analysis - Core + JSON + Stats (63 WASM / 69 Native)
   analytics: ["core", "json", "stats", "codemode"],
 
-  // Search workloads - Core + Text + Vector (46 WASM / 51 Native)
+  // Search workloads - Core + Text + Vector (47 WASM / 52 Native)
   search: ["core", "text", "vector", "codemode"],
 
   // Geospatial workloads - Core + Geo + Vector (36 WASM / 43 Native)
@@ -283,7 +283,7 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // Bare minimum - Core (21 tools)
   minimal: ["core", "codemode"],
 
-  // All group tools enabled (166 Native / 139 WASM — see TOOL COUNT TAXONOMY above)
+  // All group tools enabled (167 Native / 140 WASM — see TOOL COUNT TAXONOMY above)
   full: [
     "core",
     "json",

@@ -45,24 +45,27 @@ if (-not $DatabasePath) {
 }
 
 # Colors for output
-function Write-Step { param($Step, $Total, $Message) Write-Host "`n[$Step/$Total] " -ForegroundColor Cyan -NoNewline; Write-Host $Message -ForegroundColor White }
-function Write-Success { param($Message) Write-Host "  [OK] " -ForegroundColor Green -NoNewline; Write-Host $Message }
-function Write-Info { param($Message) Write-Host "  --> " -ForegroundColor DarkGray -NoNewline; Write-Host $Message -ForegroundColor DarkGray }
-function Write-Warn { param($Message) Write-Host "  [!] " -ForegroundColor Yellow -NoNewline; Write-Host $Message -ForegroundColor Yellow }
-function Write-Err { param($Message) Write-Host "  [X] " -ForegroundColor Red -NoNewline; Write-Host $Message -ForegroundColor Red }
+$esc = [char]27
+function Write-Step { param($Step, $Total, $Message) Write-Output "`n$esc[36m[$Step/$Total] $esc[37m$Message$esc[0m" }
+function Write-Success { param($Message) Write-Output "  $esc[32m[OK]$esc[0m $Message" }
+function Write-Info { param($Message) Write-Output "  $esc[90m--> $Message$esc[0m" }
+function Write-Warn { param($Message) Write-Output "  $esc[33m[!]$esc[0m $Message" }
+function Write-Err { param($Message) Write-Output "  $esc[31m[X]$esc[0m $Message" }
 
-Write-Host "`n========================================================" -ForegroundColor Magenta
-Write-Host "            DB-MCP Test Database Reset                   " -ForegroundColor Magenta
-Write-Host "========================================================" -ForegroundColor Magenta
+Write-Output ""
+Write-Output "$esc[35m========================================================$esc[0m"
+Write-Output "$esc[35m            DB-MCP Test Database Reset                   $esc[0m"
+Write-Output "$esc[35m========================================================$esc[0m"
 
 # Verify prerequisites
 if (-not (Test-Path $SqlFile)) {
     Write-Err "test-database.sql not found at: $SqlFile"
     exit 1
 }
-Write-Host "`nScript directory: " -NoNewline; Write-Host $ScriptDir -ForegroundColor Gray
-Write-Host "Database path: " -NoNewline; Write-Host $DatabasePath -ForegroundColor Gray
-Write-Host "SQL seed file: " -NoNewline; Write-Host $SqlFile -ForegroundColor Green
+Write-Output ""
+Write-Output "$esc[90mScript directory: $ScriptDir$esc[0m"
+Write-Output "$esc[90mDatabase path: $DatabasePath$esc[0m"
+Write-Output "$esc[32mSQL seed file: $SqlFile$esc[0m"
 
 # Check if sqlite3 is available
 $sqlite3Path = $null
@@ -87,7 +90,7 @@ if (-not $sqlite3Path) {
     Write-Warn "sqlite3 not found in PATH. Will use Node.js better-sqlite3 via db-mcp CLI."
     $useCli = $true
 } else {
-    Write-Host "SQLite3 path: " -NoNewline; Write-Host $sqlite3Path -ForegroundColor Green
+    Write-Output "$esc[32mSQLite3 path: $sqlite3Path$esc[0m"
     $useCli = $false
 }
 
@@ -107,6 +110,19 @@ if ($backupFiles) {
         if ($Verbose) { Write-Info "Deleted backup: $($bf.Name)" }
     }
     Write-Success "Cleaned up $($backupFiles.Count) backup file(s)"
+}
+
+# Remove snapshot .json.gz files left by audit backup tests
+$snapshotDir = Join-Path (Split-Path -Parent $ScriptDir) "logs\snapshots"
+if (Test-Path $snapshotDir) {
+    $snapshotFiles = Get-ChildItem -Path $snapshotDir -Filter "*.snapshot.json.gz" -ErrorAction SilentlyContinue
+    if ($snapshotFiles) {
+        foreach ($sf in $snapshotFiles) {
+            Remove-Item $sf.FullName -Force -ErrorAction SilentlyContinue
+            if ($Verbose) { Write-Info "Deleted snapshot: $($sf.Name)" }
+        }
+        Write-Success "Cleaned up $($snapshotFiles.Count) audit snapshot file(s)"
+    }
 }
 
 # Remove dump .sql files left by sqlite_dump tests
@@ -133,7 +149,9 @@ if ($nodeProcesses) {
     foreach ($proc in $nodeProcesses) {
         Write-Warn "Node process PID $($proc.ProcessId) is using this database (likely an MCP server)"
     }
-    Write-Info "The database file will be replaced in-place - existing connections will pick up the new data."
+    Write-Warn "The database is currently in use and cannot be safely reset."
+    Write-Warn "Please close any active connections (e.g. restart the MCP server) and try again."
+    exit 1
 }
 
 $filesToDelete = @(
@@ -155,9 +173,10 @@ foreach ($file in $filesToDelete) {
             }
         } catch {
             if ($file -eq $DatabasePath) {
-                # Main DB file is locked — overwrite will happen at seed step
-                Write-Warn "Database file is locked; will overwrite in-place at seed step"
-                $lockFailed = $true
+                Write-Warn "Database file is locked by another process (likely your IDE or an MCP server)."
+                Write-Warn "The database cannot be safely reset while in use."
+                Write-Warn "Please close any active connections and try again."
+                exit 1
             } else {
                 Write-Info "Could not delete $file (may be in use): $_"
             }
@@ -186,7 +205,12 @@ if (-not $useCli) {
         }
         Write-Success "Database created using sqlite3"
     } catch {
-        Write-Err "Failed to create database: $_"
+        if ($_ -match "database is locked" -or $_ -match "SQLITE_BUSY") {
+            Write-Err "Failed to reset database because it is locked by another process (likely your IDE or SQLite extension)."
+            Write-Err "Please close any active connections to the test database and try again."
+        } else {
+            Write-Err "Failed to create database: $_"
+        }
         exit 1
     }
 } else {
@@ -219,7 +243,12 @@ try {
     try {
         $result = node $tempScript $DatabasePath $SqlFile 2>&1
         if ($LASTEXITCODE -ne 0 -or $result -notmatch "SUCCESS") {
-            Write-Err "Failed to create database: $result"
+            if ($result -match "database is locked" -or $result -match "SQLITE_BUSY" -or $result -match "EBUSY") {
+                Write-Err "Failed to reset database because it is locked by another process (likely your IDE or SQLite extension)."
+                Write-Err "Please close any active connections to the test database and try again."
+            } else {
+                Write-Err "Failed to create database: $result"
+            }
             exit 1
         }
         Write-Success "Database created using Node.js (better-sqlite3)"
@@ -232,6 +261,49 @@ try {
 if ($Verbose -and (Test-Path $DatabasePath)) {
     $dbSize = (Get-Item $DatabasePath).Length / 1KB
     Write-Info "Database size: $([math]::Round($dbSize, 2)) KB"
+}
+
+# Seed audit snapshot for admin-audit testing
+$snapshotDir = Join-Path (Split-Path -Parent $ScriptDir) "logs\snapshots"
+if (-not (Test-Path $snapshotDir)) {
+    New-Item -ItemType Directory -Force -Path $snapshotDir | Out-Null
+}
+$timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH-mm-ss-fffZ")
+$snapshotFilename = "${timestamp}_sqlite_drop_view_seed_audit_test_view.snapshot.json.gz"
+
+$seedSnapshotScript = @"
+import { gzipSync } from 'node:zlib';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const snapshot = {
+  metadata: {
+    timestamp: new Date().toISOString(),
+    tool: 'sqlite_drop_view',
+    target: 'seed_audit_test_view',
+    type: 'ddl',
+    requestId: 'seed-request-id-0000',
+    sizeBytes: 300
+  },
+  ddl: 'CREATE VIEW "seed_audit_test_view" AS SELECT 1 AS test'
+};
+
+const json = JSON.stringify(snapshot, null, 2);
+const finalJson = json.replace('"sizeBytes": 300', '"sizeBytes": ' + Buffer.byteLength(json, 'utf8'));
+const compressed = gzipSync(Buffer.from(finalJson, 'utf8'));
+
+writeFileSync(join(process.argv[2], process.argv[3]), compressed);
+"@
+$dbMcpRoot = Split-Path -Parent $ScriptDir
+$tempSnapshot = Join-Path $dbMcpRoot ".seed-snapshot.js"
+$seedSnapshotScript | Out-File -FilePath $tempSnapshot -Encoding utf8 -NoNewline
+Push-Location $dbMcpRoot
+try {
+    node $tempSnapshot $snapshotDir $snapshotFilename | Out-Null
+    Write-Success "Seeded 1 audit snapshot file"
+} finally {
+    Pop-Location
+    Remove-Item $tempSnapshot -Force -ErrorAction SilentlyContinue
 }
 
 # ============================================================================
@@ -307,7 +379,7 @@ db.close();
         $tableList = ($output | Where-Object { $_ -match "^TABLES:" }) -replace "^TABLES:", ""
         $tables = $tableList -split ","
 
-        Write-Host "`n  Table verification:" -ForegroundColor Yellow
+        Write-Output "`n$esc[33m  Table verification:$esc[0m"
 
         $allPassed = $true
         foreach ($line in $output | Where-Object { $_ -match "^COUNT:" }) {
@@ -318,13 +390,9 @@ db.close();
             if ($expectedTables.ContainsKey($tableName)) {
                 $expectedCount = $expectedTables[$tableName]
                 if ($actualCount -eq $expectedCount) {
-                    Write-Host "    [pass] " -ForegroundColor Green -NoNewline
-                    Write-Host "$tableName" -NoNewline
-                    Write-Host " ($($actualCount) rows)" -ForegroundColor Gray
+                    Write-Output "    $esc[32m[pass] $tableName ($($actualCount) rows)$esc[0m"
                 } else {
-                    Write-Host "    [fail] " -ForegroundColor Red -NoNewline
-                    Write-Host "$tableName" -NoNewline
-                    Write-Host " (expected $($expectedCount), got $($actualCount))" -ForegroundColor Red
+                    Write-Output "    $esc[31m[fail] $tableName (expected $($expectedCount), got $($actualCount))$esc[0m"
                     $allPassed = $false
                 }
             }
@@ -337,7 +405,7 @@ db.close();
         }
 
         # Check for unexpected non-seed tables (test artifacts left behind)
-        Write-Host "`n  Artifact check:" -ForegroundColor Yellow
+        Write-Output "`n$esc[33m  Artifact check:$esc[0m"
         $allTableNames = ($output | Where-Object { $_ -match "^TABLES:" }) -replace "^TABLES:", ""
         # Get ALL tables from sqlite_master, not just test_* ones
         $allTablesScript = @'
@@ -382,20 +450,18 @@ db.close();
             # First pass: drop main tables (non-shadow)
             foreach ($ut in $allTablesToDrop) {
                 if ($ut -notmatch "_(data|idx|docsize|config|content|node|parent|rowid)$") {
-                    $prefix = if ($unexpectedTables -contains $ut) { "    [dropping] " } else { "    [cleaning temp] " }
-                    $color = if ($unexpectedTables -contains $ut) { "Yellow" } else { "Cyan" }
-                    Write-Host $prefix -ForegroundColor $color -NoNewline
-                    Write-Host $ut -ForegroundColor Gray
+                    $prefix = if ($unexpectedTables -contains $ut) { "[dropping]" } else { "[cleaning temp]" }
+                    $ansiColor = if ($unexpectedTables -contains $ut) { "33" } else { "36" }
+                    Write-Output "    $esc[${ansiColor}m$prefix $ut$esc[0m"
                     $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} try { db.exec('DROP VIEW IF EXISTS `"$ut`"'); } catch(e) {} "
                 }
             }
             # Second pass: drop any remaining tables (shadow tables left behind)
             foreach ($ut in $allTablesToDrop) {
                 if ($ut -match "_(data|idx|docsize|config|content|node|parent|rowid)$") {
-                    $prefix = if ($unexpectedTables -contains $ut) { "    [dropping shadow] " } else { "    [cleaning temp shadow] " }
-                    $color = if ($unexpectedTables -contains $ut) { "DarkYellow" } else { "DarkCyan" }
-                    Write-Host $prefix -ForegroundColor $color -NoNewline
-                    Write-Host $ut -ForegroundColor Gray
+                    $prefix = if ($unexpectedTables -contains $ut) { "[dropping shadow]" } else { "[cleaning temp shadow]" }
+                    $ansiColor = if ($unexpectedTables -contains $ut) { "33" } else { "36" }
+                    Write-Output "    $esc[${ansiColor}m$prefix $ut$esc[0m"
                     $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} try { db.exec('DROP VIEW IF EXISTS `"$ut`"'); } catch(e) {} "
                 }
             }
@@ -421,7 +487,7 @@ db.close();
     }
 
     # Ensure WAL is checkpointed so WASM in-memory loads get all the data
-    Write-Host "`n  Checkpointing WAL file..." -ForegroundColor Yellow
+    Write-Output "`n$esc[33m  Checkpointing WAL file...$esc[0m"
     $checkpointScript = @"
 import Database from 'better-sqlite3';
 const db = new Database(process.argv[2]);
@@ -433,8 +499,95 @@ db.close();
     node $tempCheckpoint $DatabasePath | Out-Null
     Remove-Item $tempCheckpoint -Force -ErrorAction SilentlyContinue
     Write-Success "WAL checkpointed to main database file"
+
+    # Generate encrypted copy
+    Write-Output "`n$esc[33m  Generating encrypted database copy...$esc[0m"
+    $encryptedDbPath = $DatabasePath -replace '\.db$', '-encrypted.db'
+    
+    # Remove existing encrypted db if it exists
+    $filesToDelete = @(
+        $encryptedDbPath,
+        "$encryptedDbPath-shm",
+        "$encryptedDbPath-wal",
+        "$encryptedDbPath-journal"
+    )
+    foreach ($file in $filesToDelete) {
+        if (Test-Path $file) {
+            Remove-Item $file -Force -ErrorAction SilentlyContinue
+        }
+    }
+    
+    # Copy the unencrypted database
+    Copy-Item $DatabasePath $encryptedDbPath -Force
+    
+    # Attempt to load DB_ENCRYPTION_KEY from secrets.env if not set
+    if (-not $env:DB_ENCRYPTION_KEY) {
+        $secretsPath = "C:\Users\chris\Desktop\adamic\secrets.env"
+        if (Test-Path $secretsPath) {
+            $keys = Get-Content $secretsPath | Where-Object { $_ -match "^DB_ENCRYPTION_KEY=(.+)$" } | ForEach-Object {
+                $matches[1].Trim('"')
+            }
+            if ($keys) {
+                # Get the last non-empty key (in case of multiple lines)
+                $env:DB_ENCRYPTION_KEY = $keys | Where-Object { $_ -ne "x''" -and $_ -ne "''" -and $_ -ne "" } | Select-Object -Last 1
+            }
+        }
+    }
+
+    if (-not $env:DB_ENCRYPTION_KEY) {
+        Write-Info "Skipping encrypted database copy (no DB_ENCRYPTION_KEY found)"
+    } else {
+        $encryptScript = @"
+import Database from 'better-sqlite3-multiple-ciphers';
+
+const dbPath = process.argv[2];
+const key = process.argv[3];
+
+if (!key) {
+    console.error('No DB_ENCRYPTION_KEY provided');
+    process.exit(1);
 }
 
-Write-Host "`n========================================================" -ForegroundColor Green
-Write-Host "                    Reset Complete!                      " -ForegroundColor Green
-Write-Host "========================================================" -ForegroundColor Green
+try {
+    const db = new Database(dbPath);
+    // Wrap the key in double quotes for SQLite PRAGMA syntax
+    // This handles both string passphrases and "x'...'" hex keys
+    db.pragma('rekey = "' + key + '"');
+    db.close();
+} catch (err) {
+    console.error('Failed to encrypt:', err);
+    process.exit(1);
+}
+"@
+        $tempEncrypt = Join-Path $dbMcpRoot ".encrypt.js"
+        $encryptScript | Out-File -FilePath $tempEncrypt -Encoding utf8 -NoNewline
+        Push-Location $dbMcpRoot
+        try {
+            # Quote the key so powershell doesn't eat the single quotes inside it
+            $output = ""
+            try {
+                $output = node $tempEncrypt $encryptedDbPath "$($env:DB_ENCRYPTION_KEY)" 2>&1
+            } catch {
+                $output = $_.ToString()
+            }
+            
+            if ($LASTEXITCODE -ne 0 -or $output -match "Failed to encrypt") {
+                if ($output -match "database is locked" -or $output -match "SQLITE_BUSY" -or $output -match "EBUSY") {
+                    Write-Warn "Failed to encrypt copy because it is locked by another process (likely your IDE or an MCP server)."
+                } else {
+                    Write-Warn "Failed to encrypt copy: $output"
+                }
+            } else {
+                Write-Success "Created encrypted database copy at: $encryptedDbPath"
+            }
+        } finally {
+            Pop-Location
+            Remove-Item $tempEncrypt -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+Write-Output ""
+Write-Output "$esc[32m========================================================$esc[0m"
+Write-Output "$esc[32m                    Reset Complete!                      $esc[0m"
+Write-Output "$esc[32m========================================================$esc[0m"

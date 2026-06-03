@@ -25,6 +25,7 @@ import {
   FtsHeadlineOutputSchema,
 } from "../schemas/fts.js";
 import { FtsHeadlineSchema } from "../schemas/text.js";
+import { sanitizeFtsQuery } from "./text/helpers.js";
 
 /**
  * Build error response for FTS5 unavailability in WASM mode
@@ -251,6 +252,19 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.table);
         await validateTableExists(adapter, input.table);
 
+        let offset = 0;
+        if (input.cursor) {
+          try {
+            const cursorData = JSON.parse(
+              Buffer.from(input.cursor, "base64").toString("utf8"),
+            ) as Record<string, unknown>;
+            if (typeof cursorData["offset"] === "number")
+              offset = cursorData["offset"];
+          } catch {
+            /* ignore invalid cursor */
+          }
+        }
+
         let selectClause = input.includeRowData ? "*" : "rowid";
         if (input.highlight) {
           selectClause += `, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
@@ -258,17 +272,34 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Handle wildcard/list-all query - skip MATCH and return all rows
         if (input.query === "*" || input.query.trim() === "") {
-          const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit}`;
+          const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit} OFFSET ${offset}`;
           const result = await adapter.executeReadQuery(sql, queryParams);
+
+          let nextCursor: string | undefined;
+          if (result.rows?.length === input.limit) {
+            nextCursor = Buffer.from(
+              JSON.stringify({ offset: offset + input.limit }),
+            ).toString("base64");
+          }
+
           return {
             success: true,
             rowCount: result.rows?.length ?? 0,
             results: result.rows,
+            nextCursor,
           };
         }
 
-        // Build query - use single quotes for FTS5 MATCH strings (not double quotes which are identifiers)
-        const queryEscaped = input.query.replace(/'/g, "''");
+        // Build query - use single quotes for FTS5 MATCH strings
+        const sanitizedQuery = sanitizeFtsQuery(input.query);
+        if (!sanitizedQuery) {
+          return {
+            success: true,
+            rowCount: 0,
+            results: [],
+          };
+        }
+        const queryEscaped = sanitizedQuery.replace(/'/g, "''");
         let matchExpr = `"${input.table}" MATCH '${queryEscaped}'`;
 
         // If specific columns, use column filters
@@ -282,14 +313,67 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
           matchExpr = `"${input.table}" MATCH '${colFilter}'`;
         }
 
-        const sql = `SELECT ${selectClause}, rank FROM "${input.table}" WHERE ${matchExpr} ORDER BY rank LIMIT ${input.limit}`;
+        // Faceting logic
+        let columnsToFacet: { name: string; index: number }[] = [];
+        if (input.includeFacets) {
+          const colResult = await adapter.executeReadQuery(
+            `PRAGMA table_info("${input.table}")`,
+            [],
+          );
+          const allCols = (colResult.rows ?? []).map((r, i) => ({
+            name: String(r["name"]),
+            index: i,
+          }));
+
+          if (input.columns && input.columns.length > 0) {
+            columnsToFacet = allCols.filter((c) =>
+              input.columns?.includes(c.name),
+            );
+          } else {
+            columnsToFacet = allCols.filter(
+              (c) => c.name !== input.table && c.name !== "rank",
+            );
+          }
+
+          for (const col of columnsToFacet) {
+            selectClause += `, highlight("${input.table}", ${col.index}, '\x02', '\x03') as _facet_${col.index}`;
+          }
+        }
+
+        const sql = `SELECT ${selectClause}, rank FROM "${input.table}" WHERE ${matchExpr} ORDER BY rank LIMIT ${input.limit} OFFSET ${offset}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
+
+        let nextCursor: string | undefined;
+        if (result.rows?.length === input.limit) {
+          nextCursor = Buffer.from(
+            JSON.stringify({ offset: offset + input.limit }),
+          ).toString("base64");
+        }
+
+        const facets: Record<string, number> = {};
+        if (input.includeFacets && result.rows) {
+          for (const col of columnsToFacet) {
+            facets[col.name] = 0;
+          }
+          for (const row of result.rows) {
+            for (const col of columnsToFacet) {
+              const val = row[`_facet_${col.index}`];
+              if (typeof val === "string" && val.includes("\x02")) {
+                facets[col.name] = (facets[col.name] ?? 0) + 1;
+              }
+              // Clean up the facet column from the final output
+              Reflect.deleteProperty(row, `_facet_${col.index}`);
+            }
+          }
+        }
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           results: result.rows,
+          nextCursor,
+          ...(input.includeFacets ? { facets } : {}),
         };
       } catch (error: unknown) {
         if (isFts5UnavailableError(error)) {
@@ -375,7 +459,15 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
         await validateTableExists(adapter, input.table);
 
         // Use single quotes for FTS5 MATCH strings
-        const queryEscaped = input.query.replace(/'/g, "''");
+        const sanitizedQuery = sanitizeFtsQuery(input.query);
+        if (!sanitizedQuery) {
+          return {
+            success: true,
+            rowCount: 0,
+            results: [],
+          };
+        }
+        const queryEscaped = sanitizedQuery.replace(/'/g, "''");
 
         let rankExpr: string;
         if (input.format === "bm25") {
@@ -431,7 +523,19 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
         await validateTableExists(adapter, input.table);
 
         // Escape single quotes in query
-        const queryEscaped = input.query.replace(/'/g, "''");
+        const sanitizedQuery = sanitizeFtsQuery(input.query);
+        if (
+          !sanitizedQuery &&
+          input.query !== "*" &&
+          input.query.trim() !== ""
+        ) {
+          return {
+            success: true,
+            rowCount: 0,
+            results: [],
+          };
+        }
+        const queryEscaped = sanitizedQuery.replace(/'/g, "''");
 
         // Determine column index for highlight/snippet (default: 0)
         let columnIndex = 0;

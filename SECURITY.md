@@ -4,6 +4,13 @@ The db-mcp SQLite MCP server implements comprehensive security measures to prote
 
 ## 🛡️ **Database Security**
 
+### **Encryption at Rest (SQLCipher)**
+
+- ✅ **SQLCipher Support** — The native backend (`better-sqlite3-multiple-ciphers`) optionally supports full database encryption.
+- ✅ **Dynamic Loading** — Enabled by providing a `DB_ENCRYPTION_KEY` via environment variable or the `--encryption-key` CLI flag.
+- ✅ **System Database Encryption** — When an encryption key is provided, the `SystemDb` (which contains audit logs and system metrics) is automatically encrypted using the same key to ensure sensitive queries do not leak through the audit trail.
+- ⚠️ **Native-Only** — Encryption is exclusively available on the native backend. It cannot be used with WASM (`sql.js`).
+
 ### **SQL Injection Prevention**
 
 **Identifier Sanitization** (`src/utils/identifiers.ts`)
@@ -120,7 +127,7 @@ When running in HTTP mode (`--transport http`), the following security measures 
 - ✅ **Returns 429 Too Many Requests** with proper `Retry-After` headers when limits are exceeded
 - ✅ **Slowloris DoS Protection** — configurable read timeouts via `MCP_REQUEST_TIMEOUT` and `MCP_HEADERS_TIMEOUT`
 
-> **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the rightmost `X-Forwarded-For` IPs (up to `trustedProxyCount`, default 1). **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that securely appends to the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
+> **⚠️ Reverse Proxy Note:** When `trustedProxyIps` is enabled, rate limiting uses the rightmost `X-Forwarded-For` IPs (up to the trusted proxy count). **Only configure `trustedProxyIps` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that securely appends to the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustedProxyIps` is unconfigured (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
 
 > **⚠️ Multi-Instance Deployments:** The default `express-rate-limit` in-memory store is per-process. In multi-instance deployments behind a load balancer, each instance maintains independent counters, effectively multiplying the rate limit by the number of instances. For production clusters, configure a shared rate limit store by providing a Redis store instance (e.g., `rate-limit-redis`).
 
@@ -331,6 +338,64 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] DDL Validation blocklist for `ATTACH` / `DETACH` / `LOAD_EXTENSION` (CWE-89, CWE-22)
 - [x] Code Mode recursive credential redaction for deeply nested array objects (CWE-200)
 - [x] Tool annotations with exact allowlist enforcement for `openWorldHint=true` (filesystem-touching tools only)
+
+## 🔍 **Data Privacy**
+
+### **Architecture Characteristics**
+
+- ✅ **Full data ownership**: SQLite databases stay on your infrastructure
+- ✅ **No telemetry**: No data sent to external telemetry endpoints
+- ⚠️ **External Services**: If configured for HTTP transport with OAuth, communicates with authorization server discovery (JWKS) endpoints.
+
+### **Context Security**
+
+- ✅ **No sensitive data harvesting**: Doesn't harvest private keys or credentials
+- ✅ **Schema and Data Secrecy**: The server operates strictly on the databases you configure. It does not phone home schemas, queries, or query results.
+
+## 📜 **Compliance**
+
+### **Data Protection**
+
+**GDPR-friendly:**
+
+- No telemetry collection
+- No external data transmission of database records
+- Controlled local or containerized storage
+- User controls all data
+- Easy database export/backup via built-in tools
+
+**No PII collection:**
+
+- No implicit collection of user identities
+- No tracking
+- No analytics
+
+## ⛓️ **Supply Chain Security**
+
+### **SHA-Pinned Images**
+
+**Recommended (highest security):**
+
+```bash
+# Use SHA-256 digest for immutable reference
+docker pull writenotenow/db-mcp@sha256:abc123...
+
+# Find SHA digests at:
+# https://hub.docker.com/r/writenotenow/db-mcp/tags
+```
+
+**Benefits:**
+
+- Immutable image reference
+- Protection against tag hijacking
+- Reproducible deployments
+- Supply chain verification
+
+**Tag-based (convenience):**
+
+```bash
+docker pull writenotenow/db-mcp:latest
+```
 
 ## 🚨 **Reporting Security Issues**
 

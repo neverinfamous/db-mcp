@@ -208,6 +208,7 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   createJsonCollection: "tableName",
 
   // Text
+  sentiment: "text",
   regexExtract: ["table", "column", "pattern"],
   regexMatch: ["table", "column", "pattern"],
   split: ["table", "column", "delimiter"],
@@ -268,7 +269,6 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   pragmaSettings: "pragma",
   pragmaTableInfo: "table",
   pragmaCompileOptions: "filter",
-  appendInsight: "insight",
   generateSeries: ["start", "stop", "step"],
   createView: ["viewName", "selectQuery"],
   dropView: "viewName",

@@ -208,7 +208,6 @@ test.describe("Zod Sweep: Admin", () => {
     "sqlite_verify_backup",
     "sqlite_pragma_settings",
     "sqlite_pragma_table_info",
-    "sqlite_append_insight",
     "sqlite_generate_series",
     "sqlite_create_view",
     "sqlite_drop_view",

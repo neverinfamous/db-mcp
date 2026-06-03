@@ -65,7 +65,7 @@ describe("JSON Operations Tools - Aggregation", () => {
       expect(result.success).toBe(true);
       expect(result.rows.length).toBe(1);
 
-      const arr = JSON.parse(result.rows[0]?.array_result as string);
+      const arr = result.rows[0]?.array_result as unknown[];
       expect(arr).toContain(1);
       expect(arr).toContain(2);
       expect(arr).toContain(3);
@@ -119,7 +119,7 @@ describe("JSON Operations Tools - Aggregation", () => {
       expect(result.success).toBe(true);
       expect(result.rows.length).toBe(1);
 
-      const obj = JSON.parse(result.rows[0]?.object_result as string);
+      const obj = result.rows[0]?.object_result as Record<string, unknown>;
       expect(obj.theme).toBe("dark");
       expect(obj.lang).toBe("en");
     });

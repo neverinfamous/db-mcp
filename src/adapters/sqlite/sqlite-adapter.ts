@@ -171,6 +171,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       } else {
         this.clearSchemaCache();
       }
+      this.emit("schemaChanged");
     }
 
     return result;
@@ -196,6 +197,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       } else {
         this.clearSchemaCache();
       }
+      this.emit("schemaChanged");
     }
 
     return result;
@@ -208,6 +210,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     this.ensureConnected();
     this.ensureDb().run(sql);
     this.clearSchemaCache();
+    this.emit("schemaChanged");
     return Promise.resolve();
   }
 

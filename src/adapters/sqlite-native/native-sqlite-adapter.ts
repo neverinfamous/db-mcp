@@ -5,7 +5,6 @@
  * and SpatiaLite support.
  */
 
-import Database from "better-sqlite3";
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 import { DatabaseAdapter } from "../database-adapter.js";
 import type {
@@ -98,7 +97,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   /**
    * Connect to a SQLite database using better-sqlite3
    */
-  override connect(config: DatabaseConfig): Promise<void> {
+  override async connect(config: DatabaseConfig): Promise<void> {
     if (config.type !== "sqlite") {
       throw new ConfigurationError(
         `Invalid database type: expected 'sqlite', got '${config.type as string}'`,
@@ -115,14 +114,40 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
 
       // Create database connection
-      this.db = new Database(filePath, {
-        readonly: false,
-        fileMustExist: false,
-      });
+      if (sqliteConfig.options?.encryptionKey) {
+        // Use SQLCipher driver if encryption key is provided
+        const DatabaseDriver = (await import("better-sqlite3-multiple-ciphers"))
+          .default;
+        this.db = new DatabaseDriver(filePath, {
+          readonly: false,
+          fileMustExist: false,
+        });
 
-      log.info(`Connected to SQLite database (native): ${filePath}`, {
-        code: "SQLITE_CONNECT",
-      });
+        // Apply the encryption key immediately
+        const escapedKey = sqliteConfig.options.encryptionKey.replace(
+          /"/g,
+          '""',
+        );
+        this.db.pragma(`key = "${escapedKey}"`);
+
+        log.info(
+          `Connected to SQLite database (native encrypted): ${filePath}`,
+          {
+            code: "SQLITE_CONNECT_ENCRYPTED",
+          },
+        );
+      } else {
+        // Use standard driver
+        const DatabaseDriver = (await import("better-sqlite3")).default;
+        this.db = new DatabaseDriver(filePath, {
+          readonly: false,
+          fileMustExist: false,
+        });
+
+        log.info(`Connected to SQLite database (native): ${filePath}`, {
+          code: "SQLITE_CONNECT",
+        });
+      }
 
       // Apply options
       this.applyOptions(sqliteConfig.options);
@@ -175,8 +200,6 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         },
       );
     }
-
-    return Promise.resolve();
   }
 
   /**
@@ -286,6 +309,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
       this.clearSchemaCache();
+      this.emit("schemaChanged");
     }
 
     return result;
@@ -318,6 +342,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     this.ensureConnected();
     this.ensureDb().exec(sql);
     this.clearSchemaCache();
+    this.emit("schemaChanged");
     return Promise.resolve();
   }
 

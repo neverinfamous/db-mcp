@@ -158,21 +158,6 @@ test.describe("Payload Contracts: Admin Extended", () => {
     }
   });
 
-  test("sqlite_append_insight returns { success, message, insightCount }", async ({}, testInfo) => {
-    const client = await createClient(getBaseURL(testInfo));
-    try {
-      const payload = await callToolAndParse(client, "sqlite_append_insight", {
-        insight: "Test insight from payload contract test",
-      });
-
-      expectSuccess(payload);
-      expect(typeof payload.message).toBe("string");
-      expect(typeof payload.insightCount).toBe("number");
-    } finally {
-      await client.close();
-    }
-  });
-
   test("sqlite_backup returns success or WASM limitation", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {

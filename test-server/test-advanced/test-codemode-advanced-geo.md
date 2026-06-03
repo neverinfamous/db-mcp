@@ -123,8 +123,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 1. `sqlite.geo.distance({lat1: 0, lon1: 0, lat2: 0, lon2: 0})` → distance = 0 (same point)
 2. `sqlite.geo.distance({lat1: 90, lon1: 0, lat2: -90, lon2: 0})` → antipodal ≈ 20,015 km (half Earth circumference)
 3. `sqlite.geo.distance({lat1: 0, lon1: -180, lat2: 0, lon2: 180})` → ≈ 0 (same point, opposite notation)
-4. `sqlite.geo.distance({lat1: 91, lon1: 0, lat2: 0, lon2: 0})` → report behavior for out-of-bounds latitude (>90°)
-5. `sqlite.geo.distance({lat1: 0, lon1: 181, lat2: 0, lon2: 0})` → report behavior for out-of-bounds longitude (>180°)
+4. `sqlite.geo.distance({lat1: 91, lon1: 0, lat2: 0, lon2: 0})` → structured error `GEO_INVALID_COORDINATES` (Invalid lat1: 91)
+5. `sqlite.geo.distance({lat1: 0, lon1: 181, lat2: 0, lon2: 0})` → structured error `GEO_INVALID_COORDINATES` (Invalid lon1: 181)
 
 ## Phase 2: Nearby Search Edge Cases (batched)
 

@@ -2,9 +2,11 @@
 
 ## Project Overview
 
-db-mcp is a TypeScript MCP (Model Context Protocol) server for SQLite database integration. It offers **170+ tools** with dual backends — native (better-sqlite3) for full performance and WASM (sql.js) for zero-dependency portability. Features include Code Mode (sandboxed JS execution), HTTP/SSE transport, OAuth 2.1, Tool Filtering, and Audit/Token Logging.
+db-mcp is a TypeScript MCP (Model Context Protocol) server for SQLite database integration. It offers **177 Native / 150 WASM tools** with dual backends — native (better-sqlite3) for full performance and WASM (sql.js) for zero-dependency portability. Features include Code Mode (sandboxed JS execution), HTTP/SSE transport, OAuth 2.1, Tool Filtering, and Audit/Token Logging.
 
 **Stack**: TypeScript, Vitest, Playwright (E2E), Zod schemas, better-sqlite3 (native), sql.js (WASM), Commander (CLI).
+
+> **Note**: For any CLI interactions involving Copilot, you must reference `gh copilot` and NEVER the deprecated `github-copilot-cli`.
 
 ## Session Context
 
@@ -70,6 +72,7 @@ src/
 ├── codemode/                   # Sandboxed JS execution engine
 ├── constants/                  # Server instructions, config
 ├── filtering/                  # Tool filtering (groups, meta-groups)
+├── observability/              # Logging, metrics, and health checks
 ├── server/                     # MCP server setup and registration
 ├── transports/                 # HTTP/SSE transport layer
 ├── types/                      # Type definitions + barrel exports

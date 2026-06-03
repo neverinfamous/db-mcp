@@ -45,6 +45,17 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
           });
           state.sseTransports.delete(sseTransport.sessionId);
           state.sessionOwners.delete(sseTransport.sessionId);
+
+          // Clean up subscriptions
+          if ("subscriptionManager" in server) {
+            (
+              server as unknown as {
+                subscriptionManager: {
+                  unsubscribeSession: (id: string) => void;
+                };
+              }
+            ).subscriptionManager.unsubscribeSession(sseTransport.sessionId);
+          }
         };
 
         const origSend = sseTransport.send.bind(sseTransport);

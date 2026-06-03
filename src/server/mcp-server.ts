@@ -27,7 +27,9 @@ import { logger } from "../utils/logger/index.js";
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
 import { AuditLogger } from "../audit/logger.js";
+import { SystemDb } from "../observability/system-db.js";
 import { BackupManager } from "../audit/backup-manager.js";
+import { metrics } from "../observability/metrics.js";
 import { createAuditInterceptor } from "../audit/interceptor.js";
 import type { AuditInterceptor } from "../audit/interceptor.js";
 import {
@@ -35,12 +37,21 @@ import {
   registerHelpResources,
   registerAuditResource,
   registerAuditBackupTools,
+  registerAuditSearchTool,
+  registerObservabilityResources,
+  registerAdminTools,
 } from "./registration/index.js";
 import {
   registerToolScopes,
   scopesGrantToolAccess,
 } from "../auth/scopes/enforcement.js";
 import { getAuthContext } from "../auth/auth-context.js";
+import {
+  SubscribeRequestSchema,
+  UnsubscribeRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import { SubscriptionManager } from "./subscription-manager.js";
+
 /**
  * Monkey-patch McpServer to return structured JSON errors for validation failures.
  * This ensures that SDK-level Zod validation errors match the handler error format
@@ -48,7 +59,10 @@ import { getAuthContext } from "../auth/auth-context.js";
  */
 const proto = McpServer.prototype as unknown as Record<
   string,
-  (errorMessage: string) => {
+  (
+    this: McpServer,
+    errorMessage: string,
+  ) => {
     content: { type: string; text: string }[];
     isError: boolean;
   }
@@ -57,10 +71,7 @@ const proto = McpServer.prototype as unknown as Record<
 if (typeof proto["createToolError"] === "function") {
   const originalCreateToolError = proto["createToolError"];
   proto["createToolError"] = function (errorMessage: string) {
-    const result = originalCreateToolError.call(
-      this as unknown as McpServer,
-      errorMessage,
-    );
+    const result = originalCreateToolError.call(this, errorMessage);
     if (result.content?.[0]?.type === "text") {
       const rawError = result.content[0].text;
       // Only intercept Zod validation failures from the SDK.
@@ -98,8 +109,10 @@ export class DbMcpServer {
   private config: McpServerConfig;
   private auditLogger: AuditLogger | null = null;
   private backupManager: BackupManager | null = null;
+  private systemDb: SystemDb | null = null;
   private auditInterceptor: AuditInterceptor | null = null;
   private auditInitPromise: Promise<void> | null = null;
+  public readonly subscriptionManager: SubscriptionManager;
 
   constructor(config: McpServerConfig) {
     this.config = config;
@@ -123,6 +136,73 @@ export class DbMcpServer {
       },
     );
 
+    this.subscriptionManager = new SubscriptionManager(this.server);
+    // Expose subscriptionManager on the raw server object for transport cleanup
+    (
+      this.server as unknown as { subscriptionManager: SubscriptionManager }
+    ).subscriptionManager = this.subscriptionManager;
+
+    // Register subscription capability
+    this.server.server.registerCapabilities({
+      resources: {
+        subscribe: true,
+      },
+    });
+
+    // Handle subscribe request
+    this.server.server.setRequestHandler(
+      SubscribeRequestSchema,
+      (request, extra) => {
+        const uri = request.params.uri;
+        let sessionId =
+          extra.sessionId ??
+          extra.requestInfo?.headers["mcp-session-id"] ??
+          undefined;
+
+        if (sessionId === undefined && this.config.transport === "stdio") {
+          sessionId = "stdio";
+        }
+
+        // Allow subscriptions to schema, tables, health, and dynamic table URIs
+        if (
+          !["sqlite://schema", "sqlite://tables", "sqlite://health"].includes(
+            uri,
+          ) &&
+          !uri.startsWith("sqlite://table/")
+        ) {
+          throw new Error(`Resource ${uri} is not subscribable`);
+        }
+
+        this.subscriptionManager.subscribe(
+          uri,
+          sessionId as string | undefined,
+        );
+        return {};
+      },
+    );
+
+    // Handle unsubscribe request
+    this.server.server.setRequestHandler(
+      UnsubscribeRequestSchema,
+      (request, extra) => {
+        const uri = request.params.uri;
+        let sessionId =
+          extra.sessionId ??
+          extra.requestInfo?.headers["mcp-session-id"] ??
+          undefined;
+
+        if (sessionId === undefined && this.config.transport === "stdio") {
+          sessionId = "stdio";
+        }
+
+        this.subscriptionManager.unsubscribe(
+          uri,
+          sessionId as string | undefined,
+        );
+        return {};
+      },
+    );
+
     // Log filter summary
     logger.info(getFilterSummary(this.toolFilter), { module: "FILTER" });
 
@@ -143,6 +223,12 @@ export class DbMcpServer {
       this.toolFilter,
     );
     registerHelpResources(this.server, this.toolFilter);
+    registerObservabilityResources(this.server);
+
+    // Register admin tools if the admin group is enabled
+    if (this.toolFilter.enabledGroups.has("admin")) {
+      registerAdminTools(this.server);
+    }
 
     // M-8: Monkey-patch tools/list at protocol layer to filter based on OAuth scopes
     // We must do this AFTER tools are registered, because the SDK lazily registers the 'tools/list' handler
@@ -181,6 +267,13 @@ export class DbMcpServer {
     if (config.audit?.enabled) {
       this.auditInitPromise = this.initializeAudit(config);
     }
+
+    // Periodically push health updates if there are subscribers
+    setInterval(() => {
+      if (this.subscriptionManager.hasSubscribers("sqlite://health")) {
+        void this.subscriptionManager.notifyResourceUpdated("sqlite://health");
+      }
+    }, 60_000).unref();
   }
 
   /**
@@ -225,6 +318,11 @@ export class DbMcpServer {
     adapter.registerTools(this.server, this.toolFilter);
     adapter.registerResources(this.server);
     adapter.registerPrompts(this.server);
+
+    // Wire up schema changed event to push resource updates
+    adapter.on("schemaChanged", () => {
+      void this.subscriptionManager.notifySchemaSubscribers();
+    });
 
     // Register tool scopes dynamically for auth enforcement
     const toolDefs = adapter.getToolDefinitions();
@@ -336,6 +434,9 @@ export class DbMcpServer {
       oauth: oauthConfig,
       stateless: this.config.statelessHttp ?? false,
       noAuthEnforcement: this.config.noAuthEnforcement ?? false,
+      ...(this.config.metricsExport !== undefined && {
+        metricsExport: this.config.metricsExport,
+      }),
     });
 
     // Initialize transport with the MCP server reference
@@ -378,6 +479,13 @@ export class DbMcpServer {
       logger.info("Audit logger closed", { module: "AUDIT" });
     }
 
+    // Close metrics and SystemDb
+    metrics.close();
+    if (this.systemDb) {
+      this.systemDb.close();
+      logger.info("System database closed", { module: "SYSTEM_DB" });
+    }
+
     // Flush backup manager
     if (this.backupManager) {
       await this.backupManager.flush();
@@ -397,8 +505,14 @@ export class DbMcpServer {
     const auditConfig = config.audit;
     if (!auditConfig?.enabled) return;
 
+    if (auditConfig.logPath !== "stderr") {
+      this.systemDb = new SystemDb({ dbPath: auditConfig.logPath });
+      await this.systemDb.init();
+      metrics.setSystemDb(this.systemDb);
+    }
+
     // Create audit logger and eagerly touch the log file
-    this.auditLogger = new AuditLogger(auditConfig);
+    this.auditLogger = new AuditLogger(auditConfig, this.systemDb);
     await this.auditLogger.init();
 
     // Create backup manager if configured
@@ -421,6 +535,11 @@ export class DbMcpServer {
     // Register audit backup tools only if admin group is enabled in the tool filter
     if (this.backupManager && this.toolFilter.enabledGroups.has("admin")) {
       registerAuditBackupTools(this.server, this.backupManager, this.adapters);
+    }
+
+    // Register sqlite_audit_search tool if admin group is enabled
+    if (this.toolFilter.enabledGroups.has("admin")) {
+      registerAuditSearchTool(this.server, this.auditLogger);
     }
 
     logger.info(

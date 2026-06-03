@@ -230,4 +230,83 @@ describe("Text Sentiment Tool", () => {
       expect(result.matchedPositive).toContain("amazing");
     });
   });
+
+  describe("table mode", () => {
+    beforeEach(async () => {
+      await adapter.executeWriteQuery(
+        `CREATE TABLE feedback (id INTEGER PRIMARY KEY, msg TEXT, tags JSON)`,
+        [],
+      );
+      await adapter.executeWriteQuery(
+        `INSERT INTO feedback (id, msg, tags) VALUES 
+          (1, 'amazing product', '["a"]'),
+          (2, 'terrible experience', '["b"]'),
+          (3, '', '["c"]')`,
+        [],
+      );
+    });
+
+    afterEach(async () => {
+      await adapter.executeWriteQuery(`DROP TABLE feedback`, []);
+    });
+
+    it("should process all rows in a table", async () => {
+      const result = (await sentimentTool({
+        table: "feedback",
+        column: "msg",
+        limit: 10,
+      })) as any;
+
+      expect(result.success).toBe(true);
+      expect(result.rowCount).toBe(3);
+      expect(result.results.length).toBe(3);
+
+      const res1 = result.results.find((r: any) => r.rowid === 1);
+      expect(res1.sentiment).toBe("positive");
+
+      const res2 = result.results.find((r: any) => r.rowid === 2);
+      expect(res2.sentiment).toBe("negative");
+
+      const res3 = result.results.find((r: any) => r.rowid === 3);
+      expect(res3.sentiment).toBe("neutral");
+    });
+
+    it("should support where clauses in table mode", async () => {
+      const result = (await sentimentTool({
+        table: "feedback",
+        column: "msg",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
+        limit: 10,
+      })) as any;
+
+      expect(result.success).toBe(true);
+      expect(result.rowCount).toBe(1);
+      expect(result.results[0].rowid).toBe(1);
+      expect(result.results[0].sentiment).toBe("positive");
+    });
+
+    it("should require both table and column", async () => {
+      const result = (await sentimentTool({
+        table: "feedback",
+      })) as any;
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain(
+        "Must provide either 'text' or both 'table' and 'column'",
+      );
+    });
+
+    it("should handle null and JSON values in table gracefully", async () => {
+      const result = (await sentimentTool({
+        table: "feedback",
+        column: "tags",
+        limit: 10,
+      })) as any;
+
+      expect(result.success).toBe(true);
+      expect(result.rowCount).toBe(3);
+      // It should serialize JSON arrays to string and evaluate them. None of the keywords match.
+      expect(result.results[0].sentiment).toBe("neutral");
+    });
+  });
 });

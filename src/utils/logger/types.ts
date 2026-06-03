@@ -38,7 +38,9 @@ export type LogModule =
   | "DB" // Generic database
   | "CLI" // Command line interface
   | "CODEMODE" // Sandboxed code execution
-  | "AUDIT"; // Audit logging subsystem
+  | "AUDIT" // Audit logging subsystem
+  | "METRICS" // Observability metrics
+  | "SYSTEM_DB"; // System database
 
 /**
  * Structured log context following MCP logging standards

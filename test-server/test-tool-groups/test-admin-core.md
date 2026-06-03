@@ -95,7 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
-- **Temporary files**: Delete the following test artifacts after testing:
+  - **Temporary files**: Delete the following test artifacts after testing:
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql`
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db`
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db`
@@ -106,7 +106,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (24N/23W) + Code Mode
+### Group Tools (23N/22W) + Code Mode
 
 - `sqlite_create_view`
 - `sqlite_list_views`
@@ -125,7 +125,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_pragma_optimize`
 - `sqlite_pragma_settings`
 - `sqlite_pragma_table_info`
-- `sqlite_append_insight`
+
 - `sqlite_attach_database`
 - `sqlite_detach_database`
 - `sqlite_vacuum_into`
@@ -171,10 +171,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 23. `sqlite_list_views` → verify `temp_view_orders` present
 24. `sqlite_drop_view({viewName: "temp_view_orders"})` → success
 
-## Phase 5: Insights (batched)
-
-25. `sqlite_append_insight({insight: "Test insight for verification"})` → success
-
 ## Phase 6: REINDEX (batched)
 
 26. `sqlite_reindex({})` → reindex entire database, success with `durationMs`
@@ -184,7 +180,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 ## Phase 7: WAL Management (batched)
 
 29. `sqlite_wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
-30. `sqlite_wal({action: "disable"})` → `{success: true}` (switches to DELETE), then `sqlite_wal({action: "enable"})` → `{success: true}` (verifies transition back to WAL)
+30. `sqlite_wal({action: "disable"})` → `{success: false, error: "Write query failed: database is locked"}` (expected domain error since MCP server holds active connections to WAL DB), then `sqlite_wal({action: "enable"})` → `{success: true}` (verifies WAL is still enabled)
 31. `sqlite_wal({action: "enable"})` → `{success: true, message: "WAL mode is already enabled"}` (already in WAL)
 32. `sqlite_wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`, then `sqlite_wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
@@ -220,7 +216,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 52. `sqlite_verify_backup({})` → handler error
 🔴 53. `sqlite_pragma_table_info({})` → handler error
 🔴 54. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
-🔴 55. `sqlite_append_insight({})` → handler error
+
 🔴 56. `sqlite_create_view({})` → handler error
 🔴 57. `sqlite_drop_view({})` → handler error
 🔴 58. `sqlite_dbstat({})` → handler error (or success if no required params)

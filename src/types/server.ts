@@ -62,4 +62,7 @@ export interface McpServerConfig {
 
   /** Explicitly bypass auth requirement for HTTP transport */
   noAuthEnforcement?: boolean;
+
+  /** Enable Prometheus metrics export at /metrics */
+  metricsExport?: "prometheus";
 }

@@ -88,7 +88,7 @@ describe("FTS Tools", () => {
       expect(result.triggersCreated?.length).toBe(3);
     });
 
-    it("should search FTS table", async () => {
+    it("should search FTS table and support facets", async () => {
       // First create
       await tools.get("sqlite_fts_create")?.({
         ftsTable: "documents_fts",
@@ -109,9 +109,41 @@ describe("FTS Tools", () => {
         query: "powerful",
         highlight: true,
         limit: 10,
+        includeFacets: true,
       })) as any;
       expect(searchSpecific.success).toBe(true);
       expect(searchSpecific.results[0].snippet).toBeDefined();
+      expect(searchSpecific.facets).toBeDefined();
+      expect(typeof searchSpecific.facets.title).toBe("number");
+    });
+
+    it("should support cursor-based pagination", async () => {
+      await tools.get("sqlite_fts_create")?.({
+        ftsTable: "documents_fts",
+        sourceTable: "documents",
+        columns: ["title", "body"],
+      });
+
+      const firstPage = (await tools.get("sqlite_fts_search")?.({
+        table: "documents_fts",
+        query: "*",
+        limit: 1,
+        includeRowData: true,
+      })) as any;
+      expect(firstPage.success).toBe(true);
+      expect(firstPage.results).toHaveLength(1);
+      expect(firstPage.nextCursor).toBeDefined();
+
+      const secondPage = (await tools.get("sqlite_fts_search")?.({
+        table: "documents_fts",
+        query: "*",
+        limit: 1,
+        includeRowData: true,
+        cursor: firstPage.nextCursor,
+      })) as any;
+      expect(secondPage.success).toBe(true);
+      expect(secondPage.results).toHaveLength(1);
+      expect(secondPage.results[0].title).not.toBe(firstPage.results[0].title);
     });
 
     it("should search with column filters", async () => {

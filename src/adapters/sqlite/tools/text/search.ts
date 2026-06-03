@@ -25,6 +25,7 @@ import {
   FuzzySearchOutputSchema,
   SoundexOutputSchema,
   AdvancedSearchOutputSchema,
+  HybridSearchOutputSchema,
 } from "../../schemas/text.js";
 import { levenshtein, metaphone, soundex } from "./formatting.js";
 
@@ -32,7 +33,15 @@ import {
   FuzzyMatchSchema,
   PhoneticMatchSchema,
   AdvancedSearchSchema,
+  HybridSearchSchema,
 } from "../../schemas/text.js";
+import {
+  cosineSimilarity,
+  euclideanDistance,
+  dotProduct,
+  parseVector,
+} from "../vector/helpers.js";
+import { sanitizeFtsQuery } from "./helpers.js";
 
 export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -388,12 +397,163 @@ export function createAdvancedSearchTool(
         allMatches.sort((a, b) => b.bestScore - a.bestScore);
         const limited = allMatches.slice(0, input.limit);
 
+        const facets: Record<string, number> = {};
+        if (input.includeFacets) {
+          for (const technique of input.techniques) {
+            facets[technique] = 0;
+          }
+          for (const match of allMatches) {
+            facets[match.bestType] = (facets[match.bestType] ?? 0) + 1;
+          }
+        }
+
         return {
           success: true,
           searchTerm: input.searchTerm,
           techniques: input.techniques,
           matchCount: limited.length,
           matches: limited,
+          ...(input.includeFacets ? { facets } : {}),
+        };
+      } catch (error: unknown) {
+        return formatHandlerError(error);
+      }
+    },
+  };
+}
+
+/**
+ * Hybrid Search combining FTS and Vector similarity via RRF
+ */
+export function createHybridSearchTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_hybrid_search",
+    description:
+      "Hybrid search combining full-text search and vector similarity using Reciprocal Rank Fusion (RRF).",
+    group: "text",
+    inputSchema: HybridSearchSchema,
+    outputSchema: HybridSearchOutputSchema,
+    requiredScopes: ["read"],
+    annotations: readOnly("Hybrid Search"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      try {
+        const input = HybridSearchSchema.parse(params);
+
+        const table = sanitizeIdentifier(input.table);
+        const vectorColumn = sanitizeIdentifier(input.vectorColumn);
+        await validateColumnExists(adapter, input.table, input.vectorColumn);
+
+        let textResults: { id: number; rank: number }[] = [];
+        try {
+          const sanitizedQuery = sanitizeFtsQuery(input.query);
+          if (sanitizedQuery) {
+            const queryEscaped = sanitizedQuery.replace(/'/g, "''");
+            const ftsSql = `SELECT rowid as id, rank as score FROM ${table} WHERE ${table} MATCH '${queryEscaped}' ORDER BY rank LIMIT 1000`;
+            const result = await adapter.executeReadQuery(ftsSql, []);
+            textResults = (result.rows ?? []).map((r, i) => ({
+              id: Number(r["id"] ?? r["rowid"]),
+              rank: i + 1,
+            }));
+          }
+        } catch {
+          // FTS5 might not be available or table is not FTS, we will gracefully fallback to just vector search
+        }
+
+        const vecSql = `SELECT rowid as id, ${vectorColumn} as vec FROM ${table} WHERE ${vectorColumn} IS NOT NULL LIMIT 10000`;
+        const vecResult = await adapter.executeReadQuery(vecSql, []);
+        const queryVector = input.queryVector;
+
+        const vecScored: { id: number; score: number }[] = [];
+        for (const row of vecResult.rows ?? []) {
+          try {
+            const storedVector = parseVector(row["vec"]);
+            let score: number;
+            switch (input.metric) {
+              case "euclidean":
+                score = 1 / (1 + euclideanDistance(queryVector, storedVector));
+                break;
+              case "dot":
+                score = dotProduct(queryVector, storedVector);
+                break;
+              case "cosine":
+              default:
+                score = cosineSimilarity(queryVector, storedVector);
+                break;
+            }
+            vecScored.push({ id: Number(row["id"] ?? row["rowid"]), score });
+          } catch {
+            // skip bad vectors
+          }
+        }
+
+        vecScored.sort((a, b) => b.score - a.score);
+        const vectorResults = vecScored.map((r, i) => ({
+          id: r.id,
+          rank: i + 1,
+          score: r.score,
+        }));
+
+        const combined = new Map<
+          number,
+          {
+            id: number;
+            rrfScore: number;
+            ftsRank: number | null;
+            vectorSimilarity: number | null;
+          }
+        >();
+        const k = input.rrfK;
+
+        for (const f of textResults) {
+          if (!combined.has(f.id)) {
+            combined.set(f.id, {
+              id: f.id,
+              rrfScore: 0,
+              ftsRank: null,
+              vectorSimilarity: null,
+            });
+          }
+          const entry = combined.get(f.id);
+          if (entry) {
+            entry.ftsRank = f.rank;
+            entry.rrfScore += 1 / (k + f.rank);
+          }
+        }
+
+        for (const v of vectorResults) {
+          if (!combined.has(v.id)) {
+            combined.set(v.id, {
+              id: v.id,
+              rrfScore: 0,
+              ftsRank: null,
+              vectorSimilarity: null,
+            });
+          }
+          const entry = combined.get(v.id);
+          if (entry) {
+            entry.vectorSimilarity = v.score;
+            entry.rrfScore += 1 / (k + v.rank);
+          }
+        }
+
+        const sortedCombined = Array.from(combined.values())
+          .sort((a, b) => b.rrfScore - a.rrfScore)
+          .slice(0, input.limit)
+          .map((r) => ({
+            rowid: r.id,
+            rrfScore: Math.round(r.rrfScore * 10000) / 10000,
+            ftsRank: r.ftsRank,
+            vectorSimilarity:
+              r.vectorSimilarity !== null
+                ? Math.round(r.vectorSimilarity * 10000) / 10000
+                : null,
+          }));
+
+        return {
+          success: true,
+          query: input.query,
+          matchCount: sortedCombined.length,
+          results: sortedCombined,
         };
       } catch (error: unknown) {
         return formatHandlerError(error);

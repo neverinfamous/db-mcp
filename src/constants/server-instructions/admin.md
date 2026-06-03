@@ -1,4 +1,4 @@
-# db-mcp Help — Database Administration (32N/31W tools) + Server Audit (5 tools)
+# db-mcp Help — Database Administration (31N/30W tools) + Server Audit (7 tools)
 
 ## Maintenance
 
@@ -23,14 +23,16 @@ sqlite_verify_backup({ backupPath: "/path/to/backup.db" }); // check integrity w
 sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replaces current database
 ```
 
-## Audit Backups
+## Server Management & Audit
 
 ```javascript
+sqlite_server_config({ action: "set", setting: "logLevel", value: "debug" }); // get or update runtime server configuration
 sqlite_audit_list_backups({ limit: 10, offset: 0 }); // list pre-mutation DDL snapshots
 sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific snapshot
 sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
 sqlite_audit_restore_backup({ filename: "snapshot_123.json", dryRun: true }); // restore schema from snapshot
 sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
+sqlite_audit_search({ query: "DROP TABLE", limit: 50 }); // search and filter structured audit logs
 ```
 
 ## PRAGMA
@@ -105,10 +107,4 @@ sqlite_create_csv_table({
   tableName: "csv_data",
   filePath: "/absolute/path/to/data.csv",
 });
-```
-
-## Business Insights
-
-```javascript
-sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to memo://insights
 ```

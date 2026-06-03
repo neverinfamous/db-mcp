@@ -1,6 +1,6 @@
 # db-mcp Resource Testing Plan
 
-Please test all db-mcp resources (11 data + up to 9 help) using the test database (test-server/test.db) and concisely report any issues.
+Please test all db-mcp resources (10 data + up to 9 help) using the test database (test-server/test.db) and concisely report any issues.
 
 ## Resources to Test
 
@@ -15,8 +15,7 @@ Please test all db-mcp resources (11 data + up to 9 help) using the test databas
 | 7   | sqlite_meta            | sqlite://meta                | Static    | PRAGMA values + adapter info               |
 | 8   | sqlite_compile_options | sqlite://compile_options     | Static    | SQLite compile-time build options          |
 | 9   | sqlite_pragma          | sqlite://pragma              | Static    | Runtime PRAGMA config snapshot             |
-| 10  | sqlite_insights        | memo://insights              | Static    | In-memory insights memo                    |
-| 11  | sqlite_audit           | sqlite://audit               | Static    | Audit log access (if enabled)              |
+| 10  | sqlite_audit           | sqlite://audit               | Static    | Audit log access (if enabled)              |
 
 ---
 
@@ -140,28 +139,7 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 8. sqlite_insights — Business Insights Memo
-
-**URI:** `memo://insights`  
-**Test:** Read insights resource (may be empty initially), then add an insight and verify.
-
-> **Prerequisite:** The `sqlite_append_insight` tool requires the `admin` tool group to be enabled.
-
-**Test Sequence:**
-
-1. Read memo://insights — May be empty or have default content ("No business insights have been discovered yet.")
-2. Call sqlite_append_insight tool with a test insight `{"insight": "Test insight"}` (requires admin tools)
-3. Read memo://insights again — Should contain the new insight
-4. Verify the exact insight text is present
-
-**Expected Output:**
-
-- Plain text (mimeType: text/plain)
-- Synthesized memo format from insightsManager
-
----
-
-### 9. sqlite_compile_options — Compile-Time Options
+### 8. sqlite_compile_options — Compile-Time Options
 
 **URI:** `sqlite://compile_options`  
 **Test:** Read the compile options resource.
@@ -173,7 +151,7 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 10. sqlite_pragma — Runtime Configuration Snapshot
+### 9. sqlite_pragma — Runtime Configuration Snapshot
 
 **URI:** `sqlite://pragma`  
 **Test:** Read the pragma configuration resource.
@@ -185,7 +163,7 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 11. Help Resources — On-Demand Reference Documentation
+### 10. Help Resources — On-Demand Reference Documentation
 
 **Test A — sqlite://help (always registered):**
 
@@ -220,12 +198,57 @@ If a group-specific help resource is available, read it and verify it contains r
 
 **Test C — Tool Annotations (`openWorldHint`):**
 
-Call `tools/list` and verify that **all** tools have `openWorldHint: false` in their annotations. db-mcp tools are local database operations — none require external network access.
+Call `tools/list` and verify that tools accurately report their `openWorldHint` in their annotations. `openWorldHint` should be `true` for tools that interact with the external file system (e.g., `ADMIN_FS`, `WRITE_FS`) or execute arbitrary logic (`CODEMODE`), and `false` for all standard database operations.
 
-| Check                               | Expected                 |
-| ----------------------------------- | ------------------------ |
-| All tools have `annotations` object | ✅ Present on every tool |
-| All `openWorldHint` values          | `false`                  |
+| Check                               | Expected                                        |
+| ----------------------------------- | ----------------------------------------------- |
+| All tools have `annotations` object | ✅ Present on every tool                        |
+| `openWorldHint` values              | `true` for FS/CodeMode tools, `false` otherwise |
+
+---
+
+### 11. Resource Subscriptions & Live Updates
+
+> **Note:** Resource subscriptions are fully supported over both HTTP and STDIO transports. Although the STDIO transport operates statelessly (no persistent `sessionId`), the server explicitly manages it as a singleton session to enable live update notifications.
+
+**Test A — Valid Subscriptions:**
+
+Subscribe to the dynamic schema resources and verify the server accepts the subscription.
+
+| Action                                             | Expected Result             |
+| -------------------------------------------------- | --------------------------- |
+| Subscribe to `sqlite://schema`                     | ✅ Success (empty response) |
+| Subscribe to `sqlite://tables`                     | ✅ Success (empty response) |
+| Subscribe to `sqlite://table/test_products/schema` | ✅ Success (empty response) |
+| Subscribe to `sqlite://health`                     | ✅ Success (empty response) |
+
+**Test B — Live Update Notifications:**
+
+Once subscribed, mutate the database schema and verify the server emits an `notifications/resources/updated` event.
+
+| Action                                                                  | Expected Notification Payload                                                                         |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Create a new table using `sqlite_create_table` (`test_live_sub`)        | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/.../schema`           |
+| Add a column using `sqlite_alter_table` (`test_products.sub_test TEXT`) | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/test_products/schema` |
+| Cleanup: Drop table using `sqlite_drop_table` (`test_live_sub`)         | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/.../schema`           |
+| Wait up to 60 seconds (background health polling)                       | Event fired with `uri: sqlite://health`                                                               |
+
+**Test C — Invalid Subscriptions:**
+
+Attempt to subscribe to static or non-subscribable resources.
+
+| Action                              | Expected Result                     |
+| ----------------------------------- | ----------------------------------- |
+| Subscribe to `sqlite://meta`        | ❌ Error: Resource not subscribable |
+| Subscribe to `sqlite://help`        | ❌ Error: Resource not subscribable |
+| Subscribe to `sqlite://invalid_uri` | ❌ Error: Unknown resource          |
+
+**Test D — Unsubscribe:**
+
+| Action                                       | Expected Result                       |
+| -------------------------------------------- | ------------------------------------- |
+| Unsubscribe from `sqlite://schema`           | ✅ Success (empty response)           |
+| Mutate database (e.g. `sqlite_create_table`) | ❌ No notification should be received |
 
 ---
 
@@ -237,10 +260,20 @@ Use live MCP resource reads via the `read_resource` tool against the running sql
 
 ### Test Commands
 
+For manual data validation, use the `read_resource` tool:
+
 ```
 # Resources being tested use the read_resource tool with:
 # ServerName: "sqlite"
 # Uri: "<resource-uri>"
+```
+
+For testing subscription mechanics, execute the automated Node scripts:
+
+```bash
+# From project root:
+node test-server/scripts/test-subscriptions-raw.mjs
+node test-server/scripts/test-subscriptions-sdk.mjs
 ```
 
 ### Pass/Fail Criteria

@@ -15,7 +15,11 @@
       "cflags_cc!": [ "-fno-exceptions" ],
       "msvs_settings": {
         "VCCLCompilerTool": {
-          "ExceptionHandling": 1
+          "ExceptionHandling": 1,
+          "AdditionalOptions!": ["-flto=thin", "/flto=thin"]
+        },
+        "VCLinkerTool": {
+          "AdditionalOptions!": ["opt:lldltojobs=2", "-opt:lldltojobs=2", "/opt:lldltojobs=2", "-flto=thin", "/flto=thin"]
         }
       },
       "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],

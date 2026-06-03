@@ -174,7 +174,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 35. `sqlite_stats_outliers({})` → handler error
 🔴 36. `sqlite_stats_regression({})` → handler error
 🔴 37. `sqlite_stats_hypothesis({})` → handler error
-🔴 38. `sqlite_stats_detect_anomalies({})` → handler error 39. `sqlite_stats_detect_bloat({})` → success (no required params) 40. `sqlite_stats_detect_schema_risks({})` → success (no required params)
+🔴 38. `sqlite_stats_detect_anomalies({})` → handler error
+🔴 39. `sqlite_stats_detect_bloat({})` → success (no required params)
+🔴 40. `sqlite_stats_detect_schema_risks({})` → success (no required params)
 🔴 41. `sqlite_stats_sample({})` → handler error
 🔴 42. `sqlite_execute_code({})` → handler error
 

@@ -20,9 +20,13 @@ const PROJECT_DIR = "C:\\Users\\chris\\Desktop\\db-mcp";
  */
 function testServer(args) {
   return new Promise((resolve, reject) => {
+    const cleanEnv = { ...process.env };
+    delete cleanEnv.DB_ENCRYPTION_KEY;
+
     const proc = spawn("node", ["dist/cli.js", ...args], {
       cwd: PROJECT_DIR,
       stdio: ["pipe", "pipe", "pipe"],
+      env: cleanEnv,
     });
 
     let buffer = "";

@@ -4,29 +4,29 @@
 
 ## File Inventory
 
-| File                                | Group                     | Group Tools         | Notes                            |
-| ----------------------------------- | ------------------------- | ------------------- | -------------------------------- |
-| `test-core-data.md`                 | core-data                 | 9                   | Identical Native/WASM            |
-| `test-core-schema.md`               | core-schema               | 12 + Code Mode      | Identical Native/WASM            |
-| `test-json-read.md`                 | json-read                 | 18 + Code Mode      | Identical Native/WASM            |
-| `test-json-write.md`                | json-write                | 7                   | Identical Native/WASM            |
-| `test-text-basic.md`                | text-basic                | 10 + Code Mode      | Identical Native/WASM            |
-| `test-text-advanced.md`             | text-advanced             | 9N/4W               | FTS5 tools `[NATIVE ONLY]`       |
-| `test-stats-basic.md`               | stats-basic               | 17 + Code Mode      | Identical Native/WASM            |
-| `test-stats-advanced.md`            | stats-advanced            | 6N/0W               | Window functions `[NATIVE ONLY]` |
-| `test-vector-read.md`               | vector-read               | 7 + Code Mode       | Identical Native/WASM            |
-| `test-vector-write.md`              | vector-write              | 4                   | Identical Native/WASM            |
-| `test-admin-core.md`                | admin-core                | 24N/23W + Code Mode | `dump` is `[NATIVE ONLY]`        |
-| `test-admin-extensions.md`          | admin-extensions          | 8                   | CSV, series, rtree               |
-| `test-admin-audit.md`               | admin-audit               | 5                   | Audit snapshot management        |
-| `test-transactions.md`              | transactions              | 8 + Code Mode       | `[NATIVE ONLY]`                  |
-| `test-geo-haversine.md`             | geo-haversine             | 4 + Code Mode       | Identical Native/WASM            |
-| `test-geo-spatialite.md`            | geo-spatialite            | 7N/0W               | SpatiaLite `[NATIVE ONLY]`       |
-| `test-introspection-schema.md`      | introspection-schema      | 7                   | Identical Native/WASM            |
-| `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode       | Identical Native/WASM            |
-| `test-migration.md`                 | migration                 | 6 + Code Mode       | Identical Native/WASM            |
+| File                                | Group                     | Group Tools         | Notes                                                |
+| ----------------------------------- | ------------------------- | ------------------- | ---------------------------------------------------- |
+| `test-core-data.md`                 | core-data                 | 9                   | Identical Native/WASM                                |
+| `test-core-schema.md`               | core-schema               | 12 + Code Mode      | Identical Native/WASM                                |
+| `test-json-read.md`                 | json-read                 | 18 + Code Mode      | Identical Native/WASM                                |
+| `test-json-write.md`                | json-write                | 7                   | Identical Native/WASM                                |
+| `test-text-basic.md`                | text-basic                | 10 + Code Mode      | Identical Native/WASM                                |
+| `test-text-advanced.md`             | text-advanced             | 10N/5W              | FTS5 tools `[NATIVE ONLY]`                           |
+| `test-stats-basic.md`               | stats-basic               | 17 + Code Mode      | Identical Native/WASM                                |
+| `test-stats-advanced.md`            | stats-advanced            | 6N/0W               | Window functions `[NATIVE ONLY]`                     |
+| `test-vector-read.md`               | vector-read               | 7 + Code Mode       | Identical Native/WASM                                |
+| `test-vector-write.md`              | vector-write              | 4                   | Identical Native/WASM                                |
+| `test-admin-core.md`                | admin-core                | 24N/23W + Code Mode | `dump` is `[NATIVE ONLY]`                            |
+| `test-admin-extensions.md`          | admin-extensions          | 8                   | CSV, series, rtree                                   |
+| `test-admin-audit.md`               | admin-audit               | 7                   | Audit snapshot management, search, and server config |
+| `test-transactions.md`              | transactions              | 8 + Code Mode       | `[NATIVE ONLY]`                                      |
+| `test-geo-haversine.md`             | geo-haversine             | 4 + Code Mode       | Identical Native/WASM                                |
+| `test-geo-spatialite.md`            | geo-spatialite            | 7N/0W               | SpatiaLite `[NATIVE ONLY]`                           |
+| `test-introspection-schema.md`      | introspection-schema      | 7                   | Identical Native/WASM                                |
+| `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode       | Identical Native/WASM                                |
+| `test-migration.md`                 | migration                 | 6 + Code Mode       | Identical Native/WASM                                |
 
-**Inventory total**: 172 Native / 145 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+**Inventory total**: 175 Native / 148 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Agent Instructions
 

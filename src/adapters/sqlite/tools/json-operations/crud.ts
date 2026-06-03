@@ -1,4 +1,5 @@
 import { buildWhereClause } from "../../../../utils/where-clause.js";
+import { parseJsonValue } from "../../json-utils.js";
 import {
   JsonSetOutputSchema,
   JsonRemoveOutputSchema,
@@ -123,7 +124,7 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
-          values: result.rows?.map((r) => r["value"]),
+          values: result.rows?.map((r) => parseJsonValue(r["value"])),
         };
       } catch (error: unknown) {
         return formatHandlerError(error);

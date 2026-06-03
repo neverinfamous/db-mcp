@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ResourceDefinition, RequestContext } from "../../types/index.js";
+import { metrics } from "../../observability/metrics.js";
 
 // Interface for adapter methods needed by resource registration
 export interface ResourceRegistrationAdapter {
@@ -33,6 +34,7 @@ export function registerResourceImpl(
         resourceUri: URL,
         _variables: Record<string, string | string[]>,
       ) => {
+        metrics.recordResourceRead(resourceUri.toString());
         const context = adapter.createContext();
         const content = await resource.handler(resourceUri.toString(), context);
         return {
@@ -59,6 +61,7 @@ export function registerResourceImpl(
         ...(resource.icons ? { icons: resource.icons } : {}),
       },
       async (resourceUri: URL) => {
+        metrics.recordResourceRead(resourceUri.toString());
         const context = adapter.createContext();
         const content = await resource.handler(resourceUri.toString(), context);
         return {

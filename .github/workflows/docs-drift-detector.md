@@ -1,7 +1,7 @@
 ---
 description: "Audit README and DOCKER_README for consistency and accuracy on every code PR"
 private: true
-labels: [documentation, automation]
+labels: ["documentation", "automation"]
 
 on:
   pull_request:
@@ -10,12 +10,12 @@ on:
       ["src/**", "package.json", "Dockerfile", "tsconfig*.json", "scripts/**"]
 
 engine:
-  id: copilot
-  model: claude-opus-4-20250514
+  id: "copilot"
+  model: "claude-opus-4-20250514"
 
 network:
   allowed:
-    - defaults
+    - "defaults"
 
 permissions:
   contents: read
@@ -29,12 +29,12 @@ safe-outputs:
     max: 1
 
 timeout-minutes: 15
-concurrency: docs-drift-detector
+concurrency: "docs-drift-detector"
 ---
 
 # Documentation Drift Detector
 
-You are auditing documentation for the **db-mcp** project — a TypeScript MCP server for SQLite database integration with 151 tools, Code Mode, HTTP/SSE, OAuth 2.1, Tool Filtering, and Audit/Token Logging. Your job is to check if documentation is accurate and consistent with each other and with recent changes.
+You are auditing documentation for the **db-mcp** project — a robust SQLite MCP server with dual Native/WASM adapters, 170+ specialized tools, Code Mode, HTTP/SSE transport, Tool Filtering, multiple database connections, and a comprehensive Audit & Pre-mutation Backup system. Your job is to check if documentation is accurate and consistent with each other and with recent changes.
 
 ## Important Rules
 

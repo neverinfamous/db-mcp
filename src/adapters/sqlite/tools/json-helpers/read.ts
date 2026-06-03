@@ -1,5 +1,6 @@
 import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { getUniqueColumnNames } from "./helpers.js";
+import { parseJsonValue } from "../../json-utils.js";
 import {
   JsonSelectOutputSchema,
   JsonSelectSchema,
@@ -88,10 +89,19 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 
+        const parsedRows =
+          result.rows?.map((row) => {
+            const parsedRow: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(row)) {
+              parsedRow[key] = parseJsonValue(value);
+            }
+            return parsedRow;
+          }) ?? [];
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          rows: result.rows,
+          rowCount: parsedRows.length,
+          rows: parsedRows,
         };
       } catch (error: unknown) {
         return formatHandlerError(error);
@@ -169,10 +179,19 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 
+        const parsedRows =
+          result.rows?.map((row) => {
+            const parsedRow: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(row)) {
+              parsedRow[key] = parseJsonValue(value);
+            }
+            return parsedRow;
+          }) ?? [];
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          rows: result.rows,
+          rowCount: parsedRows.length,
+          rows: parsedRows,
         };
       } catch (error: unknown) {
         return formatHandlerError(error);

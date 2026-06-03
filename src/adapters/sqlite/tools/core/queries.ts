@@ -35,7 +35,11 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: { ...readOnly("Read Query"), idempotentHint: true },
     handler: async (params: unknown, _context: RequestContext) => {
-      let input: { query: string; params?: unknown[] | undefined };
+      let input: {
+        query: string;
+        params?: unknown[] | undefined;
+        cursor?: string | undefined;
+      };
       try {
         input = ReadQuerySchema.parse(resolveAliases(params, { sql: "query" }));
       } catch (error: unknown) {
@@ -249,6 +253,35 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         // Normalize: strip trailing whitespace and semicolons so appending
         // LIMIT won't produce invalid SQL like "SELECT ...; LIMIT 1000".
         let finalQuery = input.query.replace(/[\s;]+$/g, "");
+
+        let offset = 0;
+        if (input.cursor) {
+          try {
+            const cursorData = JSON.parse(
+              Buffer.from(input.cursor, "base64").toString("utf8"),
+            ) as Record<string, unknown>;
+            if (typeof cursorData["offset"] === "number") {
+              offset = cursorData["offset"];
+            }
+          } catch {
+            return {
+              ...formatHandlerError(
+                new ValidationError(
+                  "Invalid cursor format",
+                  "VALIDATION_ERROR",
+                  {
+                    suggestion:
+                      "Use the nextCursor value returned from a previous query.",
+                    details: {},
+                  },
+                ),
+              ),
+              rowCount: 0,
+              rows: [],
+            };
+          }
+        }
+
         // Inject a safety limit if none is provided to prevent OOM or event loop blocking
         // on massive tables, especially critical for the WASM backend.
         // Only apply to SELECT/WITH — PRAGMA and EXPLAIN don't support LIMIT.
@@ -256,16 +289,37 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         const isLimitable =
           upperForLimit.startsWith("SELECT") ||
           upperForLimit.startsWith("WITH");
-        if (isLimitable && !/\bLIMIT\b/i.test(finalQuery)) {
-          finalQuery = `${finalQuery} LIMIT 50`;
+
+        const limit = 50;
+        const hasLimit = /\bLIMIT\b/i.test(finalQuery);
+        if (isLimitable && !hasLimit) {
+          finalQuery = `${finalQuery} LIMIT ${limit}`;
+          if (offset > 0) {
+            finalQuery = `${finalQuery} OFFSET ${offset}`;
+          }
+        } else if (isLimitable && hasLimit && offset > 0) {
+          // Query already has LIMIT, just append OFFSET if it doesn't have one
+          if (!/\bOFFSET\b/i.test(finalQuery)) {
+            finalQuery = `${finalQuery} OFFSET ${offset}`;
+          }
         }
 
         const result = await adapter.executeReadQuery(finalQuery, input.params);
+
+        let nextCursor: string | undefined;
+        // If we didn't have a LIMIT originally, and we got 50 rows, there might be more
+        if (isLimitable && !hasLimit && result.rows?.length === limit) {
+          const nextOffset = offset + limit;
+          nextCursor = Buffer.from(
+            JSON.stringify({ offset: nextOffset }),
+          ).toString("base64");
+        }
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
+          nextCursor,
           executionTimeMs: result.executionTimeMs,
         };
       } catch (error: unknown) {

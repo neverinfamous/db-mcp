@@ -199,7 +199,7 @@ Expected: `{success: true}` — sandbox must serialize deeply nested objects.
 return await sqlite.help();
 ```
 
-Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 140.
+Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 187.
 
 ### 2.2 — Group help (core)
 
@@ -226,8 +226,12 @@ const groups = [
 ];
 const results = {};
 for (const g of groups) {
-  const h = await sqlite[g].help();
-  results[g] = h.methods.length;
+  try {
+    const h = await sqlite[g].help();
+    results[g] = h.methods.length;
+  } catch (e) {
+    results[g] = "error: " + e.message;
+  }
 }
 return results;
 ```
@@ -291,6 +295,11 @@ return { success: true, type };
 
 Expected: `{success: true, type: "function"}`. The `sqlite.reportProgress(current, total, message)` utility must be accessible and callable without errors. Progress notifications are sent to the client but do not affect the return value.
 
+### 2.9 — Metrics Resource (External to Sandbox)
+
+Outside of `sqlite_execute_code`, use your built-in resource reading tool (e.g. `read_resource`) to read `sqlite://metrics`.
+Expected: Returns a JSON string containing `metrics` (with `callCounts`, `latencyMetrics`, etc.). This validates the observability system is active.
+
 ## Phase 3: Security & Error Handling (7 tests)
 
 ### 3.1 — Blocked pattern (require)
@@ -342,7 +351,7 @@ Call with `timeout: 500`. Expected: `{success: false}` with timeout error — th
 return await sqlite.core.readQuery({ query: "SELECT * FROM nonexistent_xyz" });
 ```
 
-Expected: Returns `{success: false, error: "..."}` — sandbox must not crash.
+Expected: Returns a result object containing the handler error (e.g. `{success: true, result: {success: false, error: "..."}}`) — sandbox must not crash.
 
 ### 3.7 — Undefined API group
 

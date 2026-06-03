@@ -1,4 +1,5 @@
 import { buildWhereClause } from "../../../../utils/where-clause.js";
+import { parseJsonValue } from "../../json-utils.js";
 /**
  * JSON Query and Aggregation Tools
  *
@@ -149,10 +150,16 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 
+        const parsedElements =
+          result.rows?.map((row) => ({
+            ...row,
+            value: parseJsonValue(row["value"]),
+          })) ?? [];
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          elements: result.rows,
+          rowCount: parsedElements.length,
+          elements: parsedElements,
         };
       } catch (error: unknown) {
         return formatHandlerError(error);
@@ -231,10 +238,19 @@ export function createJsonGroupArrayTool(
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 
+        const parsedRows =
+          result.rows?.map((row) => {
+            const parsedRow: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(row)) {
+              parsedRow[key] = parseJsonValue(value);
+            }
+            return parsedRow;
+          }) ?? [];
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          rows: result.rows ?? [],
+          rowCount: parsedRows.length,
+          rows: parsedRows,
         };
       } catch (error: unknown) {
         return formatHandlerError(error);
@@ -314,10 +330,19 @@ export function createJsonGroupObjectTool(
           const sql = `SELECT ${outerSelect} FROM (${subquery})${outerGroupBy}`;
           const result = await adapter.executeReadQuery(sql, queryParams);
 
+          const parsedRows =
+            result.rows?.map((row) => {
+              const parsedRow: Record<string, unknown> = {};
+              for (const [key, value] of Object.entries(row)) {
+                parsedRow[key] = parseJsonValue(value);
+              }
+              return parsedRow;
+            }) ?? [];
+
           return {
             success: true,
-            rowCount: result.rows?.length ?? 0,
-            rows: result.rows ?? [],
+            rowCount: parsedRows.length,
+            rows: parsedRows,
           };
         }
 
@@ -383,10 +408,19 @@ export function createJsonGroupObjectTool(
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 
+        const parsedRows =
+          result.rows?.map((row) => {
+            const parsedRow: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(row)) {
+              parsedRow[key] = parseJsonValue(value);
+            }
+            return parsedRow;
+          }) ?? [];
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          rows: result.rows ?? [],
+          rowCount: parsedRows.length,
+          rows: parsedRows,
           ...(duplicateKeyWarning && { hint: duplicateKeyWarning }),
         };
       } catch (error: unknown) {

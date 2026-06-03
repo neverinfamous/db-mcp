@@ -40,10 +40,12 @@ import {
 } from "./registration/index.js";
 import { getAuthContext } from "../auth/auth-context.js";
 
+import { EventEmitter } from "node:events";
+
 /**
  * Abstract base class for database adapters
  */
-export abstract class DatabaseAdapter {
+export abstract class DatabaseAdapter extends EventEmitter {
   /** Database type identifier */
   abstract readonly type: DatabaseType;
 

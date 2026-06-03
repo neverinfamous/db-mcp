@@ -1,16 +1,16 @@
 # Tool Reference
 
-Complete reference of all db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all 177 db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 ## Tool Count Taxonomy
 
 | Scope           | What it includes                                    |  Native |    WASM | Notes                                           |
 | --------------- | --------------------------------------------------- | ------: | ------: | ----------------------------------------------- |
-| **Group tools** | 10 adapter-registered groups                        |     167 |     140 | Accessible via Code Mode `sqlite.help()`        |
-| **Audit tools** | 5 server-level snapshot tools                       |       5 |       5 | MCP-only — not exposed in Code Mode             |
-| **Inventory**   | Group + Audit                                       | **172** | **145** | All filterable/functional tools                 |
+| **Group tools** | 10 adapter-registered groups                        |     166 |     139 | Accessible via Code Mode `sqlite.help()`        |
+| **Audit tools** | 7 server-level audit & admin tools                  |       7 |       7 | MCP-only — not exposed in Code Mode             |
+| **Inventory**   | Group + Audit                                       | **173** | **146** | All filterable/functional tools                 |
 | **Built-in**    | `server_info`, `health`, `adapters`, `execute_code` |       4 |       4 | Always on (Code Mode can be excluded via rules) |
-| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **176** | **149** | **What a client sees via `tools/list`**         |
+| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **177** | **150** | **What a client sees via `tools/list`**         |
 
 > Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.
 
@@ -32,7 +32,7 @@ Read/write queries, table and index management, and schema discovery.
 
 | MCP Tool Name             | Code Mode Name                | Description                                                                                                                          |
 | :------------------------ | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `sqlite_read_query`       | `sqlite.core.readQuery`       | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety.                               |
+| `sqlite_read_query`       | `sqlite.core.readQuery`       | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety. Supports cursor pagination.   |
 | `sqlite_write_query`      | `sqlite.core.writeQuery`      | Execute an INSERT, UPDATE, or DELETE query. Returns affected row count. Use parameter binding for safety.                            |
 | `sqlite_upsert`           | `sqlite.core.upsert`          | Insert a row or update it if it already exists (INSERT ON CONFLICT DO UPDATE / INSERT OR REPLACE).                                   |
 | `sqlite_batch_insert`     | `sqlite.core.batchInsert`     | Insert multiple rows in a single statement.                                                                                          |
@@ -90,9 +90,9 @@ Comprehensive JSON manipulation — read, write, transform, validate, and analyz
 
 ---
 
-## text (19 Native / 14 WASM tools + Code Mode)
+## text (20 Native / 15 WASM tools + Code Mode)
 
-Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, and FTS5 full-text search.
+Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, hybrid search, and FTS5 full-text search.
 
 | MCP Tool Name            | Code Mode Name               | Description                                                                                                                                                                      |
 | :----------------------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -109,9 +109,10 @@ Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, and
 | `sqlite_text_normalize`  | `sqlite.text.normalize`      | Normalize text using Unicode normalization (NFC, NFD, NFKC, NFKD) or strip accents.                                                                                              |
 | `sqlite_text_validate`   | `sqlite.text.validate`       | Validate text values against patterns: email, phone, URL, UUID, IPv4, or custom regex.                                                                                           |
 | `sqlite_advanced_search` | `sqlite.text.advancedSearch` | Advanced search combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching.                                                                                           |
+| `sqlite_hybrid_search`   | `sqlite.text.hybridSearch`   | Hybrid search combining FTS5 text search and vector embedding search using Reciprocal Rank Fusion (RRF). Returns a unified, scored result set.                                   |
 | `sqlite_text_sentiment`  | `sqlite.text.sentiment`      | Perform basic keyword-based sentiment analysis on raw text. Returns sentiment classification, score, confidence, and optionally matched words. No database query needed.         |
 | `sqlite_fts_create`      | `sqlite.text.ftsCreate`      | Create an FTS5 full-text search virtual table. `[NATIVE ONLY]`                                                                                                                   |
-| `sqlite_fts_search`      | `sqlite.text.ftsSearch`      | Search an FTS5 table using full-text query syntax. `[NATIVE ONLY]`                                                                                                               |
+| `sqlite_fts_search`      | `sqlite.text.ftsSearch`      | Search an FTS5 table using full-text query syntax. Supports cursor pagination. `[NATIVE ONLY]`                                                                                   |
 | `sqlite_fts_rebuild`     | `sqlite.text.ftsRebuild`     | Rebuild an FTS5 index to optimize search performance. `[NATIVE ONLY]`                                                                                                            |
 | `sqlite_fts_match_info`  | `sqlite.text.ftsMatchInfo`   | Get FTS5 match ranking information using bm25. `[NATIVE ONLY]`                                                                                                                   |
 | `sqlite_fts_headline`    | `sqlite.text.ftsHeadline`    | Generate highlighted snippets from FTS5 search results using `highlight()` and `snippet()`. `[NATIVE ONLY]`                                                                      |
@@ -170,7 +171,7 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 ---
 
-## admin (32N/31W group + 5 audit + Code Mode)
+## admin (31N/30W group + 7 audit + Code Mode)
 
 Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 
@@ -188,38 +189,40 @@ Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 | `sqlite_pragma_optimize`        | `sqlite.admin.pragmaOptimize`       | Run `PRAGMA optimize` to improve query performance based on usage patterns.                                               |
 | `sqlite_pragma_settings`        | `sqlite.admin.pragmaSettings`       | Get or set a PRAGMA value.                                                                                                |
 | `sqlite_pragma_table_info`      | `sqlite.admin.pragmaTableInfo`      | Get detailed column information for a table.                                                                              |
-| `sqlite_append_insight`         | `sqlite.admin.appendInsight`        | Add a business insight to the `memo://insights` resource. Use this to capture key findings during data analysis.          |
-| `sqlite_generate_series`        | `sqlite.admin.generateSeries`       | Generate a series of numbers using `generate_series()` virtual table.                                                     |
-| `sqlite_create_view`            | `sqlite.admin.createView`           | Create a view based on a SELECT query.                                                                                    |
-| `sqlite_list_views`             | `sqlite.admin.listViews`            | List all views in the database.                                                                                           |
-| `sqlite_drop_view`              | `sqlite.admin.dropView`             | Drop (delete) a view from the database.                                                                                   |
-| `sqlite_dbstat`                 | `sqlite.admin.dbstat`               | Get database storage statistics using dbstat virtual table.                                                               |
-| `sqlite_vacuum`                 | `sqlite.admin.vacuum`               | Rebuild the database to reclaim space and optimize structure.                                                             |
-| `sqlite_list_virtual_tables`    | `sqlite.admin.listVirtualTables`    | List all virtual tables in the database.                                                                                  |
-| `sqlite_virtual_table_info`     | `sqlite.admin.virtualTableInfo`     | Get metadata about a specific virtual table.                                                                              |
-| `sqlite_drop_virtual_table`     | `sqlite.admin.dropVirtualTable`     | Drop a virtual table.                                                                                                     |
-| `sqlite_create_csv_table`       | `sqlite.admin.createCsvTable`       | Create a virtual table from a CSV file. Requires the csv extension.                                                       |
-| `sqlite_analyze_csv_schema`     | `sqlite.admin.analyzeCsvSchema`     | Analyze a CSV file structure and infer column types. Uses a temporary virtual table.                                      |
-| `sqlite_create_rtree_table`     | `sqlite.admin.createRtreeTable`     | Create an R-Tree virtual table for spatial indexing. Supports 2–5 dimensions.                                             |
-| `sqlite_create_series_table`    | `sqlite.admin.createSeriesTable`    | Create a table populated with a series of numbers. Unlike `generate_series`, this creates a persistent table.             |
-| `sqlite_attach_database`        | `sqlite.admin.attachDatabase`       | Attach an external SQLite database file under a schema alias. Restricted to same directory as primary database.           |
-| `sqlite_detach_database`        | `sqlite.admin.detachDatabase`       | Detach a previously attached database by its schema alias. Cannot detach 'main' or 'temp'.                                |
-| `sqlite_vacuum_into`            | `sqlite.admin.vacuumInto`           | Create a compacted, defragmented copy of the database using VACUUM INTO. Does not modify the original.                    |
-| `sqlite_dump`                   | `sqlite.admin.dump`                 | Export the database schema and data as a SQL text dump to a specified file. `[NATIVE ONLY]`                               |
-| `sqlite_reindex`                | `sqlite.admin.reindex`              | Rebuild indexes targeting a specific index, table, or the entire database.                                                |
-| `sqlite_wal`                    | `sqlite.admin.wal`                  | WAL mode management: check status, enable/disable WAL mode, or run checkpoints with configurable modes.                   |
 
-### Server Audit Tools
+| `sqlite_generate_series` | `sqlite.admin.generateSeries` | Generate a series of numbers using `generate_series()` virtual table. |
+| `sqlite_create_view` | `sqlite.admin.createView` | Create a view based on a SELECT query. |
+| `sqlite_list_views` | `sqlite.admin.listViews` | List all views in the database. |
+| `sqlite_drop_view` | `sqlite.admin.dropView` | Drop (delete) a view from the database. |
+| `sqlite_dbstat` | `sqlite.admin.dbstat` | Get database storage statistics using dbstat virtual table. |
+| `sqlite_vacuum` | `sqlite.admin.vacuum` | Rebuild the database to reclaim space and optimize structure. |
+| `sqlite_list_virtual_tables` | `sqlite.admin.listVirtualTables` | List all virtual tables in the database. |
+| `sqlite_virtual_table_info` | `sqlite.admin.virtualTableInfo` | Get metadata about a specific virtual table. |
+| `sqlite_drop_virtual_table` | `sqlite.admin.dropVirtualTable` | Drop a virtual table. |
+| `sqlite_create_csv_table` | `sqlite.admin.createCsvTable` | Create a virtual table from a CSV file. Requires the csv extension. |
+| `sqlite_analyze_csv_schema` | `sqlite.admin.analyzeCsvSchema` | Analyze a CSV file structure and infer column types. Uses a temporary virtual table. |
+| `sqlite_create_rtree_table` | `sqlite.admin.createRtreeTable` | Create an R-Tree virtual table for spatial indexing. Supports 2–5 dimensions. |
+| `sqlite_create_series_table` | `sqlite.admin.createSeriesTable` | Create a table populated with a series of numbers. Unlike `generate_series`, this creates a persistent table. |
+| `sqlite_attach_database` | `sqlite.admin.attachDatabase` | Attach an external SQLite database file under a schema alias. Restricted to same directory as primary database. |
+| `sqlite_detach_database` | `sqlite.admin.detachDatabase` | Detach a previously attached database by its schema alias. Cannot detach 'main' or 'temp'. |
+| `sqlite_vacuum_into` | `sqlite.admin.vacuumInto` | Create a compacted, defragmented copy of the database using VACUUM INTO. Does not modify the original. |
+| `sqlite_dump` | `sqlite.admin.dump` | Export the database schema and data as a SQL text dump to a specified file. `[NATIVE ONLY]` |
+| `sqlite_reindex` | `sqlite.admin.reindex` | Rebuild indexes targeting a specific index, table, or the entire database. |
+| `sqlite_wal` | `sqlite.admin.wal` | WAL mode management: check status, enable/disable WAL mode, or run checkpoints with configurable modes. |
 
-> These tools manage pre-mutation DDL snapshots. They are not exposed in Code Mode.
+### Server Management & Audit Tools
 
-| MCP Tool Name                 | Code Mode Name | Description                                                     |
-| :---------------------------- | :------------- | :-------------------------------------------------------------- |
-| `sqlite_audit_list_backups`   | —              | List all available schema audit snapshots.                      |
-| `sqlite_audit_get_backup`     | —              | Retrieve the contents of a specific audit snapshot by filename. |
-| `sqlite_audit_diff_backup`    | —              | Compare an audit snapshot against the live database schema.     |
-| `sqlite_audit_restore_backup` | —              | Restore schema from an audit snapshot with dry-run support.     |
-| `sqlite_audit_cleanup`        | —              | Enforce retention policy and remove expired audit snapshots.    |
+> These tools manage server configuration and pre-mutation DDL snapshots. They are not exposed in Code Mode.
+
+| MCP Tool Name                 | Code Mode Name | Description                                                       |
+| :---------------------------- | :------------- | :---------------------------------------------------------------- |
+| `sqlite_server_config`        | —              | Change server configuration dynamically (e.g., log levels).       |
+| `sqlite_audit_list_backups`   | —              | List all available schema audit snapshots.                        |
+| `sqlite_audit_get_backup`     | —              | Retrieve the contents of a specific audit snapshot by filename.   |
+| `sqlite_audit_diff_backup`    | —              | Compare an audit snapshot against the live database schema.       |
+| `sqlite_audit_restore_backup` | —              | Restore schema from an audit snapshot with dry-run support.       |
+| `sqlite_audit_cleanup`        | —              | Enforce retention policy and remove expired audit snapshots.      |
+| `sqlite_audit_search`         | —              | Search and filter structured audit logs from the System Database. |
 
 ---
 
@@ -264,18 +267,18 @@ Geospatial operations — Haversine distance/radius queries and SpatiaLite advan
 
 Read-only schema analysis — dependency graphs, cascade simulation, diagnostics, and migration risk assessment.
 
-| MCP Tool Name                | Code Mode Name                            | Description                                                                                                                                                                                      |
-| :--------------------------- | :---------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sqlite_dependency_graph`    | `sqlite.introspection.dependencyGraph`    | Build a foreign key dependency graph showing relationships between all tables. Returns nodes (tables), edges (FK references), circular dependency detection, and root/leaf table identification. |
-| `sqlite_topological_sort`    | `sqlite.introspection.topologicalSort`    | Generate a safe DDL execution order for tables based on foreign key dependencies. `create` direction lists parent tables first; `drop` direction lists child tables first.                       |
-| `sqlite_cascade_simulator`   | `sqlite.introspection.cascadeSimulator`   | Simulate the impact of a DELETE, DROP, or TRUNCATE on a table. Shows which tables would be affected through cascading foreign key actions, with severity scoring.                                |
-| `sqlite_schema_snapshot`     | `sqlite.introspection.schemaSnapshot`     | Generate a comprehensive snapshot of the database schema — tables, views, indexes, and triggers — in a single call.                                                                              |
-| `sqlite_schema_diff`         | `sqlite.introspection.schemaDiff`         | Compare two schema snapshots and report structured drift — added, removed, and modified tables, views, indexes, and triggers. Accepts 'current' for live DB or inline snapshot objects.          |
-| `sqlite_constraint_analysis` | `sqlite.introspection.constraintAnalysis` | Analyze database schema for constraint health issues: missing primary keys, columns that should be NOT NULL, foreign keys without indexes, and tables that could benefit from FK relationships.  |
-| `sqlite_migration_risks`     | `sqlite.introspection.migrationRisks`     | Analyze DDL statements for SQLite-specific migration risks. Detects ALTER TABLE limitations, large table operations, column type changes, destructive operations, and FTS5 rebuild requirements. |
-| `sqlite_storage_analysis`    | `sqlite.introspection.storageAnalysis`    | Analyze database storage health: fragmentation, size breakdown per table, and optimization recommendations.                                                                                      |
-| `sqlite_index_audit`         | `sqlite.introspection.indexAudit`         | Audit index effectiveness: find redundant indexes (prefix duplicates), missing foreign key indexes, and large tables without secondary indexes. Returns actionable suggestions.                  |
-| `sqlite_query_plan`          | `sqlite.introspection.queryPlan`          | Analyze a SQL query's execution plan. Returns structured EXPLAIN QUERY PLAN output with scan-type classification and optimization suggestions.                                                   |
+| MCP Tool Name                | Code Mode Name                            | Description                                                                                                                                                                                                                           |
+| :--------------------------- | :---------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sqlite_dependency_graph`    | `sqlite.introspection.dependencyGraph`    | Build a foreign key dependency graph showing relationships between all tables. Returns nodes (tables), edges (FK references), circular dependency detection, and root/leaf table identification.                                      |
+| `sqlite_topological_sort`    | `sqlite.introspection.topologicalSort`    | Generate a safe DDL execution order for tables based on foreign key dependencies. `create` direction lists parent tables first; `drop` direction lists child tables first.                                                            |
+| `sqlite_cascade_simulator`   | `sqlite.introspection.cascadeSimulator`   | Simulate the impact of a DELETE, DROP, or TRUNCATE on a table. Shows which tables would be affected through cascading foreign key actions, with severity scoring.                                                                     |
+| `sqlite_schema_snapshot`     | `sqlite.introspection.schemaSnapshot`     | Generate a comprehensive snapshot of the database schema — tables, views, indexes, and triggers — in a single call.                                                                                                                   |
+| `sqlite_schema_diff`         | `sqlite.introspection.schemaDiff`         | Compare two schema snapshots and report structured drift — added, removed, and modified tables, views, indexes, and triggers. Accepts 'current' for live DB or inline snapshot objects.                                               |
+| `sqlite_constraint_analysis` | `sqlite.introspection.constraintAnalysis` | Analyze database schema for constraint health issues: missing primary keys, columns that should be NOT NULL, foreign keys without indexes, and tables that could benefit from FK relationships.                                       |
+| `sqlite_migration_risks`     | `sqlite.introspection.migrationRisks`     | Analyze DDL statements for SQLite-specific migration risks. Detects ALTER TABLE limitations, large table operations, column type changes, destructive operations, and FTS5 rebuild requirements.                                      |
+| `sqlite_storage_analysis`    | `sqlite.introspection.storageAnalysis`    | Analyze database storage health: fragmentation, size breakdown per table, and optimization recommendations.                                                                                                                           |
+| `sqlite_index_audit`         | `sqlite.introspection.indexAudit`         | Audit index effectiveness: find redundant indexes (prefix duplicates), missing foreign key indexes, and large tables without secondary indexes. Can recommend composite indexes for specific queries. Returns actionable suggestions. |
+| `sqlite_query_plan`          | `sqlite.introspection.queryPlan`          | Analyze a SQL query's execution plan. Returns structured EXPLAIN QUERY PLAN output with scan-type classification and optimization suggestions.                                                                                        |
 
 ---
 
@@ -300,21 +303,21 @@ Every tool in db-mcp has a mandatory `outputSchema` defined via Zod. The Vitest 
 
 All schemas are centralized in `src/adapters/sqlite/schemas/` with named exports. **No inline `z.object()` definitions** exist in handler files.
 
-| Schema File        | Groups                       | Key Schemas                                                                                                                                                                                                                                                                                                                     |
-| :----------------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `core.ts`          | core                         | `ReadQueryOutputSchema`, `WriteQueryOutputSchema`, `CreateTableOutputSchema`, `ListTablesOutputSchema`, `DescribeTableOutputSchema`, `DropTableOutputSchema`, `GetIndexesOutputSchema`, `CreateIndexOutputSchema`, `DropIndexOutputSchema`, `ListTriggersOutputSchema`, `ListConstraintsOutputSchema`, `DateMathOutputSchema`   |
-| `json.ts`          | json                         | `JsonDiffOutputSchema` + schemas for all 25 JSON tools                                                                                                                                                                                                                                                                          |
-| `text.ts`          | text                         | `TextConcatOutputSchema`, `TextTrimOutputSchema`, `TextCaseOutputSchema`, `TextSubstringOutputSchema`, `AdvancedSearchOutputSchema` + schemas for all 14 text tools                                                                                                                                                             |
-| `fts.ts`           | text (FTS5)                  | `FtsCreateOutputSchema`, `FtsSearchOutputSchema`, `FtsRebuildOutputSchema`                                                                                                                                                                                                                                                      |
-| `stats.ts`         | stats                        | `StatsBasicOutputSchema`, `StatsCountOutputSchema`, `StatsGroupByOutputSchema`, `StatsHistogramOutputSchema`, `StatsPercentileOutputSchema`, `StatsCorrelationOutputSchema`, `StatsHypothesisOutputSchema`, `StatsDetectAnomaliesOutputSchema`, `StatsDetectBloatOutputSchema`, `StatsDetectSchemaRisksOutputSchema`            |
-| `vector.ts`        | vector                       | `VectorSearchOutputSchema`, `VectorStoreOutputSchema`, `VectorBatchStoreOutputSchema`, `VectorGetOutputSchema`, `VectorDeleteOutputSchema`, `VectorCountOutputSchema`, `VectorStatsOutputSchema`, `VectorDimensionsOutputSchema`, `VectorNormalizeOutputSchema`, `VectorDistanceOutputSchema`                                   |
-| `geo.ts`           | geo                          | Schemas for all 4 geo tools                                                                                                                                                                                                                                                                                                     |
-| `admin.ts`         | admin                        | `BackupOutputSchema`, `RestoreOutputSchema`, `VerifyBackupOutputSchema`, `AnalyzeOutputSchema`, `OptimizeOutputSchema`, `IntegrityCheckOutputSchema`, `PragmaSettingsOutputSchema`, `AppendInsightOutputSchema`, `DbstatOutputSchema`, `AttachDatabaseOutputSchema`, `DetachDatabaseOutputSchema`, `VacuumIntoCopyOutputSchema` |
-| `virtual.ts`       | admin (virtual)              | `ListVirtualTablesOutputSchema`, `VirtualTableInfoOutputSchema`, `DropVirtualTableOutputSchema`, `CreateCsvTableOutputSchema`, `AnalyzeCsvSchemaOutputSchema`, `CreateRtreeTableOutputSchema`, `CreateSeriesTableOutputSchema`                                                                                                  |
-| `introspection.ts` | introspection                | `DependencyGraphOutputSchema`, `TopologicalSortOutputSchema`, `CascadeSimulatorOutputSchema`, `SchemaSnapshotOutputSchema`, `SchemaDiffOutputSchema`, `ConstraintAnalysisOutputSchema`, `MigrationRisksOutputSchema`, `StorageAnalysisOutputSchema`, `IndexAuditOutputSchema`, `QueryPlanOutputSchema`                          |
-| `migration.ts`     | migration                    | `MigrationInitOutputSchema`, `MigrationRecordOutputSchema`, `MigrationApplyOutputSchema`, `MigrationRollbackOutputSchema`, `MigrationHistoryOutputSchema`, `MigrationStatusOutputSchema`                                                                                                                                        |
-| `native.ts`        | transactions, stats (window) | `TransactionBeginOutputSchema` … `TransactionExecuteOutputSchema` (8 schemas), `WindowRowNumberOutputSchema` … `WindowNtileOutputSchema` (6 schemas)                                                                                                                                                                            |
-| `spatialite.ts`    | geo (SpatiaLite)             | `SpatialiteLoadOutputSchema` … `SpatialiteImportOutputSchema` (7 schemas)                                                                                                                                                                                                                                                       |
-| `codemode.ts`      | codemode                     | `ExecuteCodeOutputSchema`                                                                                                                                                                                                                                                                                                       |
-| `common.ts`        | _(shared)_                   | `RowRecordSchema` — base row shape                                                                                                                                                                                                                                                                                              |
-| `error-mixin.ts`   | _(shared)_                   | `ErrorFieldsMixin` — 6 optional error fields merged into all output schemas                                                                                                                                                                                                                                                     |
+| Schema File        | Groups                       | Key Schemas                                                                                                                                                                                                                                                                                                                   |
+| :----------------- | :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core.ts`          | core                         | `ReadQueryOutputSchema`, `WriteQueryOutputSchema`, `CreateTableOutputSchema`, `ListTablesOutputSchema`, `DescribeTableOutputSchema`, `DropTableOutputSchema`, `GetIndexesOutputSchema`, `CreateIndexOutputSchema`, `DropIndexOutputSchema`, `ListTriggersOutputSchema`, `ListConstraintsOutputSchema`, `DateMathOutputSchema` |
+| `json.ts`          | json                         | `JsonDiffOutputSchema` + schemas for all 25 JSON tools                                                                                                                                                                                                                                                                        |
+| `text.ts`          | text                         | `TextConcatOutputSchema`, `TextTrimOutputSchema`, `TextCaseOutputSchema`, `TextSubstringOutputSchema`, `AdvancedSearchOutputSchema`, `HybridSearchOutputSchema` + schemas for all 15 text tools                                                                                                                               |
+| `fts.ts`           | text (FTS5)                  | `FtsCreateOutputSchema`, `FtsSearchOutputSchema`, `FtsRebuildOutputSchema`                                                                                                                                                                                                                                                    |
+| `stats.ts`         | stats                        | `StatsBasicOutputSchema`, `StatsCountOutputSchema`, `StatsGroupByOutputSchema`, `StatsHistogramOutputSchema`, `StatsPercentileOutputSchema`, `StatsCorrelationOutputSchema`, `StatsHypothesisOutputSchema`, `StatsDetectAnomaliesOutputSchema`, `StatsDetectBloatOutputSchema`, `StatsDetectSchemaRisksOutputSchema`          |
+| `vector.ts`        | vector                       | `VectorSearchOutputSchema`, `VectorStoreOutputSchema`, `VectorBatchStoreOutputSchema`, `VectorGetOutputSchema`, `VectorDeleteOutputSchema`, `VectorCountOutputSchema`, `VectorStatsOutputSchema`, `VectorDimensionsOutputSchema`, `VectorNormalizeOutputSchema`, `VectorDistanceOutputSchema`                                 |
+| `geo.ts`           | geo                          | Schemas for all 4 geo tools                                                                                                                                                                                                                                                                                                   |
+| `admin.ts`         | admin                        | `BackupOutputSchema`, `RestoreOutputSchema`, `VerifyBackupOutputSchema`, `AnalyzeOutputSchema`, `OptimizeOutputSchema`, `IntegrityCheckOutputSchema`, `PragmaSettingsOutputSchema`, `DbstatOutputSchema`, `AttachDatabaseOutputSchema`, `DetachDatabaseOutputSchema`, `VacuumIntoCopyOutputSchema`, `AuditSearchOutputSchema` |
+| `virtual.ts`       | admin (virtual)              | `ListVirtualTablesOutputSchema`, `VirtualTableInfoOutputSchema`, `DropVirtualTableOutputSchema`, `CreateCsvTableOutputSchema`, `AnalyzeCsvSchemaOutputSchema`, `CreateRtreeTableOutputSchema`, `CreateSeriesTableOutputSchema`                                                                                                |
+| `introspection.ts` | introspection                | `DependencyGraphOutputSchema`, `TopologicalSortOutputSchema`, `CascadeSimulatorOutputSchema`, `SchemaSnapshotOutputSchema`, `SchemaDiffOutputSchema`, `ConstraintAnalysisOutputSchema`, `MigrationRisksOutputSchema`, `StorageAnalysisOutputSchema`, `IndexAuditOutputSchema`, `QueryPlanOutputSchema`                        |
+| `migration.ts`     | migration                    | `MigrationInitOutputSchema`, `MigrationRecordOutputSchema`, `MigrationApplyOutputSchema`, `MigrationRollbackOutputSchema`, `MigrationHistoryOutputSchema`, `MigrationStatusOutputSchema`                                                                                                                                      |
+| `native.ts`        | transactions, stats (window) | `TransactionBeginOutputSchema` … `TransactionExecuteOutputSchema` (8 schemas), `WindowRowNumberOutputSchema` … `WindowNtileOutputSchema` (6 schemas)                                                                                                                                                                          |
+| `spatialite.ts`    | geo (SpatiaLite)             | `SpatialiteLoadOutputSchema` … `SpatialiteImportOutputSchema` (7 schemas)                                                                                                                                                                                                                                                     |
+| `codemode.ts`      | codemode                     | `ExecuteCodeOutputSchema`                                                                                                                                                                                                                                                                                                     |
+| `common.ts`        | _(shared)_                   | `RowRecordSchema` — base row shape                                                                                                                                                                                                                                                                                            |
+| `error-mixin.ts`   | _(shared)_                   | `ErrorFieldsMixin` — 6 optional error fields merged into all output schemas                                                                                                                                                                                                                                                   |

@@ -119,8 +119,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 1: Core Check (batched)
 
-1. `sqlite_regex_match({table: "test_users", column: "email", pattern: "@gmail\\.com$"})` → at least 1 result (`test.user@gmail.com`)
-2. `sqlite_regex_extract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1})` → extract domain parts (example, company, startup, etc.)
+1. `sqlite_regex_match({table: "test_users", column: "email", pattern: "@gmail.com$"})` → at least 1 result (`test.user@gmail.com`)
+2. `sqlite_regex_extract({table: "test_users", column: "email", pattern: "@([^.]+).", groupIndex: 1})` → extract domain parts (example, company, startup, etc.)
 3. `sqlite_text_validate({table: "test_users", column: "email", pattern: "email"})` → all 9 rows should be valid emails
 4. `sqlite_text_validate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid counts (one user has NULL phone)
 5. `sqlite_text_case({table: "test_users", column: "username", mode: "upper"})` → all usernames uppercased

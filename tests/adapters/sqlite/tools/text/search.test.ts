@@ -212,6 +212,70 @@ describe("Text Search Tools", () => {
       expect(result.success).toBe(true);
       expect(result.matchCount).toBeGreaterThan(0);
     });
+
+    it("should include facets when requested", async () => {
+      const result = (await tools.get("sqlite_advanced_search")?.({
+        table: "texts",
+        column: "name",
+        searchTerm: "Alice",
+        techniques: ["exact", "fuzzy", "phonetic"],
+        includeFacets: true,
+      })) as any;
+
+      expect(result.success).toBe(true);
+      expect(result.facets).toBeDefined();
+      expect(typeof result.facets.exact).toBe("number");
+    });
+  });
+
+  describe("sqlite_hybrid_search", () => {
+    beforeEach(async () => {
+      // Create a test table with vectors
+      await adapter.executeWriteQuery(`
+        CREATE TABLE vector_docs (
+          id INTEGER PRIMARY KEY,
+          title TEXT,
+          embedding TEXT
+        )
+      `);
+
+      await adapter.executeWriteQuery(`
+        INSERT INTO vector_docs (id, title, embedding) VALUES
+        (1, 'Database Systems', '[0.9, 0.1, 0.0]'),
+        (2, 'Machine Learning', '[0.1, 0.9, 0.0]'),
+        (3, 'Vector Search', '[0.5, 0.5, 0.0]')
+      `);
+    });
+
+    it("should combine text and vector scores using RRF", async () => {
+      const result = (await tools.get("sqlite_hybrid_search")?.({
+        table: "vector_docs",
+        query: "Database",
+        vectorColumn: "embedding",
+        queryVector: [1.0, 0.0, 0.0],
+        limit: 10,
+        rrfK: 60,
+      })) as any;
+
+      expect(result.success).toBe(true);
+      expect(result.matchCount).toBe(3);
+      expect(result.results[0].rowid).toBeDefined();
+      expect(result.results[0].rrfScore).toBeGreaterThan(0);
+      expect(result.results[0].vectorSimilarity).toBeDefined();
+    });
+
+    it("should handle edge case rrfK values", async () => {
+      const result = (await tools.get("sqlite_hybrid_search")?.({
+        table: "vector_docs",
+        query: "Database",
+        vectorColumn: "embedding",
+        queryVector: [1.0, 0.0, 0.0],
+        rrfK: 0,
+      })) as any;
+
+      expect(result.success).toBe(true);
+      // Even with rrfK=0, it should not crash (handles Infinity or NaN gracefully due to sorting logic, though 1/0 = Infinity)
+    });
   });
 
   describe("Error path testing", () => {

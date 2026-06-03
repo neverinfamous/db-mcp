@@ -20,6 +20,7 @@ import {
   createFuzzyMatchTool,
   createPhoneticMatchTool,
   createAdvancedSearchTool,
+  createHybridSearchTool,
 } from "./search.js";
 import { createTextNormalizeTool, createTextValidateTool } from "./validate.js";
 import { createTextSentimentTool } from "./sentiment.js";
@@ -42,6 +43,7 @@ export function getTextTools(adapter: SqliteAdapter): ToolDefinition[] {
     createTextNormalizeTool(adapter),
     createTextValidateTool(adapter),
     createAdvancedSearchTool(adapter),
+    createHybridSearchTool(adapter),
     createTextSentimentTool(adapter),
   ];
 }

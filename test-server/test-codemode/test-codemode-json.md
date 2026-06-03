@@ -207,8 +207,8 @@ const scan = await sqlite.json.securityScan({
   table: "temp_cm_json_etl",
   column: "data",
 });
-await sqlite.core.writeQuery({
-  query: "DROP TABLE IF EXISTS temp_cm_json_etl",
+await sqlite.core.dropTable({
+  tableName: "temp_cm_json_etl",
 });
 return {
   schemaFields: Object.keys(schema.schema.properties).length > 0,
@@ -243,8 +243,8 @@ const scan = await sqlite.json.securityScan({
   table: "temp_cm_json_sec",
   column: "data",
 });
-await sqlite.core.writeQuery({
-  query: "DROP TABLE IF EXISTS temp_cm_json_sec",
+await sqlite.core.dropTable({
+  tableName: "temp_cm_json_sec",
 });
 if (scan.riskLevel === "low")
   failures.push("expected riskLevel > low for malicious data");
