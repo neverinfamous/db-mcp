@@ -29,6 +29,8 @@
 
 ### Fixed
 
+- Fixed `MCP_HOST` default documentation discrepancy in `README.md` and `DOCKER_README.md` to reflect `127.0.0.1` locally and `0.0.0.0` in Docker.
+- Fixed stale tool count (167 -> 177) in the Dockerfile label.
 - Added missing `MCP_ENABLE_HSTS` variable to the Environment Variables table in `DOCKER_README.md`.
 - Fixed the stale `// Admin Tools` comment in `src/filtering/tool-constants.ts`.
 - Updated the version comment for `peter-evans/dockerhub-description` in `.github/workflows/docker-publish.yml` from `# v4.0.0` to `# v5.0.0`.

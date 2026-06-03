@@ -409,7 +409,7 @@ MCP prompts provide AI-assisted database workflows:
 
 | Variable                    | Default   | Description                                                                    |
 | --------------------------- | --------- | ------------------------------------------------------------------------------ |
-| `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                                      |
+| `MCP_HOST`                  | `127.0.0.1` | Host/IP to bind to (`0.0.0.0` in Docker) (CLI: `--server-host`)                |
 | `SQLITE_DATABASE`           | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)                     |
 | `DB_ENCRYPTION_KEY`         | —         | SQLCipher encryption key (Native only) (CLI: `--encryption-key`)               |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (CLI: `--tool-filter`)                                      |

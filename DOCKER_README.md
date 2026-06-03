@@ -221,7 +221,7 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 
 | Variable                    | Default   | Description                                                               |
 | --------------------------- | --------- | ------------------------------------------------------------------------- |
-| `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (`--server-host`)                                      |
+| `MCP_HOST`                  | `127.0.0.1` | Host/IP to bind to (`0.0.0.0` in Docker) (`--server-host`)                |
 | `SQLITE_DATABASE`           | —         | SQLite database path (`--sqlite` / `--sqlite-native`)                     |
 | `DB_ENCRYPTION_KEY`         | —         | SQLCipher encryption key (Native only) (`--encryption-key`)               |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (`--tool-filter`)                                      |
