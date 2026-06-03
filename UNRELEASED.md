@@ -32,6 +32,7 @@
 - Code Mode sandbox timeouts now correctly throw `TimeoutError`.
 - Native addon crashes during Vitest by changing the execution pool from `threads` to `forks`.
 - False-positive Promise rejections in `sqlite-adapter-methods.test.ts`.
+- Updated outdated `Last updated` date in `test-server/code-map.md`.
 
 ### Security
 - **Hard Gate**: HTTP transports fail to start if `ALLOWED_IO_ROOTS` is omitted.
