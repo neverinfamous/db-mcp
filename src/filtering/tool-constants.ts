@@ -265,13 +265,13 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text (60 WASM / 65 Native)
+  // General development - Core + JSON + Text (61 WASM / 66 Native)
   starter: ["core", "json", "text", "codemode"],
 
   // Data analysis - Core + JSON + Stats (63 WASM / 69 Native)
   analytics: ["core", "json", "stats", "codemode"],
 
-  // Search workloads - Core + Text + Vector (46 WASM / 51 Native)
+  // Search workloads - Core + Text + Vector (47 WASM / 52 Native)
   search: ["core", "text", "vector", "codemode"],
 
   // Geospatial workloads - Core + Geo + Vector (36 WASM / 43 Native)

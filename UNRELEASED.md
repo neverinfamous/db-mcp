@@ -29,6 +29,10 @@
 
 ### Fixed
 
+- Resolved documentation drift by updating the wiki `Home.md` architecture to reflect the current `src/` directory layout.
+- Removed hallucinated configuration variables (`CORS_ORIGINS`, `MCP_REQUEST_TIMEOUT`, etc.) from wiki documentation.
+- Corrected the omission of `NO_AUTH_ENFORCEMENT` from `.env.example` and `mcp-config-example.json` templates.
+- Fixed stale tool token counts in `src/filtering/tool-constants.ts` comments to properly exclude built-in codemode from group math.
 - Documentation limits: Shortened `DOCKER_README.md` to safely conform to Docker Hub's 25,000 character limit, and corrected the tool count math in the groupings table.
 - Template usability: Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings for encryption keys, extensions, and auth variables.
 
