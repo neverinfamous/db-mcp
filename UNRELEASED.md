@@ -12,7 +12,7 @@
 - Session timeout enforcement for HTTP stateful mode: 30-minute idle timeout with 1-minute sweep interval, 24-hour absolute TTL, and in-flight request protection via session locks.
 - Added 4 new Optimistic Concurrency Control (OCC) tools to the `core` group: `sqlite_enable_versioning`, `sqlite_disable_versioning`, `sqlite_check_version`, and `sqlite_conditional_update`.
 - Implemented universal `snake_case` parameter mapping in `resolveAliases` for automatic validation schema forgiveness.
-- Wrapped Code Mode Sandbox bindings and `GroupApi` handlers with a `Proxy` to automatically map `snake_case` method calls to their `camelCase` implementations.
+- Wrapped Code Mode Sandbox bindings and `GroupApi` handlers with a `Proxy` injected directly into the `isolated-vm` sandbox context to automatically map `snake_case` method calls to their `camelCase` implementations without crossing V8 boundaries.
 ### Changed
 - `sqlite_write_query` and `sqlite_upsert` now accept an optional `expectedVersion` parameter. If a table is versioned, this parameter becomes required to prevent lost updates, throwing a `ConflictError` on mismatch.
 - Updated `sqlite_read_query` agent testing prompts (`test-core-data.md`, `test-codemode-core.md`, `test-codemode-advanced-core.md`) to natively validate streaming chunk degradation behavior.

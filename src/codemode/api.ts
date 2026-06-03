@@ -238,20 +238,7 @@ function createGroupApi(
     });
   };
 
-  return new Proxy(api, {
-    get(target, prop, receiver): unknown {
-      if (typeof prop === "string" && !(prop in target)) {
-        // Try snake_case to camelCase conversion
-        const camelProp = prop.replace(/_([a-z])/g, (_, letter: string) =>
-          letter.toUpperCase(),
-        );
-        if (camelProp in target) {
-          return target[camelProp];
-        }
-      }
-      return Reflect.get(target, prop, receiver) as unknown;
-    },
-  });
+  return api;
 }
 
 // =============================================================================
@@ -421,20 +408,7 @@ export class SqliteApi {
       });
     };
 
-    return new Proxy(bindings, {
-      get(target, prop, receiver): unknown {
-        if (typeof prop === "string" && !(prop in target)) {
-          // Try snake_case to camelCase conversion
-          const camelProp = prop.replace(/_([a-z])/g, (_, letter: string) =>
-            letter.toUpperCase(),
-          );
-          if (camelProp in target) {
-            return target[camelProp];
-          }
-        }
-        return Reflect.get(target, prop, receiver) as unknown;
-      },
-    });
+    return bindings;
   }
 }
 

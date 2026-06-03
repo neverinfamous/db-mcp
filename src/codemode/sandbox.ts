@@ -170,6 +170,25 @@ export class CodeModeSandbox {
       }
 
       const context = vm.createContext(sandboxEnv);
+      vm.runInContext(`
+        const proxyHandler = {
+          get(target, prop, receiver) {
+            if (typeof prop === "string" && !(prop in target)) {
+              const camelProp = prop.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+              if (camelProp in target) {
+                return Reflect.get(target, camelProp, receiver);
+              }
+            }
+            return Reflect.get(target, prop, receiver);
+          }
+        };
+        sqlite = new Proxy(sqlite, proxyHandler);
+        for (const key of Object.keys(sqlite)) {
+          if (typeof sqlite[key] === "object" && sqlite[key] !== null) {
+            sqlite[key] = new Proxy(sqlite[key], proxyHandler);
+          }
+        }
+      `, context);
       const startTime = performance.now();
       let result: unknown;
       let success = true;
@@ -308,6 +327,26 @@ export class CodeModeSandbox {
           `);
         }
       }
+
+      context.evalSync(`
+        const proxyHandler = {
+          get(target, prop, receiver) {
+            if (typeof prop === "string" && !(prop in target)) {
+              const camelProp = prop.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+              if (camelProp in target) {
+                return Reflect.get(target, camelProp, receiver);
+              }
+            }
+            return Reflect.get(target, prop, receiver);
+          }
+        };
+        globalThis.sqlite = new Proxy(globalThis.sqlite, proxyHandler);
+        for (const key of Object.keys(globalThis.sqlite)) {
+          if (typeof globalThis.sqlite[key] === "object" && globalThis.sqlite[key] !== null) {
+            globalThis.sqlite[key] = new Proxy(globalThis.sqlite[key], proxyHandler);
+          }
+        }
+      `);
 
       const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
       script = isolate.compileScriptSync(wrappedCode, {
