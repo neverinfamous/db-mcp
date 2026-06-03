@@ -1,4 +1,7 @@
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
@@ -7,12 +10,21 @@ import { readOnly } from "../../../../utils/annotations.js";
 import { resolveAliases } from "../../../sqlite/types.js";
 import { WindowRunningTotalOutputSchema } from "../../../sqlite/schemas/index.js";
 import { RunningTotalSchema } from "./schemas.js";
-import { validateTableExists, validateColumnInTable, validateOrderByColumns, resolveSelectColumns, sanitizePartitionBy, sanitizeOrderByExpr } from "./helpers.js";
+import {
+  validateTableExists,
+  validateColumnInTable,
+  validateOrderByColumns,
+  resolveSelectColumns,
+  sanitizePartitionBy,
+  sanitizeOrderByExpr,
+} from "./helpers.js";
 
 /**
  * Running total (cumulative SUM)
  */
-export function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
+export function createRunningTotalTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_window_running_total",
     description:
@@ -77,4 +89,3 @@ export function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefini
     },
   };
 }
-

@@ -1,4 +1,7 @@
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
@@ -7,7 +10,13 @@ import { readOnly } from "../../../../utils/annotations.js";
 
 import { WindowRankOutputSchema } from "../../../sqlite/schemas/index.js";
 import { RankSchema } from "./schemas.js";
-import { validateTableExists, validateOrderByColumns, resolveSelectColumns, sanitizePartitionBy, sanitizeOrderByExpr } from "./helpers.js";
+import {
+  validateTableExists,
+  validateOrderByColumns,
+  resolveSelectColumns,
+  sanitizePartitionBy,
+  sanitizeOrderByExpr,
+} from "./helpers.js";
 
 /**
  * RANK/DENSE_RANK/PERCENT_RANK window functions
@@ -74,4 +83,3 @@ export function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
     },
   };
 }
-

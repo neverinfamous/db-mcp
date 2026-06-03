@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { resolve, join } from "node:path";
 import * as fs from "node:fs";
-import { assertSafeIoPath, parseAllowedIoRoots, IoPathError } from "../security-utils.js";
+import {
+  assertSafeIoPath,
+  parseAllowedIoRoots,
+  IoPathError,
+} from "../security-utils.js";
 
 // Mock fs to simulate realpathSync behavior
 vi.mock("node:fs", async () => {
@@ -41,14 +45,14 @@ describe("security-utils", () => {
     it("should reject a path outside all allowed roots", () => {
       const targetPath = join("/app/secrets", "passwords.txt");
       expect(() => assertSafeIoPath(targetPath, allowedRoots)).toThrow(
-        IoPathError
+        IoPathError,
       );
     });
 
     it("should reject path traversal using ..", () => {
       const targetPath = join("/app/data", "..", "secrets.txt");
       expect(() => assertSafeIoPath(targetPath, allowedRoots)).toThrow(
-        IoPathError
+        IoPathError,
       );
     });
 
@@ -57,55 +61,57 @@ describe("security-utils", () => {
       // Use string concatenation to ensure the `..` is preserved and not resolved by join()
       const targetPath = ["/app/data", "subdir", "..", "backup.db"].join("/");
       expect(() => assertSafeIoPath(targetPath, allowedRoots)).toThrow(
-        IoPathError
+        IoPathError,
       );
     });
 
     it("should reject null bytes", () => {
       const targetPath = join("/app/data", "backup\x00.db");
       expect(() => assertSafeIoPath(targetPath, allowedRoots)).toThrow(
-        IoPathError
+        IoPathError,
       );
     });
 
     it("should reject URI schemes", () => {
       const targetPath = "file:///app/data/backup.db";
       expect(() => assertSafeIoPath(targetPath, allowedRoots)).toThrow(
-        IoPathError
+        IoPathError,
       );
     });
 
     it("should reject hidden files", () => {
       const targetPath = join("/app/data", ".hidden.db");
       expect(() => assertSafeIoPath(targetPath, allowedRoots)).toThrow(
-        IoPathError
+        IoPathError,
       );
     });
 
     it("should reject invalid extensions when validateExtension is true", () => {
       const targetPath = join("/app/data", "backup.exe");
       expect(() => assertSafeIoPath(targetPath, allowedRoots, true)).toThrow(
-        IoPathError
+        IoPathError,
       );
     });
 
     it("should allow invalid extensions when validateExtension is false", () => {
       const targetPath = join("/app/data", "backup.exe");
-      expect(() => assertSafeIoPath(targetPath, allowedRoots, false)).not.toThrow();
+      expect(() =>
+        assertSafeIoPath(targetPath, allowedRoots, false),
+      ).not.toThrow();
     });
 
     it("should throw if no allowed roots are provided", () => {
       const targetPath = join("/app/data", "backup.db");
       expect(() => assertSafeIoPath(targetPath, [])).toThrow(IoPathError);
     });
-    
+
     it("should throw if the target is a symlink", () => {
       const targetPath = join("/app/data", "backup.db");
       vi.mocked(fs.lstatSync).mockReturnValueOnce({
         isSymbolicLink: () => true,
       } as fs.Stats);
       expect(() => assertSafeIoPath(targetPath, allowedRoots)).toThrow(
-        IoPathError
+        IoPathError,
       );
     });
   });
@@ -126,7 +132,7 @@ describe("security-utils", () => {
     it("should reject relative paths", () => {
       const raw = "relative/path";
       expect(() => parseAllowedIoRoots(raw)).toThrow(
-        "Invalid ALLOWED_IO_ROOTS configuration: All paths must be absolute"
+        "Invalid ALLOWED_IO_ROOTS configuration: All paths must be absolute",
       );
     });
 

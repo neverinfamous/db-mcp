@@ -41,7 +41,6 @@ jobs:
         with:
           persist-credentials: false
 
-
       - uses: pnpm/action-setup@v4
         with:
           version: 9.15.4
@@ -113,4 +112,3 @@ jobs:
             echo "Package not yet visible, retrying..."
           done
           echo "⚠️ Package may still be propagating to npm registry. This is informational only."
-

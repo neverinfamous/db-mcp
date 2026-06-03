@@ -12,7 +12,10 @@ import {
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { AnalyzeCsvSchemaSchema } from "../../../schemas/virtual.js";
 import { AnalyzeCsvSchemaOutputSchema } from "../../../schemas/virtual.js";
-import { validateSameDirPath, assertSafeIoPath } from "../../../../../utils/index.js";
+import {
+  validateSameDirPath,
+  assertSafeIoPath,
+} from "../../../../../utils/index.js";
 import { getAuthContext } from "../../../../../auth/auth-context.js";
 
 export function createAnalyzeCsvSchemaTool(

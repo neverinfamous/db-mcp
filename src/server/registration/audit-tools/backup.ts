@@ -659,4 +659,3 @@ export function registerAuditBackupTools(
     { module: "AUDIT" },
   );
 }
-

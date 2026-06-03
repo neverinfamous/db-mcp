@@ -30,33 +30,33 @@ Sandboxed JavaScript execution that exposes all 9 tool groups through the `sqlit
 
 Read/write queries, table and index management, and schema discovery.
 
-| MCP Tool Name             | Code Mode Name                | Description                                                                                                                          |
-| :------------------------ | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `sqlite_read_query`       | `sqlite.core.readQuery`       | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety. Supports cursor pagination and row streaming via `stream: true`.   |
-| `sqlite_write_query`      | `sqlite.core.writeQuery`      | Execute an INSERT, UPDATE, or DELETE query. Returns affected row count. Use parameter binding for safety.                            |
-| `sqlite_upsert`           | `sqlite.core.upsert`          | Insert a row or update it if it already exists (INSERT ON CONFLICT DO UPDATE / INSERT OR REPLACE).                                   |
-| `sqlite_batch_insert`     | `sqlite.core.batchInsert`     | Insert multiple rows in a single statement.                                                                                          |
-| `sqlite_count`            | `sqlite.core.count`           | Count rows in a table, optionally filtered by a WHERE clause.                                                                        |
-| `sqlite_exists`           | `sqlite.core.exists`          | Check whether rows exist in a table, optionally filtered by a WHERE clause.                                                          |
-| `sqlite_truncate`         | `sqlite.core.truncate`        | Truncate a table (executes DELETE FROM table).                                                                                       |
-| `sqlite_list_tables`      | `sqlite.core.listTables`      | List all tables and views in the database with their column counts.                                                                  |
-| `sqlite_describe_table`   | `sqlite.core.describeTable`   | Get detailed schema information for a table including columns, types, and constraints.                                               |
-| `sqlite_create_table`     | `sqlite.core.createTable`     | Create a new table in the database with specified columns and constraints.                                                           |
-| `sqlite_drop_table`       | `sqlite.core.dropTable`       | Drop (delete) a table from the database. This is irreversible!                                                                       |
-| `sqlite_get_indexes`      | `sqlite.core.getIndexes`      | List all indexes in the database, optionally filtered by table.                                                                      |
-| `sqlite_create_index`     | `sqlite.core.createIndex`     | Create an index on one or more columns to improve query performance.                                                                 |
-| `sqlite_drop_index`       | `sqlite.core.dropIndex`       | Drop (delete) an index from the database.                                                                                            |
-| `sqlite_list_triggers`    | `sqlite.core.listTriggers`    | List database triggers with optional table filter. Shows name, table, event type, timing, and full SQL.                              |
-| `sqlite_list_constraints` | `sqlite.core.listConstraints` | List all constraints for a table: primary key columns, foreign keys, unique indexes, and CHECK constraints.                          |
-| `sqlite_date_add`         | `sqlite.core.dateAdd`         | Add or subtract time from a date/time column using native SQLite datetime modifiers.                                                 |
-| `sqlite_date_diff`        | `sqlite.core.dateDiff`        | Calculate the difference between two date/time columns, returning the result in days, hours, minutes, or seconds.                    |
-| `sqlite_alter_table`      | `sqlite.core.alterTable`      | Alter a table's structure: add, rename, or drop columns, or rename the table. Validates constraints and SQLite-specific limitations. |
-| `sqlite_enable_versioning`| `sqlite.core.enableVersioning`| Add a `_version` column and a BEFORE UPDATE trigger to enforce optimistic concurrency control on a table.                            |
-| `sqlite_disable_versioning`| `sqlite.core.disableVersioning`| Remove the `_version` column and concurrency trigger from a versioned table.                                                       |
-| `sqlite_check_version`    | `sqlite.core.checkVersion`    | Get the current `_version` of a row. Returns null if row doesn't exist.                                                              |
-| `sqlite_conditional_update`| `sqlite.core.conditionalUpdate`| Safely update a row, incrementing `_version` atomically. Will fail if `expectedVersion` does not match the database state.         |
-| `sqlite_create_trigger`   | `sqlite.core.createTrigger`   | Create a database trigger with BEFORE/AFTER/INSTEAD OF timing, column-specific UPDATE triggers, and optional WHEN conditions.        |
-| `sqlite_drop_trigger`     | `sqlite.core.dropTrigger`     | Drop a database trigger with existence checking.                                                                                     |
+| MCP Tool Name               | Code Mode Name                  | Description                                                                                                                                                             |
+| :-------------------------- | :------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sqlite_read_query`         | `sqlite.core.readQuery`         | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety. Supports cursor pagination and row streaming via `stream: true`. |
+| `sqlite_write_query`        | `sqlite.core.writeQuery`        | Execute an INSERT, UPDATE, or DELETE query. Returns affected row count. Use parameter binding for safety.                                                               |
+| `sqlite_upsert`             | `sqlite.core.upsert`            | Insert a row or update it if it already exists (INSERT ON CONFLICT DO UPDATE / INSERT OR REPLACE).                                                                      |
+| `sqlite_batch_insert`       | `sqlite.core.batchInsert`       | Insert multiple rows in a single statement.                                                                                                                             |
+| `sqlite_count`              | `sqlite.core.count`             | Count rows in a table, optionally filtered by a WHERE clause.                                                                                                           |
+| `sqlite_exists`             | `sqlite.core.exists`            | Check whether rows exist in a table, optionally filtered by a WHERE clause.                                                                                             |
+| `sqlite_truncate`           | `sqlite.core.truncate`          | Truncate a table (executes DELETE FROM table).                                                                                                                          |
+| `sqlite_list_tables`        | `sqlite.core.listTables`        | List all tables and views in the database with their column counts.                                                                                                     |
+| `sqlite_describe_table`     | `sqlite.core.describeTable`     | Get detailed schema information for a table including columns, types, and constraints.                                                                                  |
+| `sqlite_create_table`       | `sqlite.core.createTable`       | Create a new table in the database with specified columns and constraints.                                                                                              |
+| `sqlite_drop_table`         | `sqlite.core.dropTable`         | Drop (delete) a table from the database. This is irreversible!                                                                                                          |
+| `sqlite_get_indexes`        | `sqlite.core.getIndexes`        | List all indexes in the database, optionally filtered by table.                                                                                                         |
+| `sqlite_create_index`       | `sqlite.core.createIndex`       | Create an index on one or more columns to improve query performance.                                                                                                    |
+| `sqlite_drop_index`         | `sqlite.core.dropIndex`         | Drop (delete) an index from the database.                                                                                                                               |
+| `sqlite_list_triggers`      | `sqlite.core.listTriggers`      | List database triggers with optional table filter. Shows name, table, event type, timing, and full SQL.                                                                 |
+| `sqlite_list_constraints`   | `sqlite.core.listConstraints`   | List all constraints for a table: primary key columns, foreign keys, unique indexes, and CHECK constraints.                                                             |
+| `sqlite_date_add`           | `sqlite.core.dateAdd`           | Add or subtract time from a date/time column using native SQLite datetime modifiers.                                                                                    |
+| `sqlite_date_diff`          | `sqlite.core.dateDiff`          | Calculate the difference between two date/time columns, returning the result in days, hours, minutes, or seconds.                                                       |
+| `sqlite_alter_table`        | `sqlite.core.alterTable`        | Alter a table's structure: add, rename, or drop columns, or rename the table. Validates constraints and SQLite-specific limitations.                                    |
+| `sqlite_enable_versioning`  | `sqlite.core.enableVersioning`  | Add a `_version` column and a BEFORE UPDATE trigger to enforce optimistic concurrency control on a table.                                                               |
+| `sqlite_disable_versioning` | `sqlite.core.disableVersioning` | Remove the `_version` column and concurrency trigger from a versioned table.                                                                                            |
+| `sqlite_check_version`      | `sqlite.core.checkVersion`      | Get the current `_version` of a row. Returns null if row doesn't exist.                                                                                                 |
+| `sqlite_conditional_update` | `sqlite.core.conditionalUpdate` | Safely update a row, incrementing `_version` atomically. Will fail if `expectedVersion` does not match the database state.                                              |
+| `sqlite_create_trigger`     | `sqlite.core.createTrigger`     | Create a database trigger with BEFORE/AFTER/INSTEAD OF timing, column-specific UPDATE triggers, and optional WHEN conditions.                                           |
+| `sqlite_drop_trigger`       | `sqlite.core.dropTrigger`       | Drop a database trigger with existence checking.                                                                                                                        |
 
 ---
 

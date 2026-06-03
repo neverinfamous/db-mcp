@@ -163,12 +163,16 @@ test.describe("Payload Contracts: CSV Tools", () => {
 
   test("sqlite_create_csv_table with out-of-bounds path → blocked", async ({}, testInfo) => {
     if (!csvAvailable) test.skip();
-    
+
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Use an absolute path that is explicitly outside the allowed roots (process.cwd())
-      const outOfBoundsPath = path.resolve("/", "tmp", "forbidden_mcp_test.csv");
-      
+      const outOfBoundsPath = path.resolve(
+        "/",
+        "tmp",
+        "forbidden_mcp_test.csv",
+      );
+
       const payload = await callToolAndParse(
         client,
         "sqlite_create_csv_table",
@@ -180,7 +184,9 @@ test.describe("Payload Contracts: CSV Tools", () => {
 
       expect(payload.success).toBe(false);
       expect(payload.code).toBe("SECURITY_ERROR");
-      expect(String(payload.error)).toContain("Directory path escapes allowed sandbox boundaries");
+      expect(String(payload.error)).toContain(
+        "Directory path escapes allowed sandbox boundaries",
+      );
     } finally {
       await client.close();
     }

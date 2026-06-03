@@ -26,7 +26,10 @@ import {
   KEEP_PREFIX_GROUPS,
 } from "./api-constants.js";
 import { scopesGrantToolAccess } from "../auth/scopes/enforcement.js";
-import { ValidationError, AuthorizationError } from "../utils/errors/classes.js";
+import {
+  ValidationError,
+  AuthorizationError,
+} from "../utils/errors/classes.js";
 
 /**
  * Convert tool name to camelCase method name.

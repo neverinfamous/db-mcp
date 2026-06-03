@@ -22,7 +22,6 @@ jobs:
         with:
           persist-credentials: false
 
-
       - uses: pnpm/action-setup@v4
         with:
           version: 9.15.4
@@ -58,4 +57,3 @@ jobs:
           path: playwright-report/
           if-no-files-found: warn
           retention-days: 1
-

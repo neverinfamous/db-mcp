@@ -192,16 +192,16 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Check for sandbox timeout
-        if (!result.success && typeof result.error === "string" && /script execution timed out/i.test(result.error)) {
+        if (
+          !result.success &&
+          typeof result.error === "string" &&
+          /script execution timed out/i.test(result.error)
+        ) {
           return formatHandlerError(
-            new TimeoutError(
-              "Code execution timed out",
-              "CODEMODE_TIMEOUT",
-              {
-                suggestion:
-                  "Reduce code complexity or increase the timeout parameter (max 30000ms). Break complex logic into smaller execute_code calls.",
-              },
-            ),
+            new TimeoutError("Code execution timed out", "CODEMODE_TIMEOUT", {
+              suggestion:
+                "Reduce code complexity or increase the timeout parameter (max 30000ms). Break complex logic into smaller execute_code calls.",
+            }),
           );
         }
 
@@ -233,15 +233,11 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
           /script execution timed out/i.test(error.message)
         ) {
           return formatHandlerError(
-            new TimeoutError(
-              "Code execution timed out",
-              "CODEMODE_TIMEOUT",
-              {
-                suggestion:
-                  "Reduce code complexity or increase the timeout parameter (max 30000ms). Break complex logic into smaller execute_code calls.",
-                cause: error,
-              },
-            ),
+            new TimeoutError("Code execution timed out", "CODEMODE_TIMEOUT", {
+              suggestion:
+                "Reduce code complexity or increase the timeout parameter (max 30000ms). Break complex logic into smaller execute_code calls.",
+              cause: error,
+            }),
           );
         }
 

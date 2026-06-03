@@ -370,4 +370,3 @@ jobs:
       id-token: write
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-

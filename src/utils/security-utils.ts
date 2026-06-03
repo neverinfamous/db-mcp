@@ -1,4 +1,12 @@
-import { resolve, dirname, join, relative, isAbsolute, sep, parse as pathParse } from "node:path";
+import {
+  resolve,
+  dirname,
+  join,
+  relative,
+  isAbsolute,
+  sep,
+  parse as pathParse,
+} from "node:path";
 import { realpathSync, existsSync, lstatSync } from "node:fs";
 import { DbMcpError } from "./errors/base.js";
 import { ErrorCategory } from "./errors/categories.js";
@@ -159,7 +167,9 @@ export function assertSafeIoPath(
  * @returns Array of absolute paths
  * @throws Error if invalid or not absolute
  */
-export function parseAllowedIoRoots(raw: string | undefined): string[] | undefined {
+export function parseAllowedIoRoots(
+  raw: string | undefined,
+): string[] | undefined {
   if (!raw) return undefined;
 
   if (raw.length > 51200) {
@@ -173,7 +183,10 @@ export function parseAllowedIoRoots(raw: string | undefined): string[] | undefin
   try {
     if (raw.trim().startsWith("[")) {
       const parsed: unknown = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.every((p) => typeof p === "string" && isAbsolute(p))) {
+      if (
+        Array.isArray(parsed) &&
+        parsed.every((p) => typeof p === "string" && isAbsolute(p))
+      ) {
         paths = parsed as string[];
       } else {
         throw new ConfigurationError("Must be an array of absolute paths");
@@ -183,16 +196,20 @@ export function parseAllowedIoRoots(raw: string | undefined): string[] | undefin
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
-        
+
       if (paths.some((p) => !isAbsolute(p))) {
         throw new ConfigurationError("All paths must be absolute");
       }
     }
   } catch (e: unknown) {
     const errName = e instanceof Error ? e.message : String(e);
-    throw new ConfigurationError(`Invalid ALLOWED_IO_ROOTS configuration: ${errName}`, "CONFIG_ERROR", {
-      cause: e instanceof Error ? e : undefined,
-    });
+    throw new ConfigurationError(
+      `Invalid ALLOWED_IO_ROOTS configuration: ${errName}`,
+      "CONFIG_ERROR",
+      {
+        cause: e instanceof Error ? e : undefined,
+      },
+    );
   }
 
   for (const p of paths) {

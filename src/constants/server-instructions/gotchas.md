@@ -5,7 +5,7 @@
 1. **CSV virtual tables & Backups**: Require ABSOLUTE file paths. Operations will be strictly blocked if paths do not fall within the explicitly authorized `ALLOWED_IO_ROOTS` directory list. Unconfigured stdio transports default to no filesystem access.
 2. **Resource Subscriptions**: The `sqlite://schema` and `sqlite://health` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
 3. **HTTP Session Timeouts**: Stateful HTTP sessions automatically expire after 30 minutes of inactivity, or 24 hours total. Sessions are swept automatically; ensure client workflows re-authenticate or handle broken sessions gracefully.
-4. **Structured Errors**: Execution timeouts surface as recoverable `TimeoutError` (category: `timeout`). Rate limit violations surface as `RateLimitError` (category: `rate_limit`). Use this metadata to programmatically retry or backoff.
+4. **Structured Errors**: The server returns strongly-typed JSON errors instead of generic stack traces. Execution timeouts surface as recoverable `TimeoutError` (category: `timeout`). Rate limit violations surface as `RateLimitError` (category: `rate_limit`). Input/schema rejections surface as `ValidationError` (category: `validation`). Use this metadata (`code`, `category`, `recoverable`) to programmatically retry or backoff.
 
 ## WASM vs Native
 

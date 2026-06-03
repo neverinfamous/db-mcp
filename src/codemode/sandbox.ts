@@ -15,7 +15,11 @@ import {
   type SandboxResult,
 } from "./types.js";
 import { transformAutoReturn } from "./auto-return.js";
-import { ValidationError, RateLimitError, InternalError } from "../utils/errors/classes.js";
+import {
+  ValidationError,
+  RateLimitError,
+  InternalError,
+} from "../utils/errors/classes.js";
 
 /**
  * A sandboxed execution context using isolated-vm
@@ -83,7 +87,9 @@ export class CodeModeSandbox {
           return;
         const n = node as Record<string, unknown>;
         if (n["type"] === "WithStatement") {
-          throw new ValidationError("'with' statements are forbidden in sandbox code.");
+          throw new ValidationError(
+            "'with' statements are forbidden in sandbox code.",
+          );
         }
         if (
           n["type"] === "MemberExpression" &&
@@ -171,7 +177,8 @@ export class CodeModeSandbox {
       }
 
       const context = vm.createContext(sandboxEnv);
-      vm.runInContext(`
+      vm.runInContext(
+        `
         const proxyHandler = {
           get(target, prop, receiver) {
             if (typeof prop === "string" && !(prop in target)) {
@@ -189,7 +196,9 @@ export class CodeModeSandbox {
             sqlite[key] = new Proxy(sqlite[key], proxyHandler);
           }
         }
-      `, context);
+      `,
+        context,
+      );
       const startTime = performance.now();
       let result: unknown;
       let success = true;
@@ -286,9 +295,13 @@ export class CodeModeSandbox {
                     methodFn as (...args: unknown[]) => Promise<unknown>
                   )(...args);
                 } catch (e) {
-                  throw new InternalError(e instanceof Error ? e.message : String(e), "RPC_EXECUTION_ERROR", {
-                    cause: e instanceof Error ? e : undefined,
-                  });
+                  throw new InternalError(
+                    e instanceof Error ? e.message : String(e),
+                    "RPC_EXECUTION_ERROR",
+                    {
+                      cause: e instanceof Error ? e : undefined,
+                    },
+                  );
                 }
               });
               refCleanup.push(fnRef);
@@ -313,9 +326,13 @@ export class CodeModeSandbox {
                 groupValue as (...args: unknown[]) => Promise<unknown>
               )(...args);
             } catch (e) {
-              throw new InternalError(e instanceof Error ? e.message : String(e), "RPC_EXECUTION_ERROR", {
-                cause: e instanceof Error ? e : undefined,
-              });
+              throw new InternalError(
+                e instanceof Error ? e.message : String(e),
+                "RPC_EXECUTION_ERROR",
+                {
+                  cause: e instanceof Error ? e : undefined,
+                },
+              );
             }
           });
           refCleanup.push(fnRef);
@@ -444,7 +461,10 @@ export class SandboxPool {
 
   static getIvmLib(): typeof ivm {
     if (!SandboxPool.cachedIvmLib) {
-      throw new InternalError("ivmLib not initialized", "IVMLIB_NOT_INITIALIZED");
+      throw new InternalError(
+        "ivmLib not initialized",
+        "IVMLIB_NOT_INITIALIZED",
+      );
     }
     return SandboxPool.cachedIvmLib;
   }
@@ -475,7 +495,7 @@ export class SandboxPool {
     if (this.inUseCount >= this.options.maxInstances) {
       throw new InternalError(
         `Sandbox pool exhausted (max ${this.options.maxInstances})`,
-        "POOL_EXHAUSTED"
+        "POOL_EXHAUSTED",
       );
     }
 

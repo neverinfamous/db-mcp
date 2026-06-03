@@ -1,4 +1,7 @@
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
@@ -7,12 +10,20 @@ import { readOnly } from "../../../../utils/annotations.js";
 
 import { WindowRowNumberOutputSchema } from "../../../sqlite/schemas/index.js";
 import { RowNumberSchema } from "./schemas.js";
-import { validateTableExists, validateOrderByColumns, resolveSelectColumns, sanitizePartitionBy, sanitizeOrderByExpr } from "./helpers.js";
+import {
+  validateTableExists,
+  validateOrderByColumns,
+  resolveSelectColumns,
+  sanitizePartitionBy,
+  sanitizeOrderByExpr,
+} from "./helpers.js";
 
 /**
  * ROW_NUMBER window function
  */
-export function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
+export function createRowNumberTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_window_row_number",
     description:
@@ -72,4 +83,3 @@ export function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinitio
     },
   };
 }
-

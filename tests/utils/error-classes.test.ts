@@ -239,9 +239,7 @@ describe("ConflictError", () => {
       suggestion: "Re-read the current row version and retry",
       cause,
     });
-    expect(err.suggestion).toBe(
-      "Re-read the current row version and retry",
-    );
+    expect(err.suggestion).toBe("Re-read the current row version and retry");
     expect(err.cause).toBe(cause);
   });
 

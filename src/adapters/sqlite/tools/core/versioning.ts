@@ -1,7 +1,15 @@
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
-import { formatHandlerError, ValidationError, ConflictError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+  ConflictError,
+  ResourceNotFoundError,
+} from "../../../../utils/errors/index.js";
 import { sanitizeIdentifier } from "../../../../utils/identifiers.js";
 import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { validateTableExists } from "./convenience-schemas.js";
@@ -19,10 +27,13 @@ import {
 /**
  * Enable Optimistic Concurrency Control on a table.
  */
-export function createEnableVersioningTool(adapter: SqliteAdapter): ToolDefinition {
+export function createEnableVersioningTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_enable_versioning",
-    description: "Enable optimistic concurrency control (OCC) on a table. Adds a _version column and an auto-increment trigger.",
+    description:
+      "Enable optimistic concurrency control (OCC) on a table. Adds a _version column and an auto-increment trigger.",
     group: "core",
     inputSchema: EnableVersioningSchema,
     outputSchema: EnableVersioningOutputSchema,
@@ -44,13 +55,19 @@ export function createEnableVersioningTool(adapter: SqliteAdapter): ToolDefiniti
 
       try {
         // Check if _version already exists
-        const pragmaCheck = await adapter.executeReadQuery(`PRAGMA table_info(${safeTable})`);
-        const hasVersionColumn = (pragmaCheck.rows ?? []).some((col: Record<string, unknown>) => col["name"] === "_version");
+        const pragmaCheck = await adapter.executeReadQuery(
+          `PRAGMA table_info(${safeTable})`,
+        );
+        const hasVersionColumn = (pragmaCheck.rows ?? []).some(
+          (col: Record<string, unknown>) => col["name"] === "_version",
+        );
 
         const statements: string[] = [];
-        
+
         if (!hasVersionColumn) {
-          statements.push(`ALTER TABLE ${safeTable} ADD COLUMN _version INTEGER NOT NULL DEFAULT 1;`);
+          statements.push(
+            `ALTER TABLE ${safeTable} ADD COLUMN _version INTEGER NOT NULL DEFAULT 1;`,
+          );
         }
 
         // Create the trigger
@@ -71,8 +88,8 @@ END;`;
 
         return {
           success: true,
-          message: hasVersionColumn 
-            ? `Versioning already active on '${input.table}', trigger ensured.` 
+          message: hasVersionColumn
+            ? `Versioning already active on '${input.table}', trigger ensured.`
             : `Versioning enabled on '${input.table}'. Added _version column and trigger.`,
           sql,
           alreadyEnabled: hasVersionColumn,
@@ -87,10 +104,13 @@ END;`;
 /**
  * Disable Optimistic Concurrency Control on a table.
  */
-export function createDisableVersioningTool(adapter: SqliteAdapter): ToolDefinition {
+export function createDisableVersioningTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_disable_versioning",
-    description: "Disable optimistic concurrency control (OCC) on a table. Drops the _version column and its trigger.",
+    description:
+      "Disable optimistic concurrency control (OCC) on a table. Drops the _version column and its trigger.",
     group: "core",
     inputSchema: DisableVersioningSchema,
     outputSchema: DisableVersioningOutputSchema,
@@ -107,21 +127,37 @@ export function createDisableVersioningTool(adapter: SqliteAdapter): ToolDefinit
       const safeTable = sanitizeIdentifier(input.table);
       const triggerName = sanitizeIdentifier(`_mcp_version_${input.table}`);
 
-      const tableCheck = await adapter.executeReadQuery(`SELECT 1 FROM pragma_table_list(?) WHERE type IN ('table', 'view') LIMIT 1`, [input.table]);
+      const tableCheck = await adapter.executeReadQuery(
+        `SELECT 1 FROM pragma_table_list(?) WHERE type IN ('table', 'view') LIMIT 1`,
+        [input.table],
+      );
       if (!tableCheck.rows || tableCheck.rows.length === 0) {
         if (input.ifExists) {
-          return { success: true, message: `Table '${input.table}' does not exist (no changes made).`, sql: "" };
+          return {
+            success: true,
+            message: `Table '${input.table}' does not exist (no changes made).`,
+            sql: "",
+          };
         }
-        return { ...formatHandlerError(new ValidationError(`Table '${input.table}' does not exist.`)), sql: "" };
+        return {
+          ...formatHandlerError(
+            new ValidationError(`Table '${input.table}' does not exist.`),
+          ),
+          sql: "",
+        };
       }
 
       try {
-        const pragmaCheck = await adapter.executeReadQuery(`PRAGMA table_info(${safeTable})`);
-        const hasVersionColumn = (pragmaCheck.rows ?? []).some((col: Record<string, unknown>) => col["name"] === "_version");
+        const pragmaCheck = await adapter.executeReadQuery(
+          `PRAGMA table_info(${safeTable})`,
+        );
+        const hasVersionColumn = (pragmaCheck.rows ?? []).some(
+          (col: Record<string, unknown>) => col["name"] === "_version",
+        );
 
         const statements: string[] = [];
         statements.push(`DROP TRIGGER IF EXISTS ${triggerName};`);
-        
+
         if (hasVersionColumn) {
           statements.push(`ALTER TABLE ${safeTable} DROP COLUMN _version;`);
         }
@@ -134,8 +170,8 @@ export function createDisableVersioningTool(adapter: SqliteAdapter): ToolDefinit
 
         return {
           success: true,
-          message: hasVersionColumn 
-            ? `Versioning disabled on '${input.table}'. Dropped _version column and trigger.` 
+          message: hasVersionColumn
+            ? `Versioning disabled on '${input.table}'. Dropped _version column and trigger.`
             : `Versioning already disabled on '${input.table}', trigger dropped if existed.`,
           sql,
         };
@@ -152,7 +188,8 @@ export function createDisableVersioningTool(adapter: SqliteAdapter): ToolDefinit
 export function createCheckVersionTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_check_version",
-    description: "Read the current _version of a specific row for optimistic concurrency control.",
+    description:
+      "Read the current _version of a specific row for optimistic concurrency control.",
     group: "core",
     inputSchema: CheckVersionSchema,
     outputSchema: CheckVersionOutputSchema,
@@ -177,14 +214,22 @@ export function createCheckVersionTool(adapter: SqliteAdapter): ToolDefinition {
         const result = await adapter.executeReadQuery(sql, [input.rowId]);
 
         if (!result.rows || result.rows.length === 0) {
-          return formatHandlerError(new ResourceNotFoundError(`Row not found in table '${input.table}' with ${safeIdCol} = ${input.rowId}`));
+          return formatHandlerError(
+            new ResourceNotFoundError(
+              `Row not found in table '${input.table}' with ${safeIdCol} = ${input.rowId}`,
+            ),
+          );
         }
 
         const row = result.rows[0];
         if (row && typeof row["_version"] === "number") {
           return { success: true, version: row["_version"], row };
         } else {
-          return formatHandlerError(new ValidationError(`Table '${input.table}' does not appear to have versioning enabled (missing _version column).`));
+          return formatHandlerError(
+            new ValidationError(
+              `Table '${input.table}' does not appear to have versioning enabled (missing _version column).`,
+            ),
+          );
         }
       } catch (error: unknown) {
         return formatHandlerError(error);
@@ -196,10 +241,13 @@ export function createCheckVersionTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Conditionally update a row if the version matches.
  */
-export function createConditionalUpdateTool(adapter: SqliteAdapter): ToolDefinition {
+export function createConditionalUpdateTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_conditional_update",
-    description: "Update a row only if its _version matches expectedVersion. Prevents lost updates in multi-agent environments.",
+    description:
+      "Update a row only if its _version matches expectedVersion. Prevents lost updates in multi-agent environments.",
     group: "core",
     inputSchema: ConditionalUpdateSchema,
     outputSchema: ConditionalUpdateOutputSchema,
@@ -219,22 +267,28 @@ export function createConditionalUpdateTool(adapter: SqliteAdapter): ToolDefinit
       const safeTable = sanitizeIdentifier(input.table);
       const columns = Object.keys(input.data);
       if (columns.length === 0) {
-        return formatHandlerError(new ValidationError("Update data cannot be empty"));
+        return formatHandlerError(
+          new ValidationError("Update data cannot be empty"),
+        );
       }
 
       if (input.conditions.length === 0) {
-        return formatHandlerError(new ValidationError("Conditions are required to identify the row"));
+        return formatHandlerError(
+          new ValidationError("Conditions are required to identify the row"),
+        );
       }
 
       try {
         const queryParams: unknown[] = [];
         const safeColumns = columns.map(sanitizeIdentifier);
-        const setClauses = safeColumns.map(c => `${c} = ?`).join(", ");
+        const setClauses = safeColumns.map((c) => `${c} = ?`).join(", ");
         queryParams.push(...Object.values(input.data));
 
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+        );
         queryParams.push(...whereParams);
-        
+
         // Append version guard
         queryParams.push(input.expectedVersion);
 
@@ -244,31 +298,51 @@ export function createConditionalUpdateTool(adapter: SqliteAdapter): ToolDefinit
         if (result.rowsAffected === 0) {
           // Check if row exists at all to differentiate NotFound from Conflict
           const checkSql = `SELECT _version FROM ${safeTable} WHERE ${whereSql}`;
-          const checkResult = await adapter.executeReadQuery(checkSql, whereParams);
+          const checkResult = await adapter.executeReadQuery(
+            checkSql,
+            whereParams,
+          );
 
           if (!checkResult.rows || checkResult.rows.length === 0) {
-            return formatHandlerError(new ResourceNotFoundError("Row not found matching the provided conditions"));
+            return formatHandlerError(
+              new ResourceNotFoundError(
+                "Row not found matching the provided conditions",
+              ),
+            );
           }
 
           const currentVersionRaw = checkResult.rows[0]?.["_version"];
           if (currentVersionRaw === undefined || currentVersionRaw === null) {
-             return formatHandlerError(new ValidationError(`Table '${input.table}' does not appear to have versioning enabled (missing _version column).`));
+            return formatHandlerError(
+              new ValidationError(
+                `Table '${input.table}' does not appear to have versioning enabled (missing _version column).`,
+              ),
+            );
           }
 
           const currentVersion = Number(currentVersionRaw);
-          return formatHandlerError(new ConflictError(
-            `Version conflict: expected version ${input.expectedVersion} but row has version ${currentVersion}. Re-read the row and retry.`,
-            "CONFLICT_ERROR",
-            {
-              conflictType: "version_mismatch",
-              suggestion: "Re-read the row to get the current version, then retry the update.",
-              details: { table: input.table, expectedVersion: input.expectedVersion, currentVersion }
-            }
-          ));
+          return formatHandlerError(
+            new ConflictError(
+              `Version conflict: expected version ${input.expectedVersion} but row has version ${currentVersion}. Re-read the row and retry.`,
+              "CONFLICT_ERROR",
+              {
+                conflictType: "version_mismatch",
+                suggestion:
+                  "Re-read the row to get the current version, then retry the update.",
+                details: {
+                  table: input.table,
+                  expectedVersion: input.expectedVersion,
+                  currentVersion,
+                },
+              },
+            ),
+          );
         }
 
         const newRow = result.rows?.[0];
-        const currentVersion = newRow ? (newRow["_version"] as number) : undefined;
+        const currentVersion = newRow
+          ? (newRow["_version"] as number)
+          : undefined;
 
         return {
           success: true,

@@ -36,10 +36,7 @@ import { getPromptDefinitions } from "./prompts/index.js";
 import { executeRead, executeWrite, executeGeneral } from "./query-executor.js";
 
 import { isDDL } from "../sqlite-helpers.js";
-import {
-  ReadWriteLock,
-  type ReadWriteLockStats,
-} from "./read-write-lock.js";
+import { ReadWriteLock, type ReadWriteLockStats } from "./read-write-lock.js";
 
 import {
   connectSqliteDatabase,
@@ -456,7 +453,9 @@ export class SqliteAdapter extends DatabaseAdapter {
     const isRead =
       trimmed.startsWith("SELECT") ||
       trimmed.startsWith("EXPLAIN") ||
-      (trimmed.startsWith("PRAGMA") && !sql.includes("=") && !sql.includes("("));
+      (trimmed.startsWith("PRAGMA") &&
+        !sql.includes("=") &&
+        !sql.includes("("));
 
     const release = isRead
       ? await this.rwLock.acquireRead()

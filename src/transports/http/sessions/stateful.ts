@@ -53,7 +53,10 @@ function isValidSessionId(id: string | undefined): id is string {
 /**
  * Helper to update session activity timestamp
  */
-export function touchSession(state: HttpTransportState, sessionId: string): void {
+export function touchSession(
+  state: HttpTransportState,
+  sessionId: string,
+): void {
   state.sessionLastActivity.set(sessionId, Date.now());
 }
 
@@ -187,10 +190,7 @@ export function setupStatefulEndpoints(
           httpTransport = existingTransport;
         } else if (sessionId === undefined && isNewSessionRequest(req.body)) {
           const maxSessions = state.config.maxSessions ?? 1000;
-          if (
-            state.transports.size + state.sseTransports.size >=
-            maxSessions
-          ) {
+          if (state.transports.size + state.sseTransports.size >= maxSessions) {
             res.status(429).json({
               jsonrpc: "2.0",
               error: {
@@ -295,7 +295,7 @@ export function setupStatefulEndpoints(
               release();
             }
           });
-          
+
           const activeSid = newTransport.sessionId;
           try {
             if (activeSid) {
@@ -417,7 +417,10 @@ export function setupStatefulEndpoints(
         try {
           const count = state.sessionLocks.get(sessionId) ?? 0;
           state.sessionLocks.set(sessionId, count + 1);
-          await httpTransport.handleRequest(asIncoming(req), asServerResponse(res));
+          await httpTransport.handleRequest(
+            asIncoming(req),
+            asServerResponse(res),
+          );
         } finally {
           const count = state.sessionLocks.get(sessionId) ?? 0;
           if (count > 1) {
@@ -461,7 +464,10 @@ export function setupStatefulEndpoints(
         try {
           const count = state.sessionLocks.get(sessionId) ?? 0;
           state.sessionLocks.set(sessionId, count + 1);
-          await httpTransport.handleRequest(asIncoming(req), asServerResponse(res));
+          await httpTransport.handleRequest(
+            asIncoming(req),
+            asServerResponse(res),
+          );
         } finally {
           const count = state.sessionLocks.get(sessionId) ?? 0;
           if (count > 1) {

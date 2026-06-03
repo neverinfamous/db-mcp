@@ -92,7 +92,6 @@ jobs:
         with:
           persist-credentials: false
 
-
       - uses: pnpm/action-setup@v4
         with:
           version: 9.15.4
@@ -137,4 +136,3 @@ jobs:
           echo "ℹ️  Overrides are intentional CVE patches for transitive dependencies."
           echo "   Remove an override only after confirming the parent dependency"
           echo "   has adopted the fix and pnpm audit passes without it."
-

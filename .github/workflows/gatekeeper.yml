@@ -65,4 +65,3 @@ jobs:
       DOCKER_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
       DOCKERHUB_DESC_TOKEN: ${{ secrets.DOCKERHUB_DESC_TOKEN || secrets.DOCKER_PASSWORD }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-

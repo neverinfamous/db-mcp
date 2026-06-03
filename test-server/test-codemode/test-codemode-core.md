@@ -95,7 +95,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
-  
 
 ---
 
@@ -297,13 +296,19 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ```javascript
 // Test missing expectedVersion ConflictError
-await sqlite.core.createTable({ table: "temp_occ_err", columns: [{name: "id", type: "INTEGER", primaryKey: true}]});
+await sqlite.core.createTable({
+  table: "temp_occ_err",
+  columns: [{ name: "id", type: "INTEGER", primaryKey: true }],
+});
 await sqlite.core.writeQuery("INSERT INTO temp_occ_err (id) VALUES (1)");
-await sqlite.core.enableVersioning({table: "temp_occ_err"});
-const res = await sqlite.core.writeQuery("UPDATE temp_occ_err SET id=2 WHERE id=1");
+await sqlite.core.enableVersioning({ table: "temp_occ_err" });
+const res = await sqlite.core.writeQuery(
+  "UPDATE temp_occ_err SET id=2 WHERE id=1",
+);
 // The writeQuery call should THROW a structured ConflictError indicating expectedVersion is required.
 // Note: If you don't wrap it in try/catch in Code Mode, the sandbox execution returns the structured error naturally.
 ```
+
 🔴 76. Ensure the `temp_occ_err` code mode snippet returns `{success: false}` with ConflictError details, then drop `temp_occ_err`.
 
 ## Phase 3: Multi-Step Workflow (4 tests)

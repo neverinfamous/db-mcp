@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { setupStatefulEndpoints, touchSession } from "../../src/transports/http/sessions/stateful.js";
+import {
+  setupStatefulEndpoints,
+  touchSession,
+} from "../../src/transports/http/sessions/stateful.js";
 import type { HttpTransportState } from "../../src/transports/http/types.js";
 import {
   SESSION_TIMEOUT_MS,
@@ -62,82 +65,90 @@ describe("Session Timeout Enforcement", () => {
 
   it("should expire idle HTTP sessions after SESSION_TIMEOUT_MS", () => {
     const sessionId = "test-session-1";
-    
+
     // Setup a mock transport
-    const mockTransport = { close: vi.fn() } as unknown as StreamableHTTPServerTransport;
+    const mockTransport = {
+      close: vi.fn(),
+    } as unknown as StreamableHTTPServerTransport;
     state.transports.set(sessionId, mockTransport);
-    
+
     // Simulate activity just now
     touchSession(state, sessionId);
-    
+
     // Advance time by 29 minutes (less than timeout)
     vi.advanceTimersByTime(29 * 60 * 1000);
-    
+
     // Session should still exist
     expect(state.transports.has(sessionId)).toBe(true);
     expect(mockTransport.close).not.toHaveBeenCalled();
-    
+
     // Advance past timeout + sweep interval
     vi.advanceTimersByTime(2 * 60 * 1000); // Total 31 mins
-    
+
     // Session should be closed (timer calls close, the onclose handler in real life removes from map)
     expect(mockTransport.close).toHaveBeenCalled();
   });
 
   it("should not expire active sessions", () => {
     const sessionId = "test-session-2";
-    const mockTransport = { close: vi.fn() } as unknown as StreamableHTTPServerTransport;
+    const mockTransport = {
+      close: vi.fn(),
+    } as unknown as StreamableHTTPServerTransport;
     state.transports.set(sessionId, mockTransport);
-    
+
     touchSession(state, sessionId);
-    
+
     // Advance 20 mins
     vi.advanceTimersByTime(20 * 60 * 1000);
-    
+
     // Touch session (activity!)
     touchSession(state, sessionId);
-    
+
     // Advance another 20 mins (total 40 mins since creation, but only 20 mins idle)
     vi.advanceTimersByTime(20 * 60 * 1000);
-    
+
     expect(mockTransport.close).not.toHaveBeenCalled();
   });
 
   it("should skip sessions with active locks (in-flight requests)", () => {
     const sessionId = "test-session-3";
-    const mockTransport = { close: vi.fn() } as unknown as StreamableHTTPServerTransport;
+    const mockTransport = {
+      close: vi.fn(),
+    } as unknown as StreamableHTTPServerTransport;
     state.transports.set(sessionId, mockTransport);
-    
+
     touchSession(state, sessionId);
-    
+
     // Set lock
     state.sessionLocks.set(sessionId, 1);
-    
+
     // Advance past timeout
     vi.advanceTimersByTime(31 * 60 * 1000);
-    
+
     // Should NOT be closed because it's locked
     expect(mockTransport.close).not.toHaveBeenCalled();
-    
+
     // Release lock
     state.sessionLocks.delete(sessionId);
-    
+
     // Advance to next sweep
     vi.advanceTimersByTime(SESSION_SWEEP_INTERVAL_MS);
-    
+
     // Now it should be closed
     expect(mockTransport.close).toHaveBeenCalled();
   });
 
   it("should expire idle SSE sessions", () => {
     const sessionId = "test-sse-1";
-    const mockSseTransport = { close: vi.fn() } as unknown as SSEServerTransport;
+    const mockSseTransport = {
+      close: vi.fn(),
+    } as unknown as SSEServerTransport;
     state.sseTransports.set(sessionId, mockSseTransport);
-    
+
     touchSession(state, sessionId);
-    
+
     vi.advanceTimersByTime(31 * 60 * 1000);
-    
+
     expect(mockSseTransport.close).toHaveBeenCalled();
   });
 });

@@ -204,15 +204,17 @@ export const ReadQuerySchema = z.object({
     .default(false)
     .describe(
       "Stream results row-by-row via MCP progress notifications instead of returning all rows in the response. " +
-      "Requires a progressToken in the request _meta. Falls back to normal behavior if unavailable. " +
-      "The final response contains rowCount and metadata but not the rows themselves."
+        "Requires a progressToken in the request _meta. Falls back to normal behavior if unavailable. " +
+        "The final response contains rowCount and metadata but not the rows themselves.",
     ),
   chunkSize: z
     .number()
     .int()
     .positive()
     .optional()
-    .describe("When streaming, the number of rows to include in each progress notification chunk (default 10)"),
+    .describe(
+      "When streaming, the number of rows to include in each progress notification chunk (default 10)",
+    ),
 });
 
 export const WriteQuerySchema = z.object({
@@ -770,9 +772,17 @@ export const CheckVersionOutputSchema = z
 export const ConditionalUpdateSchema = z.object({
   table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  data: z.record(z.string(), z.unknown()).describe("Column-value pairs to update"),
-  conditions: z.array(WhereConditionSchema).describe("WHERE conditions to locate the row (e.g. id = 1)"),
-  expectedVersion: z.number().int().positive().describe("The _version value expected to be currently in the database"),
+  data: z
+    .record(z.string(), z.unknown())
+    .describe("Column-value pairs to update"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .describe("WHERE conditions to locate the row (e.g. id = 1)"),
+  expectedVersion: z
+    .number()
+    .int()
+    .positive()
+    .describe("The _version value expected to be currently in the database"),
 });
 
 export const ConditionalUpdateOutputSchema = z

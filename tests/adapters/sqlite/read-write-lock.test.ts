@@ -63,12 +63,12 @@ describe("ReadWriteLock", () => {
 
     // Release writer 1
     w1();
-    
+
     // Writers have priority over readers when waiting
     const w2 = await w2Promise;
     expect(w2Acquired).toBe(true);
     expect(r1Acquired).toBe(false);
-    
+
     w2();
     const r1 = await r1Promise;
     expect(r1Acquired).toBe(true);

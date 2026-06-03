@@ -320,8 +320,8 @@ src/
 
 ### Available Scripts
 
-| Script                  | Purpose                                              |
-| ----------------------- | ---------------------------------------------------- |
+| Script                   | Purpose                                              |
+| ------------------------ | ---------------------------------------------------- |
 | `pnpm run build`         | Production build via tsc                             |
 | `pnpm run dev`           | Watch mode (incremental builds)                      |
 | `pnpm run check`         | **Quality gate** — lint + typecheck (run before PRs) |

@@ -34,4 +34,3 @@ export function validateDdl(sql: string): void {
     );
   }
 }
-

@@ -1,4 +1,7 @@
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
@@ -7,12 +10,21 @@ import { readOnly } from "../../../../utils/annotations.js";
 import { resolveAliases } from "../../../sqlite/types.js";
 import { WindowMovingAvgOutputSchema } from "../../../sqlite/schemas/index.js";
 import { MovingAverageSchema } from "./schemas.js";
-import { validateTableExists, validateColumnInTable, validateOrderByColumns, resolveSelectColumns, sanitizePartitionBy, sanitizeOrderByExpr } from "./helpers.js";
+import {
+  validateTableExists,
+  validateColumnInTable,
+  validateOrderByColumns,
+  resolveSelectColumns,
+  sanitizePartitionBy,
+  sanitizeOrderByExpr,
+} from "./helpers.js";
 
 /**
  * Moving average
  */
-export function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
+export function createMovingAverageTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_window_moving_avg",
     description:
@@ -79,4 +91,3 @@ export function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefin
     },
   };
 }
-

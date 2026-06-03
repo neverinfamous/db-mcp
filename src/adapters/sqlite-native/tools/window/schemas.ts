@@ -145,4 +145,3 @@ export const NtileSchema = z.object({
     z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
-

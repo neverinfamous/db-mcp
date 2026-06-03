@@ -1,21 +1,21 @@
 ---
-description: 'Audit README and DOCKER_README for consistency and accuracy on every code PR'
+description: "Audit README and DOCKER_README for consistency and accuracy on every code PR"
 private: true
-labels: ['documentation', 'automation']
+labels: ["documentation", "automation"]
 
 on:
   pull_request:
     types: [opened, ready_for_review]
     paths:
-      ['src/**', 'package.json', 'Dockerfile', 'tsconfig*.json', 'scripts/**']
+      ["src/**", "package.json", "Dockerfile", "tsconfig*.json", "scripts/**"]
 
 engine:
-  id: 'copilot'
-  model: 'claude-opus-4-20250514'
+  id: "copilot"
+  model: "claude-opus-4-20250514"
 
 network:
   allowed:
-    - 'defaults'
+    - "defaults"
 
 permissions:
   contents: read
@@ -29,7 +29,7 @@ safe-outputs:
     max: 1
 
 timeout-minutes: 15
-concurrency: 'docs-drift-detector'
+concurrency: "docs-drift-detector"
 ---
 
 # Documentation Drift Detector

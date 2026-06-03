@@ -75,9 +75,7 @@ describe("Core Tools - DML", () => {
     });
 
     it("should gracefully ignore stream: true if no progressToken in context", async () => {
-      await adapter.executeWriteQuery(
-        "CREATE TABLE stream_test (id INTEGER)",
-      );
+      await adapter.executeWriteQuery("CREATE TABLE stream_test (id INTEGER)");
       await adapter.executeWriteQuery(
         "INSERT INTO stream_test VALUES (1), (2), (3)",
       );

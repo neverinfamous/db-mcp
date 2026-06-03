@@ -1,4 +1,7 @@
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
@@ -7,12 +10,23 @@ import { readOnly } from "../../../../utils/annotations.js";
 import { resolveAliases } from "../../../sqlite/types.js";
 import { WindowLagLeadOutputSchema } from "../../../sqlite/schemas/index.js";
 import { LagLeadSchema } from "./schemas.js";
-import { validateTableExists, validateColumnInTable, validateOrderByColumns, resolveSelectColumns, sanitizePartitionBy, validateDefaultValue, sanitizeOrderByExpr, VALID_DIRECTIONS } from "./helpers.js";
+import {
+  validateTableExists,
+  validateColumnInTable,
+  validateOrderByColumns,
+  resolveSelectColumns,
+  sanitizePartitionBy,
+  validateDefaultValue,
+  sanitizeOrderByExpr,
+  VALID_DIRECTIONS,
+} from "./helpers.js";
 
 /**
  * LAG/LEAD window functions
  */
-export function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
+export function createLagLeadTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_window_lag_lead",
     description:
@@ -103,4 +117,3 @@ export function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition 
     },
   };
 }
-

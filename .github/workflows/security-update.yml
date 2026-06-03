@@ -152,4 +152,3 @@ jobs:
               `,
               labels: ['security', 'vulnerability', 'docker']
             })
-

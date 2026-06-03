@@ -89,7 +89,11 @@ export class ReadWriteLock {
 
   private processQueues(): void {
     // Writers have priority if they are waiting and no readers are active
-    if (this.writeWaiters.length > 0 && this.activeReaders === 0 && !this.isWriting) {
+    if (
+      this.writeWaiters.length > 0 &&
+      this.activeReaders === 0 &&
+      !this.isWriting
+    ) {
       const nextWriter = this.writeWaiters.shift();
       nextWriter?.();
       return;
@@ -123,7 +127,7 @@ export class ReadWriteLock {
    * Force release all waiting locks (useful for shutdown)
    */
   dispose(): void {
-    // Clear queues to prevent memory leaks, but we can't easily reject the promises 
+    // Clear queues to prevent memory leaks, but we can't easily reject the promises
     // since we only store the resolve function. In a real scenario, we might want
     // to store { resolve, reject } to properly fail pending requests.
     // For this implementation, the connection is shutting down anyway.

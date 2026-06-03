@@ -31,12 +31,7 @@ export async function streamResultRows(
     const chunk = rows.slice(start, end);
 
     // Send the chunk as the progress message payload
-    await sendProgress(
-      ctx,
-      i + 1,
-      totalChunks,
-      JSON.stringify(chunk)
-    );
+    await sendProgress(ctx, i + 1, totalChunks, JSON.stringify(chunk));
   }
 
   return totalChunks;

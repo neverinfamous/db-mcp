@@ -10,7 +10,10 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
-import { validateSameDirPath, assertSafeIoPath } from "../../../../../utils/index.js";
+import {
+  validateSameDirPath,
+  assertSafeIoPath,
+} from "../../../../../utils/index.js";
 import {
   buildProgressContext,
   sendProgress,
@@ -122,7 +125,9 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           if (!fs.existsSync(resolvedPath)) {
             return {
               ...formatHandlerError(
-                new ValidationError(`Source file not found: ${input.sourcePath}`),
+                new ValidationError(
+                  `Source file not found: ${input.sourcePath}`,
+                ),
               ),
               sourcePath: input.sourcePath,
             };

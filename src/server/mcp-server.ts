@@ -131,7 +131,7 @@ export class DbMcpServer {
       allowedIoRoots = []; // Empty array means NO filesystem access
       logger.warning(
         "⚠️ SECURITY WARNING: ALLOWED_IO_ROOTS not explicitly provided. Defaulting to empty array (NO filesystem access). You MUST specify --allowed-io-roots (or ALLOWED_IO_ROOTS env var) to enable filesystem tools.",
-        { module: "SERVER" }
+        { module: "SERVER" },
       );
     } else {
       logger.info("IO sandbox configured", {
@@ -139,7 +139,7 @@ export class DbMcpServer {
         allowedRoots: allowedIoRoots,
       });
     }
-    
+
     // Ensure the resolved roots are saved back to config so adapters get them
     this.config.allowedIoRoots = allowedIoRoots;
 

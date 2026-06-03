@@ -41,7 +41,8 @@ proc.stdout.on("data", (chunk) => {
 
       // Handle notifications
       if (msg.method === "notifications/progress") {
-        const isStream = msg.params.progressToken === "test-token-sqlite_read_query";
+        const isStream =
+          msg.params.progressToken === "test-token-sqlite_read_query";
         const prefix = isStream ? "[STREAM] Chunk" : "[PROGRESS] Step";
         console.log(
           `${prefix} ${msg.params.progress} of ${msg.params.total || "?"}`,
@@ -170,7 +171,11 @@ async function main() {
     { name: "sqlite_execute_code", args: { code }, minEvents: 5 },
     {
       name: "sqlite_read_query",
-      args: { query: "SELECT * FROM test_measurements", stream: true, chunkSize: 10 },
+      args: {
+        query: "SELECT * FROM test_measurements",
+        stream: true,
+        chunkSize: 10,
+      },
       minEvents: 5,
     },
   ];

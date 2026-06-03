@@ -130,16 +130,18 @@ export function resolveAliases(
   aliasMap: Record<string, string> = {},
 ): unknown {
   if (typeof params !== "object" || params === null) return params;
-  
+
   // Create a shallow copy to avoid mutating the original input object
   const obj = { ...(params as Record<string, unknown>) };
-  
+
   // 1. Universal explicit alias: snake_case to camelCase
   for (const key of Object.keys(obj)) {
     if (key.includes("_")) {
-      const camelKey = key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+      const camelKey = key.replace(/_([a-z])/g, (_, letter: string) =>
+        letter.toUpperCase(),
+      );
       if (obj[camelKey] === undefined && obj[key] !== undefined) {
-         obj[camelKey] = obj[key];
+        obj[camelKey] = obj[key];
       }
     }
   }

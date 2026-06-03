@@ -68,4 +68,3 @@ jobs:
             exit 1
           fi
           echo "✅ No high/critical CodeQL findings"
-

@@ -168,34 +168,34 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 
 ### Environment Variables
 
-| Variable                    | Default     | Description                                                               |
-| --------------------------- | ----------- | ------------------------------------------------------------------------- |
-| `MCP_HOST`                  | `127.0.0.1` | Host/IP to bind to (`0.0.0.0` in Docker) (`--server-host`)                |
-| `SQLITE_DATABASE`           | —           | SQLite database path (`--sqlite` / `--sqlite-native`)                     |
-| `DB_ENCRYPTION_KEY`         | —           | SQLCipher encryption key (Native only) (`--encryption-key`)               |
-| `DB_MCP_TOOL_FILTER`        | —           | Tool filter string (`--tool-filter`)                                      |
-| `METRICS_EXPORT`            | —           | Export metrics at HTTP /metrics (e.g., `prometheus`) (`--metrics-export`) |
-| `OAUTH_ENABLED`             | `false`     | Enable OAuth 2.1 (`--oauth-enabled`)                                      |
-| `OAUTH_ISSUER`              | —           | Authorization server URL (`--oauth-issuer`)                               |
-| `OAUTH_AUDIENCE`            | —           | Expected token audience (`--oauth-audience`)                              |
-| `OAUTH_JWKS_URI`            | —           | JWKS URI, auto-discovered if omitted (`--oauth-jwks-uri`)                 |
-| `OAUTH_CLOCK_TOLERANCE`     | `60`        | Clock tolerance in seconds (`--oauth-clock-tolerance`)                    |
-| `MCP_ENABLE_HSTS`           | `false`     | Enable HSTS header (`--enable-hsts`)                                      |
-| `NO_AUTH_ENFORCEMENT`       | `false`     | Explicitly bypass auth enforcement for HTTP (`--no-auth-enforcement`)     |
+| Variable                    | Default     | Description                                                                    |
+| --------------------------- | ----------- | ------------------------------------------------------------------------------ |
+| `MCP_HOST`                  | `127.0.0.1` | Host/IP to bind to (`0.0.0.0` in Docker) (`--server-host`)                     |
+| `SQLITE_DATABASE`           | —           | SQLite database path (`--sqlite` / `--sqlite-native`)                          |
+| `DB_ENCRYPTION_KEY`         | —           | SQLCipher encryption key (Native only) (`--encryption-key`)                    |
+| `DB_MCP_TOOL_FILTER`        | —           | Tool filter string (`--tool-filter`)                                           |
+| `METRICS_EXPORT`            | —           | Export metrics at HTTP /metrics (e.g., `prometheus`) (`--metrics-export`)      |
+| `OAUTH_ENABLED`             | `false`     | Enable OAuth 2.1 (`--oauth-enabled`)                                           |
+| `OAUTH_ISSUER`              | —           | Authorization server URL (`--oauth-issuer`)                                    |
+| `OAUTH_AUDIENCE`            | —           | Expected token audience (`--oauth-audience`)                                   |
+| `OAUTH_JWKS_URI`            | —           | JWKS URI, auto-discovered if omitted (`--oauth-jwks-uri`)                      |
+| `OAUTH_CLOCK_TOLERANCE`     | `60`        | Clock tolerance in seconds (`--oauth-clock-tolerance`)                         |
+| `MCP_ENABLE_HSTS`           | `false`     | Enable HSTS header (`--enable-hsts`)                                           |
+| `NO_AUTH_ENFORCEMENT`       | `false`     | Explicitly bypass auth enforcement for HTTP (`--no-auth-enforcement`)          |
 | `ALLOWED_IO_ROOTS`          | —           | JSON array or comma-separated list of absolute paths allowed for IO operations |
-| `LOG_LEVEL`                 | `info`      | Log verbosity: `debug`, `info`, `warning`, `error`                        |
-| `METADATA_CACHE_TTL_MS`     | `5000`      | Schema cache TTL in ms (auto-invalidated on DDL)                          |
-| `CODEMODE_ISOLATION`        | `isolate`   | Code Mode sandbox: `isolate` (isolated-vm native) or `worker`             |
-| `CODE_MODE_MAX_RESULT_SIZE` | `102400`    | Max Code Mode result payload in bytes (default 100KB, cap 50MB)           |
-| `MCP_RATE_LIMIT_MAX`        | `100`       | Max requests/minute per IP (HTTP transport)                               |
-| `CSV_EXTENSION_PATH`        | —           | Path to CSV extension binary (native only)                                |
-| `SPATIALITE_PATH`           | —           | Path to SpatiaLite extension binary (native only)                         |
-| `MCP_AUTH_TOKEN`            | —           | Simple bearer token for HTTP auth (`--auth-token`)                        |
-| `AUDIT_LOG`                 | —           | Audit log file path, or `stderr` (`--audit-log`)                          |
-| `AUDIT_REDACT`              | `true`      | Redact tool arguments from audit entries (`--audit-no-redact` to disable) |
-| `AUDIT_READS`               | `false`     | Also log read-scoped tool invocations (`--audit-reads`)                   |
-| `AUDIT_BACKUP`              | `false`     | Enable pre-mutation DDL snapshots (`--audit-backup`)                      |
-| `AUDIT_BACKUP_DATA`         | `false`     | Include sample data rows in snapshots (`--audit-backup-data`)             |
+| `LOG_LEVEL`                 | `info`      | Log verbosity: `debug`, `info`, `warning`, `error`                             |
+| `METADATA_CACHE_TTL_MS`     | `5000`      | Schema cache TTL in ms (auto-invalidated on DDL)                               |
+| `CODEMODE_ISOLATION`        | `isolate`   | Code Mode sandbox: `isolate` (isolated-vm native) or `worker`                  |
+| `CODE_MODE_MAX_RESULT_SIZE` | `102400`    | Max Code Mode result payload in bytes (default 100KB, cap 50MB)                |
+| `MCP_RATE_LIMIT_MAX`        | `100`       | Max requests/minute per IP (HTTP transport)                                    |
+| `CSV_EXTENSION_PATH`        | —           | Path to CSV extension binary (native only)                                     |
+| `SPATIALITE_PATH`           | —           | Path to SpatiaLite extension binary (native only)                              |
+| `MCP_AUTH_TOKEN`            | —           | Simple bearer token for HTTP auth (`--auth-token`)                             |
+| `AUDIT_LOG`                 | —           | Audit log file path, or `stderr` (`--audit-log`)                               |
+| `AUDIT_REDACT`              | `true`      | Redact tool arguments from audit entries (`--audit-no-redact` to disable)      |
+| `AUDIT_READS`               | `false`     | Also log read-scoped tool invocations (`--audit-reads`)                        |
+| `AUDIT_BACKUP`              | `false`     | Enable pre-mutation DDL snapshots (`--audit-backup`)                           |
+| `AUDIT_BACKUP_DATA`         | `false`     | Include sample data rows in snapshots (`--audit-backup-data`)                  |
 
 ### HTTP/SSE Transport
 

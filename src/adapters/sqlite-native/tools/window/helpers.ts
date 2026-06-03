@@ -1,4 +1,3 @@
-
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import {
   validateIdentifier,
@@ -284,4 +283,3 @@ export function validateDefaultValue(value: string): void {
     ErrorCategory.VALIDATION,
   );
 }
-
