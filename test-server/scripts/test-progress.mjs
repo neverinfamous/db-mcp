@@ -7,7 +7,7 @@ const projectDir = resolve(__dirname, "../..");
 
 const proc = spawn(
   "node",
-  ["dist/cli.js", "--sqlite", "./test-server/test.db", "--log-level", "error"],
+  ["dist/cli.js", "--sqlite-native", "./test-server/test.db", "--log-level", "error"],
   {
     cwd: projectDir,
     stdio: ["pipe", "pipe", "pipe"],
@@ -71,6 +71,37 @@ function notify(method, params = {}) {
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+async function runTest(toolName, args, expectedMinEvents = 1) {
+  console.log(`\nTesting tool: ${toolName}...`);
+  progressEvents.length = 0; // Reset array
+  
+  const response = await rpc("tools/call", {
+    name: toolName,
+    arguments: args,
+    _meta: { progressToken: `test-token-${toolName}` },
+  });
+
+  if (response.error) {
+    console.error(`  FAIL: Tool returned error:`, response.error);
+    return false;
+  }
+  
+  if (response.result?.isError) {
+    console.error(`  FAIL: Tool returned business error:`, response.result);
+    return false;
+  }
+
+  if (progressEvents.length >= expectedMinEvents) {
+    console.log(`  PASS: Received ${progressEvents.length} progress notifications!`);
+    return true;
+  } else {
+    console.error(
+      `  FAIL: Expected at least ${expectedMinEvents} progress notifications, got ${progressEvents.length}`,
+    );
+    return false;
+  }
+}
+
 async function main() {
   console.log("Initializing MCP Server...");
   await rpc("initialize", {
@@ -82,14 +113,17 @@ async function main() {
   notify("notifications/initialized");
   await delay(1000);
 
+  // Initialize migrations so apply doesn't fail
+  await rpc("tools/call", { name: "sqlite_migration_init", arguments: {} });
+
   const code = `
     function sleepMs(ms) {
       const start = Date.now();
       while (Date.now() - start < ms) {}
     }
     if (typeof sqlite.reportProgress === 'function') {
-      for (let i = 1; i <= 3; i++) {
-        await sqlite.reportProgress(i, 3, "Step " + i);
+      for (let i = 1; i <= 5; i++) {
+        await sqlite.reportProgress(i, 5, "Step " + i);
         sleepMs(100);
       }
       return "Success";
@@ -97,31 +131,38 @@ async function main() {
     throw new Error("Missing reportProgress");
   `;
 
-  console.log("\nCalling sqlite_execute_code with a progress loop...");
+  const ts = Date.now();
 
-  const response = await rpc("tools/call", {
-    name: "sqlite_execute_code",
-    arguments: { code },
-    _meta: { progressToken: "test-token" },
+  const tests = [
+    { name: "sqlite_vacuum", args: {} },
+    { name: "sqlite_backup", args: { targetPath: "./test-server/backup.db" } },
+    { name: "sqlite_restore", args: { sourcePath: "./test-server/backup.db" } },
+    { name: "sqlite_dump", args: { outputPath: "./test-server/dump.sql" } },
+    { name: "sqlite_optimize", args: { analyze: true, reindex: true } },
+    { name: "sqlite_migration_apply", args: { version: "test-" + ts, sql: "CREATE TABLE test_prog_" + ts + " (id INTEGER);" } },
+    { name: "sqlite_execute_code", args: { code }, minEvents: 5 },
+  ];
+
+  let passed = true;
+
+  for (const t of tests) {
+    const success = await runTest(t.name, t.args, t.minEvents || 1);
+    if (!success) passed = false;
+  }
+  
+  // Cleanup
+  import("fs").then(fs => {
+    try { fs.unlinkSync(resolve(projectDir, "test-server", "vacuum.db")); } catch {}
+    try { fs.unlinkSync(resolve(projectDir, "test-server", "backup.db")); } catch {}
+    try { fs.unlinkSync(resolve(projectDir, "test-server", "dump.sql")); } catch {}
   });
 
-  if (response.error) {
-    console.error("FAIL: Tool returned error:", response.error);
+  proc.kill();
+  if (!passed) {
     process.exitCode = 1;
   } else {
-    console.log("\nTool finished successfully!");
-
-    if (progressEvents.length === 3) {
-      console.log(`PASS: Received exactly 3 progress notifications!`);
-    } else {
-      console.error(
-        `FAIL: Expected 3 progress notifications, got ${progressEvents.length}`,
-      );
-      process.exitCode = 1;
-    }
+    console.log("\nAll 7 tools successfully tested for progress notifications!");
   }
-
-  proc.kill();
 }
 
 main().catch((err) => {

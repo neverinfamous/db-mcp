@@ -31,7 +31,7 @@ import { spawn } from "child_process";
 const projectDir = "C:\\Users\\chris\\Desktop\\db-mcp";
 
 /** Expected total tool count: 171 inventory (166 group + 5 audit) + 4 built-in */
-const EXPECTED_TOOL_COUNT = 175;
+const EXPECTED_TOOL_COUNT = 177;
 
 /**
  * Tools registered directly via SDK's registerTool() cannot carry sensitiveHint
@@ -43,12 +43,14 @@ const SDK_REGISTERED_TOOLS = new Set([
   "server_info",
   "server_health",
   "list_adapters",
+  "sqlite_server_config",
   // Audit tools (src/server/registration/audit-tools.ts)
   "sqlite_audit_list_backups",
   "sqlite_audit_get_backup",
   "sqlite_audit_cleanup",
   "sqlite_audit_diff_backup",
   "sqlite_audit_restore_backup",
+  "sqlite_audit_search",
 ]);
 
 /**

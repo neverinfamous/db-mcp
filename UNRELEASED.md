@@ -52,7 +52,8 @@
 - Defunct `--auth-token` argument remaining in `cli.ts` help text.
 - `SubscriptionManager` blindly broadcasting resource update notifications without verifying active subscribers for the URI.
 - Test output clarity and missing assertions in `test-subscriptions-raw.mjs` and `test-subscriptions-sdk.mjs`.
-
+- `EXPECTED_TOOL_COUNT` and missing administrative tools in `SDK_REGISTERED_TOOLS` in `test-tool-annotations.mjs`.
+- Refactored `test-progress.mjs` to systematically iterate and rigorously verify all 7 progress-enabled tools instead of testing a single isolated loop.
 ### Security
 
 - Bumped npm bundled `tar` in Dockerfile to `7.5.16` to apply latest security patches.
