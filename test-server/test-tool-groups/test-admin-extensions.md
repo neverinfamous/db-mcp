@@ -138,25 +138,27 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 11. `sqlite_drop_virtual_table({tableName: "nonexistent_vtable_xyz", ifExists: false})` → `{success: false}`
 🔴 12. `sqlite_create_csv_table({tableName: "temp_csv_bad", filePath: "C:\\nonexistent\\path\\file.csv"})` → `{success: false}`
 🔴 13. `sqlite_create_rtree_table({tableName: "test_products", dimensions: 2})` → `{success: false}` (table already exists)
+🔴 14. `sqlite_create_csv_table({tableName: "temp_csv_bad", filePath: "C:\\Windows\\System32\\secrets.csv"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 15. `sqlite_analyze_csv_schema({filePath: "C:\\Windows\\System32\\secrets.csv"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 14. `sqlite_virtual_table_info({})` → handler error
-🔴 15. `sqlite_drop_virtual_table({})` → handler error
-🔴 16. `sqlite_create_csv_table({})` → handler error
-🔴 17. `sqlite_analyze_csv_schema({})` → handler error
-🔴 18. `sqlite_create_rtree_table({})` → handler error
-🔴 19. `sqlite_create_series_table({})` → handler error
-🔴 20. `sqlite_generate_series({})` → handler error
+🔴 16. `sqlite_virtual_table_info({})` → handler error
+🔴 17. `sqlite_drop_virtual_table({})` → handler error
+🔴 18. `sqlite_create_csv_table({})` → handler error
+🔴 19. `sqlite_analyze_csv_schema({})` → handler error
+🔴 20. `sqlite_create_rtree_table({})` → handler error
+🔴 21. `sqlite_create_series_table({})` → handler error
+🔴 22. `sqlite_generate_series({})` → handler error
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 21. `sqlite_generate_series({start: "abc", stop: 5, step: 1})` → handler error
-🔴 22. `sqlite_create_series_table({tableName: "temp_coercion_test", start: 1, stop: "abc"})` → handler error
+🔴 23. `sqlite_generate_series({start: "abc", stop: 5, step: 1})` → handler error
+🔴 24. `sqlite_create_series_table({tableName: "temp_coercion_test", start: 1, stop: "abc"})` → handler error
 
 ---
 

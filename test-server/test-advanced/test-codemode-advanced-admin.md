@@ -196,23 +196,25 @@ All tools should return errors as structured objects instead of throwing. The ex
 33. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_backup.db"})` → structured error
 34. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_file.csv"})` → structured error
 35. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → structured error (path traversal)
+36. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "C:\\Windows\\System32\\system.csv"})` → structured error (ALLOWED_IO_ROOTS boundary rejection)
+37. `sqlite.admin.verifyBackup({backupPath: "C:\\Windows\\System32\\backup.db"})` → structured error (ALLOWED_IO_ROOTS boundary rejection)
 
 ## Phase 8: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-36. Verify that backup/restore/verify, CSV, R-Tree, dump, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
+38. Verify that backup/restore/verify, CSV, R-Tree, dump, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
 
 ## Phase 9: REINDEX & WAL Edge Cases (batched)
 
-37. `sqlite.admin.reindex()` → full DB reindex, verify `durationMs > 0`
-38. `sqlite.admin.reindex({target: "test_products"})` → table-specific, verify success
-39. `sqlite.admin.reindex({target: "idx_orders_status"})` → index-specific, verify success
-40. `sqlite.admin.reindex({target: "../../etc/passwd"})` → structured error (identifier validation rejects non-alphanumeric)
-41. `sqlite.admin.wal({action: "status"})` → verify `journalMode` matches expectation (should be "wal")
-42. `sqlite.admin.wal({action: "enable"})` → already WAL → "already enabled" message, not error
-43. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "PASSIVE"})` → success with `walPages` and `checkpointedPages`
-44. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "TRUNCATE"})` → success, verify pages
+39. `sqlite.admin.reindex()` → full DB reindex, verify `durationMs > 0`
+40. `sqlite.admin.reindex({target: "test_products"})` → table-specific, verify success
+41. `sqlite.admin.reindex({target: "idx_orders_status"})` → index-specific, verify success
+42. `sqlite.admin.reindex({target: "../../etc/passwd"})` → structured error (identifier validation rejects non-alphanumeric)
+43. `sqlite.admin.wal({action: "status"})` → verify `journalMode` matches expectation (should be "wal")
+44. `sqlite.admin.wal({action: "enable"})` → already WAL → "already enabled" message, not error
+45. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "PASSIVE"})` → success with `walPages` and `checkpointedPages`
+46. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "TRUNCATE"})` → success, verify pages
 
 ### Final Cleanup
 

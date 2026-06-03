@@ -206,35 +206,40 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 47. `sqlite_drop_view({viewName: "nonexistent_view_xyz"})` → `{success: false}`
 🔴 48. `sqlite_vacuum_into({outputPath: "../../../etc/evil.db"})` → `{success: false}` (path traversal rejection)
 🔴 49. `sqlite_wal({action: "invalid_action_xyz"})` → `{success: false}` (invalid action value)
+🔴 50. `sqlite_attach_database({filepath: "C:\\Windows\\System32\\calc.exe", alias: "evil"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 51. `sqlite_dump({outputPath: "C:\\Windows\\System32\\dump.sql"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 52. `sqlite_vacuum_into({outputPath: "C:\\Windows\\System32\\vacuum.db"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 53. `sqlite_backup({targetPath: "C:\\Windows\\System32\\backup.db"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 54. `sqlite_restore({sourcePath: "C:\\Windows\\System32\\backup.db"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
 
 ## Phase 8: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 50. `sqlite_backup({})` → handler error
-🔴 51. `sqlite_restore({})` → handler error
-🔴 52. `sqlite_verify_backup({})` → handler error
-🔴 53. `sqlite_pragma_table_info({})` → handler error
-🔴 54. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
+🔴 55. `sqlite_backup({})` → handler error
+🔴 56. `sqlite_restore({})` → handler error
+🔴 57. `sqlite_verify_backup({})` → handler error
+🔴 58. `sqlite_pragma_table_info({})` → handler error
+🔴 59. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
 
-🔴 56. `sqlite_create_view({})` → handler error
-🔴 57. `sqlite_drop_view({})` → handler error
-🔴 58. `sqlite_dbstat({})` → handler error (or success if no required params)
-🔴 59. `sqlite_attach_database({})` → handler error
-🔴 60. `sqlite_detach_database({})` → handler error
-🔴 61. `sqlite_vacuum_into({})` → handler error
-🔴 62. `sqlite_dump({})` → handler error
-🔴 63. `sqlite_reindex({})` → success (target is optional — reindexes entire database)
-🔴 64. `sqlite_wal({})` → handler error (action is required)
-🔴 65. `sqlite_analyze({})` → success (no required params)
-🔴 66. `sqlite_integrity_check({})` → success (no required params)
-🔴 67. `sqlite_optimize({})` → success (no required params)
-🔴 68. `sqlite_pragma_optimize({})` → success (no required params)
-🔴 69. `sqlite_vacuum({})` → success (no required params)
-🔴 70. `sqlite_pragma_compile_options({})` → success (no required params)
-🔴 71. `sqlite_pragma_database_list({})` → success (no required params)
-🔴 72. `sqlite_list_views({})` → success (no required params)
-🔴 73. `sqlite_index_stats({})` → success (no required params)
+🔴 60. `sqlite_create_view({})` → handler error
+🔴 61. `sqlite_drop_view({})` → handler error
+🔴 62. `sqlite_dbstat({})` → handler error (or success if no required params)
+🔴 63. `sqlite_attach_database({})` → handler error
+🔴 64. `sqlite_detach_database({})` → handler error
+🔴 65. `sqlite_vacuum_into({})` → handler error
+🔴 66. `sqlite_dump({})` → handler error
+🔴 67. `sqlite_reindex({})` → success (target is optional — reindexes entire database)
+🔴 68. `sqlite_wal({})` → handler error (action is required)
+🔴 69. `sqlite_analyze({})` → success (no required params)
+🔴 70. `sqlite_integrity_check({})` → success (no required params)
+🔴 71. `sqlite_optimize({})` → success (no required params)
+🔴 72. `sqlite_pragma_optimize({})` → success (no required params)
+🔴 73. `sqlite_vacuum({})` → success (no required params)
+🔴 74. `sqlite_pragma_compile_options({})` → success (no required params)
+🔴 75. `sqlite_pragma_database_list({})` → success (no required params)
+🔴 76. `sqlite_list_views({})` → success (no required params)
+🔴 77. `sqlite_index_stats({})` → success (no required params)
 
 ---
 
