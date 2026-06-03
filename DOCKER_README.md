@@ -45,7 +45,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 
 | Feature              | WASM (sql.js)                                                    | Native (better-sqlite3)         |
 | -------------------- | ---------------------------------------------------------------- | ------------------------------- |
-| **Group Tools**      | 139                                                              | **166**                         |
+| **Group Tools**      | 143                                                              | **170**                         |
 | **Transactions**     | ❌                                                               | ✅ 8 tools                      |
 | **Window Functions** | ❌                                                               | ✅ 6 tools                      |
 | **SpatiaLite GIS**   | ❌                                                               | ✅ 7 tools                      |
@@ -135,13 +135,13 @@ Specify exactly the groups you need:
 
 | Shortcut     | WASM   | Native | + Built-in | What's Included                |
 | ------------ | ------ | ------ | ---------- | ------------------------------ |
-| `starter`    | **61** | **66** | +4         | Core, JSON, Text               |
-| `analytics`  | 63     | 69     | +4         | Core, JSON, Stats              |
-| `search`     | 47     | 52     | +4         | Core, Text, Vector             |
-| `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
-| `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
-| `minimal`    | 21     | 21     | +4         | Core only                      |
-| `full`       | 139    | 166    | +4         | Everything enabled             |
+| `starter`    | **65** | **70** | +4         | Core, JSON, Text               |
+| `analytics`  | 67     | 73     | +4         | Core, JSON, Stats              |
+| `search`     | 51     | 56     | +4         | Core, Text, Vector             |
+| `spatial`    | 40     | 47     | +4         | Core, Geo, Vector              |
+| `dev-schema` | 41     | 41     | +4         | Core, Introspection, Migration |
+| `minimal`    | 25     | 25     | +4         | Core only                      |
+| `full`       | 143    | 170    | +4         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
@@ -253,8 +253,8 @@ For advanced configuration (raw hex keys vs passphrases, dual-backend audit log 
 
 | Platform                  | Features                            |
 | ------------------------- | ----------------------------------- |
-| **AMD64** (x86_64)        | Full: 166 tools, native, SpatiaLite |
-| **ARM64** (Apple Silicon) | Full: 166 tools, native             |
+| **AMD64** (x86_64)        | Full: 170 tools, native, SpatiaLite |
+| **ARM64** (Apple Silicon) | Full: 170 tools, native             |
 
 Node.js 24 on Alpine Linux • Multi-stage build • Non-root user • better-sqlite3 native
 

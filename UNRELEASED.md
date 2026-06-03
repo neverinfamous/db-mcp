@@ -27,6 +27,7 @@
 - Migrated project package manager from `npm` to `pnpm` (`v9.15.4`) for improved performance, stricter dependency resolution, and reduced disk footprint.
 - Updated `Dockerfile` to use `pnpm` exclusively, eliminating the need to manually patch transitively bundled `npm` vulnerabilities.
 ### Fixed
+- Synchronized tool counts and supported versions across `DOCKER_README.md` and `SECURITY.md` based on `v4.0.0` audit.
 - Fixed Code Mode sandbox timeouts failing to surface as structured `TimeoutError` responses by catching execution timeouts directly from the sandbox pool execution result.
 - Fixed native addon crashes during Vitest execution by migrating the execution pool from `threads` to `forks` in `vitest.config.ts`, ensuring isolated V8 heaps for `isolated-vm`.
 - Fixed false-positive test failures in `sqlite-adapter-methods.test.ts` by correcting async `Promise` rejection assertions and `connectionPooling` capability flags.
