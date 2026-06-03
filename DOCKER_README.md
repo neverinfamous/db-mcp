@@ -143,7 +143,6 @@ Specify exactly the groups you need:
 > +4 built-in tools are injected into every group. (7 audit tools are also always available).
 | Category (Group)                     | WASM | Native | + Built-in | Description                                |
 | ------------------------------------ | ---- | ------ | ---------- | ------------------------------------------ |
-| Code Mode (`codemode`)               | 1    | 1      | +4         | Sandboxed JavaScript execution 🧠          |
 | Core Database (`core`)               | 21   | 21     | +4         | Basic CRUD, schema, tables, indexes, views |
 | JSON Operations (`json`)             | 25   | 25     | +4         | JSON/JSONB, schema analysis, security scan |
 | Text Processing (`text`)             | 15   | 20     | +4         | Regex, fuzzy, phonetic, sentiment, FTS5    |
@@ -232,6 +231,7 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `OAUTH_AUDIENCE`            | —         | Expected token audience (`--oauth-audience`)                              |
 | `OAUTH_JWKS_URI`            | —         | JWKS URI, auto-discovered if omitted (`--oauth-jwks-uri`)                 |
 | `OAUTH_CLOCK_TOLERANCE`     | `60`      | Clock tolerance in seconds (`--oauth-clock-tolerance`)                    |
+| `MCP_ENABLE_HSTS`           | `false`   | Enable HSTS header (`--enable-hsts`)                                      |
 | `LOG_LEVEL`                 | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`                        |
 | `METADATA_CACHE_TTL_MS`     | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL)                          |
 | `CODEMODE_ISOLATION`        | `isolate` | Code Mode sandbox: `isolate` (isolated-vm native) or `worker`             |
@@ -239,6 +239,7 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `MCP_RATE_LIMIT_MAX`        | `100`     | Max requests/minute per IP (HTTP transport)                               |
 | `CSV_EXTENSION_PATH`        | —         | Path to CSV extension binary (native only)                                |
 | `SPATIALITE_PATH`           | —         | Path to SpatiaLite extension binary (native only)                         |
+| `MCP_AUTH_TOKEN`            | —         | Simple bearer token for HTTP auth (`--auth-token`)                        |
 | `AUDIT_LOG`                 | —         | Audit log file path, or `stderr` (`--audit-log`)                          |
 | `AUDIT_REDACT`              | `true`    | Redact tool arguments from audit entries (`--audit-no-redact` to disable) |
 | `AUDIT_READS`               | `false`   | Also log read-scoped tool invocations (`--audit-reads`)                   |

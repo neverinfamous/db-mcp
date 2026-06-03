@@ -174,7 +174,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "vector_distance",
   ],
   admin: [
-    // Admin Tools (14: backup.ts, verify.ts, pragma.ts, reindex.ts, wal.ts)
+    // Admin Tools (12: backup.ts, verify.ts, pragma.ts)
     "backup",
     "analyze",
     "integrity_check",

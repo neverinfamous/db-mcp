@@ -218,7 +218,6 @@ Specify exactly the groups you need:
 
 | Group           | WASM | Native | + Built-in | Description                                |
 | --------------- | ---- | ------ | ---------- | ------------------------------------------ |
-| `codemode`      | 1    | 1      | +4         | Code Mode (sandboxed code execution) 🧠    |
 | `core`          | 21   | 21     | +4         | Basic CRUD, schema, tables                 |
 | `json`          | 25   | 25     | +4         | JSON/JSONB operations, analysis            |
 | `text`          | 15   | 20     | +4         | Text processing + FTS5 + advanced search   |
@@ -428,6 +427,7 @@ MCP prompts provide AI-assisted database workflows:
 | `MCP_RATE_LIMIT_MAX`        | `100`     | Max requests/minute per IP (HTTP transport)                                    |
 | `CSV_EXTENSION_PATH`        | —         | Custom path to CSV extension binary (native only)                              |
 | `SPATIALITE_PATH`           | —         | Custom path to SpatiaLite extension binary (native only)                       |
+| `MCP_AUTH_TOKEN`            | —         | Simple bearer token for HTTP auth (CLI: `--auth-token`)                        |
 | `AUDIT_LOG`                 | —         | Audit log file path, or `stderr` (CLI: `--audit-log`)                          |
 | `AUDIT_REDACT`              | `true`    | Redact tool arguments from audit entries (CLI: `--audit-no-redact` to disable) |
 | `AUDIT_READS`               | `false`   | Also log read-scoped tool invocations (CLI: `--audit-reads`)                   |
