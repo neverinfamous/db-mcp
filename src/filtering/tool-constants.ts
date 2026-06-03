@@ -132,7 +132,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "fts_headline",
   ],
   stats: [
-    // Stats Tools (16 WASM)
+    // Stats Tools (13 WASM)
     "stats_basic",
     "stats_count",
     "stats_group_by",

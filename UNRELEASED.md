@@ -34,6 +34,8 @@
 - Added missing `MCP_ENABLE_HSTS` variable to the Environment Variables table in `DOCKER_README.md`.
 - Fixed the stale `// Admin Tools` comment in `src/filtering/tool-constants.ts`.
 - Updated the version comment for `peter-evans/dockerhub-description` in `.github/workflows/docker-publish.yml` from `# v4.0.0` to `# v5.0.0`.
+- Fixed minor discrepancies found during exhaustive `/doc-audit` (Stats tool count in code comments, `dump.ts` table categorization in `test-server/code-map.md`).
+- Added missing `.github/workflows/wiki-drift-detector.md` workflow for continuous wiki documentation drift checks.
 - Updated agentic workflows to strictly use single quotes in YAML frontmatter and explicitly reference `gh copilot` in instructions.
 - Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings.
 - Silent fallbacks in `introspection` Zod schemas that swallowed wrong-type validation errors for enum properties.
