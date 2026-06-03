@@ -35,7 +35,7 @@
 - Fixed the stale `// Admin Tools` comment in `src/filtering/tool-constants.ts`.
 - Updated the version comment for `peter-evans/dockerhub-description` in `.github/workflows/docker-publish.yml` from `# v4.0.0` to `# v5.0.0`.
 - Fixed minor discrepancies found during exhaustive `/doc-audit` (Stats tool count in code comments, `dump.ts` table categorization in `test-server/code-map.md`).
-- Fixed documentation drift across READMEs, SECURITY.md, CONTRIBUTING.md, and the Wiki (tool counts, NO_AUTH_ENFORCEMENT, trustedProxyIps, architecture trees).
+- Fixed documentation drift across READMEs, SECURITY.md, CONTRIBUTING.md, and the Wiki (tool counts, NO_AUTH_ENFORCEMENT, trustedProxyIps, architecture trees, starter/search preset tool counts).
 - Added missing `.github/workflows/wiki-drift-detector.md` workflow for continuous wiki documentation drift checks.
 - Updated agentic workflows to strictly use single quotes in YAML frontmatter and explicitly reference `gh copilot` in instructions.
 - Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings.

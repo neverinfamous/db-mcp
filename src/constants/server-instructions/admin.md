@@ -1,4 +1,4 @@
-# db-mcp Help — Database Administration (31N/31W tools) + Server Audit (7 tools)
+# db-mcp Help — Database Administration (31N/30W tools) + Server Audit (7 tools)
 
 ## Maintenance
 

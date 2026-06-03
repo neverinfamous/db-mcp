@@ -209,9 +209,9 @@ Specify exactly the groups you need:
 
 | Shortcut     | WASM   | Native | + Built-in | What's Included                |
 | ------------ | ------ | ------ | ---------- | ------------------------------ |
-| `starter`    | **60** | **65** | +4         | Core, JSON, Text               |
+| `starter`    | **61** | **66** | +4         | Core, JSON, Text               |
 | `analytics`  | 63     | 69     | +4         | Core, JSON, Stats              |
-| `search`     | 46     | 51     | +4         | Core, Text, Vector             |
+| `search`     | 47     | 52     | +4         | Core, Text, Vector             |
 | `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
 | `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
 | `minimal`    | 21     | 21     | +4         | Core only                      |

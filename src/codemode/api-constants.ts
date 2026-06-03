@@ -208,6 +208,7 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   createJsonCollection: "tableName",
 
   // Text
+  sentiment: "text",
   regexExtract: ["table", "column", "pattern"],
   regexMatch: ["table", "column", "pattern"],
   split: ["table", "column", "delimiter"],
