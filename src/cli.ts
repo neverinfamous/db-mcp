@@ -310,7 +310,7 @@ Environment Variables:
 Examples:
   db-mcp --sqlite-native ./data.db
   db-mcp --sqlite-native ./data.db --tool-filter "starter"
-  db-mcp --transport http --port 3000 --auth-token my-secret --sqlite ./data.db
+  MCP_AUTH_TOKEN=my-secret db-mcp --transport http --port 3000 --sqlite ./data.db
   db-mcp --transport http --oauth-enabled --oauth-issuer http://keycloak:8080/realms/mcp --oauth-audience db-mcp --sqlite ./data.db
 
 For more information, visit: https://github.com/neverinfamous/db-mcp
