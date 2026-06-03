@@ -305,8 +305,7 @@ src/
 ├── adapters/       # SQLite queries, handlers, Zod schemas, prompts, and resources
 ├── audit/          # JSONL audit trail with session token estimates, pre-mutation snapshots, interceptor
 ├── auth/           # Transport-agnostic OAuth 2.1, scopes, RFC 6750 enforcement
-├── cli/            # CLI argument parsing and server bootstrap
-├── cli.ts          # Entry point
+├── cli.ts          # CLI argument parsing, server bootstrap, and entry point
 ├── codemode/       # Sandboxed JavaScript execution (Code Mode — VM & Worker Isolate)
 ├── constants/      # Help content generation and dynamic server instructions
 ├── filtering/      # Tool filter parsing, group resolution
