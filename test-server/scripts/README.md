@@ -8,7 +8,7 @@ You must run these scripts from the project root using Node. Ensure you have bui
 
 ```bash
 # Run from the project root:
-npm run build
+pnpm run build
 
 # 1. Test tool annotations and total tool count (Native Mode)
 node test-server/scripts/test-tool-annotations.mjs

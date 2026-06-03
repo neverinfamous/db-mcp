@@ -235,7 +235,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 ## 🔄 **CI/CD Security**
 
 - ✅ **CodeQL analysis** — automated static analysis on push/PR
-- ✅ **npm audit** — dependency vulnerability checking (audit-level: moderate)
+- ✅ **pnpm audit** — dependency vulnerability checking (audit-level: moderate)
 - ✅ **Secrets scanning** — dedicated workflow on push and PR (defense-in-depth for direct pushes to main)
 - ✅ **Lockfile integrity** — SHA-256 hash and `git diff --exit-code` verification before `npm ci` to detect post-checkout tampering
 - ✅ **Patch drift detection** — weekly CI workflow validates Dockerfile patches and package.json overrides against upstream versions
@@ -437,7 +437,7 @@ We appreciate responsible disclosure and will acknowledge your contribution in o
 ## 🔄 **Security Updates**
 
 - **Container updates**: Rebuild Docker images when base images are updated
-- **Dependency updates**: Keep npm packages updated via `npm audit` and manual dependency upgrades
+- **Dependency updates**: Keep pnpm packages updated via `pnpm audit` and manual dependency upgrades
 - **Database maintenance**: Run `ANALYZE` and `VACUUM` regularly for optimal performance
 - **Security patches**: Apply host system security updates
 
