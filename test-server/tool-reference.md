@@ -32,7 +32,7 @@ Read/write queries, table and index management, and schema discovery.
 
 | MCP Tool Name             | Code Mode Name                | Description                                                                                                                          |
 | :------------------------ | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `sqlite_read_query`       | `sqlite.core.readQuery`       | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety. Supports cursor pagination.   |
+| `sqlite_read_query`       | `sqlite.core.readQuery`       | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety. Supports cursor pagination and row streaming via `stream: true`.   |
 | `sqlite_write_query`      | `sqlite.core.writeQuery`      | Execute an INSERT, UPDATE, or DELETE query. Returns affected row count. Use parameter binding for safety.                            |
 | `sqlite_upsert`           | `sqlite.core.upsert`          | Insert a row or update it if it already exists (INSERT ON CONFLICT DO UPDATE / INSERT OR REPLACE).                                   |
 | `sqlite_batch_insert`     | `sqlite.core.batchInsert`     | Insert multiple rows in a single statement.                                                                                          |

@@ -63,6 +63,7 @@ src/
 │   ├── identifiers.ts              # SQL identifier validation/sanitization (table names, columns)
 
 │   ├── progress-utils.ts           # MCP progress notification helpers
+│   ├── stream-utils.ts             # MCP streaming result chunks utility
 │   ├── resource-annotations.ts     # MCP resource annotation helpers
 │   ├── where-clause.ts             # WHERE clause builder/validator
 │   ├── validate-path.ts            # Path traversal validation (shared by attach_database, vacuum_into, dump)

@@ -26,6 +26,8 @@ export const ReadQueryOutputSchema = z
     rows: z.array(RowRecordSchema).optional(),
     nextCursor: z.string().optional(),
     executionTimeMs: z.number().optional(),
+    streamed: z.boolean().optional(),
+    chunksEmitted: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -196,6 +198,21 @@ export const ReadQuerySchema = z.object({
     .optional()
     .describe("Query parameters for prepared statements"),
   cursor: z.string().optional().describe("Opaque cursor for pagination"),
+  stream: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Stream results row-by-row via MCP progress notifications instead of returning all rows in the response. " +
+      "Requires a progressToken in the request _meta. Falls back to normal behavior if unavailable. " +
+      "The final response contains rowCount and metadata but not the rows themselves."
+    ),
+  chunkSize: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("When streaming, the number of rows to include in each progress notification chunk (default 10)"),
 });
 
 export const WriteQuerySchema = z.object({

@@ -2,7 +2,7 @@
 
 ## Basic Queries
 
-- `sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "..." })` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports `cursor` for offset-based pagination (returns `nextCursor`). **Agent Tip:** Avoid `SELECT *` on wide tables with large text/JSON columns to conserve token context; use `sqlite_describe_table` first and select specific columns.
+- `sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "...", stream: true, chunkSize: 10 })` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports `cursor` for offset-based pagination (returns `nextCursor`). Set `stream: true` to return row-by-row chunks via progress notifications instead of full response buffering (requires client progressToken support; gracefully falls back if unavailable). **Agent Tip:** Avoid `SELECT *` on wide tables with large text/JSON columns to conserve token context; use `sqlite_describe_table` first and select specific columns.
 - `sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
 
 ## Tables & Schema

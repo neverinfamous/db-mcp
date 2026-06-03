@@ -20,6 +20,8 @@ import {
   ReadQueryOutputSchema,
   WriteQueryOutputSchema,
 } from "../../schemas/core.js";
+import { buildProgressContext } from "../../../../utils/progress-utils.js";
+import { streamResultRows } from "../../../../utils/stream-utils.js";
 
 /**
  * Execute a read-only SQL query
@@ -39,6 +41,8 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         query: string;
         params?: unknown[] | undefined;
         cursor?: string | undefined;
+        stream?: boolean | undefined;
+        chunkSize?: number | undefined;
       };
       try {
         input = ReadQuerySchema.parse(resolveAliases(params, { sql: "query" }));
@@ -313,6 +317,23 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           nextCursor = Buffer.from(
             JSON.stringify({ offset: nextOffset }),
           ).toString("base64");
+        }
+
+        // Handle streaming if requested and a progressToken is available
+        if (input.stream) {
+          const progressCtx = buildProgressContext(_context);
+          if (progressCtx) {
+            const chunksEmitted = await streamResultRows(progressCtx, result.rows ?? [], input.chunkSize);
+            return {
+              success: true,
+              rowCount: result.rows?.length ?? 0,
+              nextCursor,
+              executionTimeMs: result.executionTimeMs,
+              streamed: true,
+              chunksEmitted,
+            };
+          }
+          // Fall back to returning all rows if progress token isn't available
         }
 
         return {

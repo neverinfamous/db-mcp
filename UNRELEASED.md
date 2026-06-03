@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+- Added `stream: true` parameter (with optional `chunkSize`) to `sqlite_read_query` for streaming query results via MCP progress notifications, reducing memory pressure for large result sets.
 - Implemented `ALLOWED_IO_ROOTS` filesystem boundary sandbox to restrict IO operations (e.g., CSV imports, backup dumps) to explicitly authorized directories.
 - Added `--allowed-io-roots` CLI flag and `ALLOWED_IO_ROOTS` environment variable to configure the IO sandbox.
 - Session timeout enforcement for HTTP stateful mode: 30-minute idle timeout with 1-minute sweep interval, 24-hour absolute TTL, and in-flight request protection via session locks.
