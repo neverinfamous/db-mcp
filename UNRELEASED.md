@@ -25,11 +25,10 @@
 
 ### Removed
 
-- `sqlite_append_insight` tool and `memo://insights` resource (leftovers from memory-journal port).
+- `sqlite_append_insight` tool and `memo://insights` partially ported resource.
 
 ### Fixed
 
-- Corrected documentation drift across README files, agentic workflows, codebase map, and wiki to accurately reflect 11 data resources, 11 help resources, and the removal of legacy memory-journal capabilities.
 - Updated agentic workflows to strictly use single quotes in YAML frontmatter and explicitly reference `gh copilot` in instructions.
 - Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings.
 - Silent fallbacks in `introspection` Zod schemas that swallowed wrong-type validation errors for enum properties.
@@ -41,13 +40,10 @@
 - SQLCipher `PRAGMA key` syntax errors causing `file is not a database` failures.
 - `DB_ENCRYPTION_KEY` environment variable leakage breaking unencrypted Playwright E2E tests.
 - `SubscriptionManager` silently dropping subscriptions over the stateless `stdio` transport.
-- Inaccuracies in test documentation regarding `openWorldHint` expectations and STDIO transport limitations.
 - `SchemaManager`/`describeTable` omitting generated columns by cross-referencing `table_xinfo` and `sqlite_master` DDL.
 - Code Mode API normalization regression where parameter arrays were incorrectly processed for methods like `searchRegex`.
 - Missing AST validation error trigger in `sandbox.test.ts`.
-- ESLint `prefer-const` issue in `tables.ts`.
 - Automated subscription test scripts (`test-subscriptions-raw.mjs`, `test-subscriptions-sdk.mjs`) attempting DDL via `sqlite_write_query` instead of dedicated DDL tools, and using an outdated SDK signature for `setNotificationHandler`.
-- Fixed factual error in `test-codemode-admin.md` where `sqlite.admin.wal` testing incorrectly expected a `{success: true}` response instead of a DB lock error due to expected Code Mode connection pool behavior.
 
 ### Security
 
