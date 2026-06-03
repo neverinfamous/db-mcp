@@ -74,6 +74,8 @@ const CATEGORY_DEFAULT_CODES: Record<ErrorCategory, string> = {
   [ErrorCategory.AUTHENTICATION]: "AUTHENTICATION_ERROR",
   [ErrorCategory.AUTHORIZATION]: "AUTHORIZATION_ERROR",
   [ErrorCategory.INTERNAL]: "UNKNOWN_ERROR",
+  [ErrorCategory.TIMEOUT]: "TIMEOUT_ERROR",
+  [ErrorCategory.RATE_LIMIT]: "RATE_LIMIT_ERROR",
 };
 
 // =============================================================================

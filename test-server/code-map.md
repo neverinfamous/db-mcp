@@ -71,7 +71,7 @@ src/
 │   ├── errors/                     # Error class hierarchy (see § Error Classes below)
 │   │   ├── base.ts                 # DbMcpError (abstract base) — auto-refines generic codes via suggestions
 │   │   ├── categories.ts           # ErrorCategory enum + ErrorResponse interface
-│   │   ├── classes.ts              # 8 concrete error subclasses
+│   │   ├── classes.ts              # 14 concrete error subclasses
 │   │   ├── error-response-fields.ts # ErrorResponseFields mixin (SSoT, re-exported from format.ts)
 │   │   ├── format.ts               # formatHandlerError() — structured {success:false} builder
 │   │   ├── suggestions.ts          # Error suggestion helpers (typo hints, table/column suggestions)
@@ -330,7 +330,10 @@ DbMcpError (base.ts)
 ├── AuthenticationError          code: AUTHENTICATION_ERROR   category: authentication
 ├── AuthorizationError           code: AUTHORIZATION_ERROR    category: authorization
 ├── TransactionError             code: TRANSACTION_ERROR      category: query            recoverable: true
-└── ExtensionNotAvailableError   code: EXTENSION_MISSING      category: config           accepts: extensionName
+├── ExtensionNotAvailableError   code: EXTENSION_MISSING      category: config           accepts: extensionName
+├── TimeoutError                 code: TIMEOUT_ERROR          category: timeout          recoverable: true   accepts: timeoutMs
+├── RateLimitError               code: RATE_LIMIT_ERROR       category: rate_limit       recoverable: true   accepts: retryAfterMs, limit
+└── ConflictError                code: CONFLICT_ERROR         category: query            recoverable: true   accepts: conflictType
 ```
 
 **Usage pattern** — all tool handlers:

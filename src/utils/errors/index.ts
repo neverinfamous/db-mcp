@@ -19,6 +19,9 @@ export {
   AuthorizationError,
   TransactionError,
   ExtensionNotAvailableError,
+  TimeoutError,
+  RateLimitError,
+  ConflictError,
 } from "./classes.js";
 export {
   type ErrorResponse,

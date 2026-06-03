@@ -228,13 +228,13 @@ const ERROR_SUGGESTIONS: {
     pattern: /rate limit exceeded/i,
     suggestion:
       "Wait before retrying. Combine multiple operations into fewer execute_code calls.",
-    category: ErrorCategory.PERMISSION,
+    category: ErrorCategory.RATE_LIMIT,
   },
   {
     pattern: /execution timed out/i,
     suggestion:
       "Reduce code complexity or increase timeout (max 30s). Break into smaller operations.",
-    category: ErrorCategory.QUERY,
+    category: ErrorCategory.TIMEOUT,
   },
   {
     pattern: /sandbox.*not initialized/i,

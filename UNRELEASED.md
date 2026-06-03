@@ -1,6 +1,10 @@
 ## [Unreleased]
 
 ### Added
+- `TimeoutError`, `RateLimitError`, and `ConflictError` typed error classes with `TIMEOUT` and `RATE_LIMIT` error categories for precise agent error classification
+- Code Mode timeout errors now surface as `TimeoutError` (category: `timeout`, recoverable: `true`) instead of generic `InternalError`
+- Code Mode rate limit errors now throw typed `RateLimitError` with `retryAfterMs` context instead of inline response literals
+- HTTP transport rate limit responses now return structured error shapes with `code`, `category`, `suggestion`, and `recoverable` fields
 - WASM adapter request serialization via reader-writer lock for concurrent HTTP deployments
 - Added `stream: true` parameter (with optional `chunkSize`) to `sqlite_read_query` for streaming query results via MCP progress notifications, reducing memory pressure for large result sets.
 - Implemented `ALLOWED_IO_ROOTS` filesystem boundary sandbox to restrict IO operations (e.g., CSV imports, backup dumps) to explicitly authorized directories.

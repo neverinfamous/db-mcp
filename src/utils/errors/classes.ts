@@ -255,3 +255,84 @@ export class ExtensionNotAvailableError extends DbMcpError {
     });
   }
 }
+
+/**
+ * Timeout error for execution timeouts (e.g., Code Mode sandbox)
+ */
+export class TimeoutError extends DbMcpError {
+  constructor(
+    message: string,
+    code = "TIMEOUT_ERROR",
+    options?: {
+      suggestion?: string | undefined;
+      details?: Record<string, unknown> | undefined;
+      timeoutMs?: number | undefined;
+      cause?: Error | undefined;
+    },
+  ) {
+    super(message, code, ErrorCategory.TIMEOUT, {
+      ...options,
+      details: {
+        ...options?.details,
+        timeoutMs: options?.timeoutMs,
+      },
+      recoverable: true, // Timeouts are retriable with increased timeout or simplified logic
+    });
+  }
+}
+
+/**
+ * Rate limit error for programmatic detection of rate limit enforcement
+ */
+export class RateLimitError extends DbMcpError {
+  constructor(
+    message: string,
+    code = "RATE_LIMIT_ERROR",
+    options?: {
+      suggestion?: string | undefined;
+      details?: Record<string, unknown> | undefined;
+      retryAfterMs?: number | undefined;
+      limit?: number | undefined;
+      cause?: Error | undefined;
+    },
+  ) {
+    super(message, code, ErrorCategory.RATE_LIMIT, {
+      ...options,
+      details: {
+        ...options?.details,
+        retryAfterMs: options?.retryAfterMs,
+        limit: options?.limit,
+      },
+      recoverable: true, // Rate limits are transient — retry after backoff
+    });
+  }
+}
+
+/**
+ * Conflict error for optimistic concurrency violations
+ *
+ * Used when a concurrent modification is detected (e.g., version mismatch
+ * during an optimistic locking update). Retry after re-reading current state.
+ */
+export class ConflictError extends DbMcpError {
+  constructor(
+    message: string,
+    code = "CONFLICT_ERROR",
+    options?: {
+      suggestion?: string | undefined;
+      details?: Record<string, unknown> | undefined;
+      conflictType?: string | undefined;
+      cause?: Error | undefined;
+    },
+  ) {
+    super(message, code, ErrorCategory.QUERY, {
+      ...options,
+      details: {
+        ...options?.details,
+        conflictType: options?.conflictType,
+      },
+      recoverable: true, // Conflicts are retriable after re-reading current state
+    });
+  }
+}
+

@@ -27,6 +27,8 @@ import {
   formatHandlerError,
   DbMcpError,
   ErrorCategory,
+  RateLimitError,
+  TimeoutError,
 } from "../../../utils/errors/index.js";
 import {
   ExecuteCodeSchema,
@@ -122,16 +124,15 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         // Check rate limit
         const clientId = _context.auth?.sub ?? _context.clientIp ?? processId;
         if (!(await security.checkRateLimit(clientId))) {
-          return {
-            success: false,
-            error: `Rate limit exceeded. Maximum ${String(codemodeRateLimit)} executions per minute.`,
-            code: "CODEMODE_RATE_LIMITED",
-            category: "permission",
-            suggestion:
-              "Wait before retrying. Combine multiple operations into fewer execute_code calls.",
-            recoverable: true,
-            metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
-          };
+          throw new RateLimitError(
+            `Rate limit exceeded. Maximum ${String(codemodeRateLimit)} executions per minute.`,
+            "CODEMODE_RATE_LIMITED",
+            {
+              suggestion:
+                "Wait before retrying. Combine multiple operations into fewer execute_code calls.",
+              limit: codemodeRateLimit,
+            },
+          );
         }
 
         // Initialize pool lazily
@@ -211,6 +212,24 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
           operation: "executeCode",
           error: error instanceof Error ? error : undefined,
         });
+
+        // Detect sandbox timeout errors and wrap as TimeoutError
+        if (
+          error instanceof Error &&
+          /script execution timed out/i.test(error.message)
+        ) {
+          return formatHandlerError(
+            new TimeoutError(
+              "Code execution timed out",
+              "CODEMODE_TIMEOUT",
+              {
+                suggestion:
+                  "Reduce code complexity or increase the timeout parameter (max 30000ms). Break complex logic into smaller execute_code calls.",
+                cause: error,
+              },
+            ),
+          );
+        }
 
         return formatHandlerError(error);
       }

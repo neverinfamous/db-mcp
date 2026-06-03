@@ -26,6 +26,10 @@ export enum ErrorCategory {
   AUTHORIZATION = "authorization",
   /** Unexpected internal errors */
   INTERNAL = "internal",
+  /** Execution timeout errors */
+  TIMEOUT = "timeout",
+  /** Rate limit enforcement errors */
+  RATE_LIMIT = "rate_limit",
 }
 
 /**
