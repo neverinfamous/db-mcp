@@ -137,7 +137,13 @@ When running in HTTP mode (`--transport http`), the following security measures 
 - ✅ **Session ownership binding** — each session is bound to the authenticated subject (`req.auth.sub`) at creation. Every subsequent POST, GET (SSE stream, including legacy SSE connections), and DELETE request verifies that the requester's identity matches the session owner, preventing cross-client session hijack (CWE-284, CWE-639)
 - ✅ **Graceful degradation** — when auth is disabled (stdio transport, local dev), session ownership is not enforced (owner is `undefined`)
 
-> **⚠️ In-Memory Sessions:** Session state (including ownership binding) is stored in-memory. Server restarts clear all sessions, forcing clients to re-establish. In multi-instance deployments, sessions are not shared across instances — use sticky sessions at the load balancer or implement a shared session store for production clusters.
+### **Session Timeout Enforcement**
+
+- ✅ **Idle timeout** — Sessions inactive for 30 minutes are automatically expired and cleaned up via a 1-minute sweep interval.
+- ✅ **Absolute TTL** — Sessions have a hard 24-hour maximum lifetime regardless of activity, forcing periodic re-authentication.
+- ✅ **In-flight protection** — Sessions with active requests are skipped by the sweep timer to prevent mid-request disconnection.
+
+> **⚠️ In-Memory Sessions:** Session state (including ownership binding and timeout tracking) is stored in-memory. Server restarts clear all sessions, forcing clients to re-establish. In multi-instance deployments, sessions are not shared across instances — use sticky sessions at the load balancer or implement a shared session store for production clusters.
 
 ### **Filesystem Hard Gate**
 
@@ -333,6 +339,9 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] CI/CD concurrent execution block safeguards
 - [x] Unauthenticated HTTP transport implicitly fails closed without `--no-auth-enforcement` flag
 - [x] Session ID format and length validation (UUIDv4) for stateful transport
+- [x] Session idle timeout enforcement (30-minute default, 1-minute sweep)
+- [x] Session absolute TTL enforcement (24-hour hard cap)
+- [x] In-flight request protection during session expiry sweep
 
 - [x] WebAssembly and SharedArrayBuffer blocked in Code Mode sandbox
 - [x] File I/O functions (`WRITEFILE`, `READFILE`) blocked in restore tool

@@ -67,6 +67,9 @@ export class HttpTransport {
   /** Internal state shared with session/middleware/oauth modules */
   private readonly state: HttpTransportState;
 
+  /** Sweep timer for session timeout cleanup */
+  private sweepTimer: ReturnType<typeof setInterval> | null = null;
+
   constructor(config: HttpTransportConfig) {
     this.state = {
       config: {
@@ -81,6 +84,9 @@ export class HttpTransport {
       transports: new Map(),
       sseTransports: new Map(),
       sessionOwners: new Map(),
+      sessionLastActivity: new Map(),
+      sessionCreatedAt: new Map(),
+      sessionLocks: new Map(),
       statelessTransport: null,
       resourceServer: null,
       authServerDiscovery: null,
@@ -259,7 +265,7 @@ export class HttpTransport {
     if (this.state.config.stateless) {
       await setupStatelessEndpoints(this.state);
     } else {
-      setupStatefulEndpoints(this.state);
+      this.sweepTimer = setupStatefulEndpoints(this.state);
     }
 
     // Legacy SSE endpoints (always available in stateful mode)
@@ -339,6 +345,11 @@ export class HttpTransport {
    * Stop the server and close all active sessions
    */
   async stop(): Promise<void> {
+    if (this.sweepTimer) {
+      clearInterval(this.sweepTimer);
+      this.sweepTimer = null;
+    }
+
     // Close all active Streamable HTTP transports
     for (const [sessionId, transport] of this.state.transports) {
       try {

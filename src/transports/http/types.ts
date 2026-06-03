@@ -34,6 +34,13 @@ export const HTTP_KEEP_ALIVE_TIMEOUT_MS = 65_000;
 /** Headers timeout (ms) — must be > keepAliveTimeout per Node.js docs */
 export const HTTP_HEADERS_TIMEOUT_MS = 66_000;
 
+/** Session idle timeout for stateful HTTP mode (30 minutes) */
+export const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+/** Session timeout sweep interval (1 minute) */
+export const SESSION_SWEEP_INTERVAL_MS = 1 * 60 * 1000;
+/** Session absolute TTL (24 hours) — hard cap regardless of activity */
+export const SESSION_ABSOLUTE_TTL_MS = 24 * 60 * 60 * 1000;
+
 // =============================================================================
 // Configuration
 // =============================================================================
@@ -166,6 +173,11 @@ export interface HttpTransportState {
   // Used to verify that only the client that created a session can use it (H-2).
   // When auth is disabled, owner is undefined and binding is not enforced.
   sessionOwners: Map<string, string | undefined>;
+
+  // Session activity tracking
+  sessionLastActivity: Map<string, number>;
+  sessionCreatedAt: Map<string, number>;
+  sessionLocks: Map<string, number>;
 
   // OAuth components
   resourceServer: OAuthResourceServer | null;

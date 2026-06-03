@@ -58,7 +58,7 @@ sqlite_reindex({ target: "orders" }); // rebuild all indexes for a table
 
 ## Backup/Restore (Native only)
 
-⚠️ Paths must be absolute and within \`ALLOWED_IO_ROOTS\` if configured.
+⚠️ Paths must be absolute and within explicitly authorized \`ALLOWED_IO_ROOTS\`.
 
 \`\`\`javascript
 sqlite_backup({ targetPath: "/path/to/backup.db" });
@@ -144,7 +144,7 @@ sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }); // 2D:
 
 ## CSV Virtual Tables (Native only)
 
-⚠️ Requires ABSOLUTE file paths that must fall within \`ALLOWED_IO_ROOTS\` if configured.
+⚠️ Requires ABSOLUTE file paths that must fall within explicitly authorized \`ALLOWED_IO_ROOTS\`.
 
 \`\`\`javascript
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" }); // analyze CSV structure
@@ -309,7 +309,7 @@ sqlite_spatialite_index({
 10. **SpatiaLite distances**: \`nearest_neighbor\`/\`distance_matrix\` return CARTESIAN distance (degrees), not geodetic (km/miles)
 11. **SpatiaLite buffer**: Auto-simplifies output by default (tolerance=0.0001). Use \`simplifyTolerance: 0\` to disable
 12. **sqlite_stats_top_n**: Returns all columns by default which creates large payloads for wide tables — always pass \`selectColumns\` to control output size
-13. **CSV virtual tables & Backups**: Require ABSOLUTE file paths. Operations will be blocked if paths do not fall within the authorized \`ALLOWED_IO_ROOTS\` directory (or the primary database directory if unconfigured).
+13. **CSV virtual tables & Backups**: Require ABSOLUTE file paths. Operations will be strictly blocked if paths do not fall within the explicitly authorized \`ALLOWED_IO_ROOTS\` directory list. Unconfigured stdio transports default to no filesystem access.
 14. **sqlite_create_series_table**: Creates a REGULAR table (not virtual) — use \`sqlite_drop_table\` to remove
 15. **sqlite_dbstat**: \`summarize\` only works in native; WASM returns counts only
 16. **PRAGMA compile options**: WASM may show FTS3, not FTS5
@@ -319,6 +319,7 @@ sqlite_spatialite_index({
 20. **sqlite_schema_diff**: \`baseline\` and \`target\` accept either the string \`"current"\` (queries live DB) or an inline snapshot object from a prior \`sqlite_schema_snapshot\` call. At least one side must be \`"current"\` unless doing an offline comparison
 21. **sqlite_upsert**: Always specify \`conflictColumns\` — without it, falls back to \`REPLACE\` which deletes and re-inserts the row, potentially losing columns not included in \`data\`
 22. **Resource Subscriptions**: The \`sqlite://schema\` and \`sqlite://health\` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
+23. **HTTP Session Timeouts**: Stateful HTTP sessions automatically expire after 30 minutes of inactivity, or 24 hours total. Sessions are swept automatically; ensure client workflows re-authenticate or handle broken sessions gracefully.
 
 ## WASM vs Native
 

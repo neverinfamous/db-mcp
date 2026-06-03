@@ -28,6 +28,12 @@
 
 **Inventory total**: 175 Native / 148 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
+## Pre-requisites
+
+1. The testing database MUST be freshly seeded via `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to ensure deterministic results.
+2. The MCP server MUST be started with the `ALLOWED_IO_ROOTS` environment variable configured (e.g., set to the db-mcp repository root), otherwise it will hard-fail to start and block file-based tool tests (like CSV generation or database dumps).
+3. **Session Timeouts**: If using the HTTP transport, note that sessions will strictly expire after 30 minutes of inactivity and have an absolute TTL of 24 hours. Ensure your manual testing flows account for these timeouts.
+
 ## Agent Instructions
 
 When tasked with running tests from this folder, adhere to the following protocol:

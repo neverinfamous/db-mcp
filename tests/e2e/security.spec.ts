@@ -150,4 +150,31 @@ test.describe("HTTP Transport Security & Limits", () => {
       stopServer(HSTS_PORT);
     }
   });
+
+  test("should fail to start HTTP server if ALLOWED_IO_ROOTS is omitted", async () => {
+    const { spawn } = await import("node:child_process");
+    
+    // Copy process.env but explicitly omit ALLOWED_IO_ROOTS
+    const env = { ...process.env };
+    delete env.ALLOWED_IO_ROOTS;
+
+    const serverProcess = spawn(
+      "node",
+      ["dist/cli.js", "--transport", "http", "--port", "3007", "--sqlite", ":memory:"],
+      { cwd: process.cwd(), env, stdio: "ignore" }
+    );
+
+    const exitCode = await new Promise<number | null>((resolve) => {
+      serverProcess.on("exit", (code) => resolve(code));
+      
+      // Safety timeout in case it actually starts (which is a test failure)
+      setTimeout(() => {
+        serverProcess.kill();
+        resolve(-1);
+      }, 5000);
+    });
+
+    // Should hard-fail with exit code 1
+    expect(exitCode).toBe(1);
+  });
 });
