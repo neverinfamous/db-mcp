@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import assert from "assert";
 
 async function main() {
   const proc = spawn("node", ["dist/cli.js", "--transport=stdio"], {
@@ -55,23 +56,34 @@ async function main() {
 
   await new Promise(r => setTimeout(r, 500));
 
+  function assertNotifications(expected, stepName) {
+    try {
+      assert.deepStrictEqual([...notifications].sort(), [...expected].sort());
+      console.log(`✅ Passed ${stepName}`);
+    } catch (err) {
+      console.error(`❌ FAILED ${stepName}: Expected`, expected, `but got`, notifications);
+      process.exit(1);
+    }
+  }
+
   console.log("Mutating DB: CREATE");
   send("tools/call", { name: "sqlite_create_table", arguments: { table: "test_live_sub", columns: [{ name: "id", type: "INTEGER", primaryKey: true }] } });
   await new Promise(r => setTimeout(r, 500));
-  console.log("Notifications after CREATE:", notifications);
+  assertNotifications(["sqlite://schema", "sqlite://tables", "sqlite://table/test_products/schema"], "CREATE");
   notifications = [];
 
   console.log("Mutating DB: ALTER");
   send("tools/call", { name: "sqlite_alter_table", arguments: { table: "test_products", operation: "add_column", column: "sub_test", type: "TEXT" } });
   await new Promise(r => setTimeout(r, 500));
-  console.log("Notifications after ALTER:", notifications);
+  assertNotifications(["sqlite://schema", "sqlite://tables", "sqlite://table/test_products/schema"], "ALTER");
   notifications = [];
 
   console.log("Mutating DB: DROP");
   send("tools/call", { name: "sqlite_drop_table", arguments: { table: "test_live_sub" } });
   await new Promise(r => setTimeout(r, 500));
-  console.log("Notifications after DROP:", notifications);
+  assertNotifications(["sqlite://schema", "sqlite://tables", "sqlite://table/test_products/schema"], "DROP");
 
+  console.log("\n✅ All RAW subscription tests passed!");
   proc.kill();
   setTimeout(() => process.exit(0), 500);
 }

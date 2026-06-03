@@ -50,6 +50,8 @@
 - Automated subscription test scripts attempting DDL via `sqlite_write_query` instead of dedicated DDL tools and using outdated SDK signatures.
 - `reset-database.ps1` crashing with `SQLITE_NOTADB` during encryption when database is locked (now gracefully warns).
 - Defunct `--auth-token` argument remaining in `cli.ts` help text.
+- `SubscriptionManager` blindly broadcasting resource update notifications without verifying active subscribers for the URI.
+- Test output clarity and missing assertions in `test-subscriptions-raw.mjs` and `test-subscriptions-sdk.mjs`.
 
 ### Security
 

@@ -78,10 +78,9 @@ export class SubscriptionManager {
    * Notifies all subscribed clients that a resource has changed.
    */
   public async notifyResourceUpdated(uri: string): Promise<void> {
-    // Always broadcast resource updates if the transport allows it, 
-    // because the MCP SDK handles routing or broadcast.
-    // However, if we have NO tracked sessions, and it's a stateful transport, we can skip it.
-    // Since some transports are stateless and SDK broadcasts anyway, we'll just send it.
+    if (!this.hasSubscribers(uri)) {
+      return;
+    }
     
     try {
       await this.server.server.sendResourceUpdated({ uri });
