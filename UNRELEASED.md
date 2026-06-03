@@ -33,6 +33,8 @@
 - Native addon crashes during Vitest by changing the execution pool from `threads` to `forks`.
 - False-positive Promise rejections in `sqlite-adapter-methods.test.ts`.
 - Updated outdated `Last updated` date in `test-server/code-map.md`.
+- Synced `AUDIT_REDACT` default to `true` in `.env.example` and `mcp-config-example.json` to match `cli.ts`.
+- Synced `tool-reference.md` to the `db-mcp.wiki` repository to ensure accurate tool counts and schemas.
 
 ### Security
 - **Hard Gate**: HTTP transports fail to start if `ALLOWED_IO_ROOTS` is omitted.

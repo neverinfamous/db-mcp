@@ -100,7 +100,7 @@
         "MCP_ENABLE_HSTS": "false",
         "NO_AUTH_ENFORCEMENT": "false",
         "AUDIT_BACKUP": "false",
-        "AUDIT_REDACT": "false",
+        "AUDIT_REDACT": "true",
         "AUDIT_READS": "false",
         "AUDIT_BACKUP_DATA": "false",
         "AUDIT_LOG": "/tmp/db-mcp-logs/audit.jsonl",
