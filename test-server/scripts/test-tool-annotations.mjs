@@ -393,6 +393,9 @@ function pct(count, total) {
 // Server Communication (JSON-RPC over stdio)
 // =============================================================================
 
+const cleanEnv = { ...process.env };
+delete cleanEnv.DB_ENCRYPTION_KEY;
+
 const proc = spawn(
   "node",
   [
@@ -410,6 +413,7 @@ const proc = spawn(
   {
     cwd: projectDir,
     stdio: ["pipe", "pipe", "pipe"],
+    env: cleanEnv,
   },
 );
 

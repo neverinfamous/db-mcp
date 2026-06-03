@@ -5,6 +5,9 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectDir = resolve(__dirname, "../..");
 
+const cleanEnv = { ...process.env };
+delete cleanEnv.DB_ENCRYPTION_KEY;
+
 const proc = spawn(
   "node",
   [
@@ -17,6 +20,7 @@ const proc = spawn(
   {
     cwd: projectDir,
     stdio: ["pipe", "pipe", "pipe"],
+    env: cleanEnv,
   },
 );
 

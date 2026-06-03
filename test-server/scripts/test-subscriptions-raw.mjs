@@ -2,8 +2,11 @@ import { spawn } from "child_process";
 import assert from "assert";
 
 async function main() {
+  const env = { ...process.env, SQLITE_DATABASE: "test-server/test.db" };
+  delete env.DB_ENCRYPTION_KEY;
+
   const proc = spawn("node", ["dist/cli.js", "--transport=stdio"], {
-    env: { ...process.env, SQLITE_DATABASE: "test-server/test.db" },
+    env,
     stdio: ["pipe", "pipe", "pipe"]
   });
 

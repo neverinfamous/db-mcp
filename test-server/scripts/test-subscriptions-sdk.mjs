@@ -4,10 +4,13 @@ import { z } from "zod";
 import assert from "assert";
 
 async function main() {
+  const env = { ...process.env, SQLITE_DATABASE: "test-server/test.db" };
+  delete env.DB_ENCRYPTION_KEY;
+
   const transport = new StdioClientTransport({
     command: "node",
     args: ["dist/cli.js", "--transport=stdio"],
-    env: { ...process.env, SQLITE_DATABASE: "test-server/test.db" }
+    env
   });
 
   const client = new Client({ name: "test-client", version: "1.0.0" }, { capabilities: {} });
