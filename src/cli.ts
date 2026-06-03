@@ -297,7 +297,7 @@ Server Options:
   --metrics-export <type>   Export metrics at HTTP /metrics (e.g., prometheus)
   --tool-filter <filter>    Tool filter string. Supports:
                               Shortcuts: starter, analytics, search, spatial, minimal, full
-                              Groups: core, json, text, fts5, stats, vector, geo, ...
+                              Groups: core, json, text, stats, vector, geo, ...
                               Mixed: core,json,-text (whitelist with exclusions)
                               Legacy: -vector,-geo (exclusion from all)
 

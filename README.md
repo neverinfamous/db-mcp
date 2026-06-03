@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-88.18%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-88.15%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -274,9 +274,9 @@ This is useful for scripted or automated clients that need a minimal, precise se
 
 ```bash
 --tool-filter "starter"
---tool-filter "core,json,text,fts5"
+--tool-filter "core,json,text,stats"
 --tool-filter "starter,+stats"
---tool-filter "starter,-fts5"
+--tool-filter "starter,-vector"
 ```
 
 **Legacy Syntax (still supported):**

@@ -214,8 +214,9 @@ db-mcp organizes tools into groups covering: `core`, `json`, `text`, `stats`, `v
 3. **Add structured error handling** by letting the handler return `formatHandlerError()` when exceptions are caught
 4. **Write meaningful Vitest tests** and update E2E spec files if making systemic changes
 5. **Add the tool to the group's help resource** (the markdown file under `src/constants/server-instructions/`)
-6. **Verify OAuth Scope** — ensure the new tool aligns with its group's defined OAuth 2.1 scope (`read`, `write`, or `admin`)
-7. **Update `UNRELEASED.md`** with your change (see [Changelog](#-changelog) below)
+6. **Update the tool reference documentation** in `test-server/tool-reference.md` and the filtering constants in `src/filtering/tool-constants.ts`
+7. **Verify OAuth Scope** — ensure the new tool aligns with its group's defined OAuth 2.1 scope (`read`, `write`, or `admin`)
+8. **Update `UNRELEASED.md`** with your change (see [Changelog](#-changelog) below)
 
 ## 🐛 Bug Reports
 
