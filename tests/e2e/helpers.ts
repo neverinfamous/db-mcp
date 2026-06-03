@@ -173,6 +173,7 @@ export async function startServer(
         MCP_RATE_LIMIT_MAX: args.some((a) => a === "--rate-limit-max")
           ? undefined
           : "10000",
+        ALLOWED_IO_ROOTS: process.cwd(),
       },
     },
   );

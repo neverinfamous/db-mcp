@@ -35,6 +35,7 @@ function createMockAdapter() {
     executeReadQuery: vi.fn(),
     executeWriteQuery: vi.fn(),
     getConfiguredPath: vi.fn().mockReturnValue("/absolute/test.db"),
+    getAllowedIoRoots: vi.fn().mockReturnValue(undefined),
   } as any;
 }
 

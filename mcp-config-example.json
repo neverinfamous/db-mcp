@@ -58,6 +58,8 @@
         "AUDIT_BACKUP_DATA",
         "-e",
         "AUDIT_LOG",
+        "-e",
+        "ALLOWED_IO_ROOTS",
         "writenotenow/db-mcp:latest",
         "--sqlite-native",
         "/app/data/my-database.db",
@@ -95,7 +97,8 @@
         "AUDIT_REDACT": "false",
         "AUDIT_READS": "false",
         "AUDIT_BACKUP_DATA": "false",
-        "AUDIT_LOG": "/tmp/db-mcp-logs/audit.jsonl"
+        "AUDIT_LOG": "/tmp/db-mcp-logs/audit.jsonl",
+        "ALLOWED_IO_ROOTS": "[\"/app/data\"]"
       }
     }
   }

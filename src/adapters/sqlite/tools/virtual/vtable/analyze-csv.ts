@@ -12,7 +12,7 @@ import {
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { AnalyzeCsvSchemaSchema } from "../../../schemas/virtual.js";
 import { AnalyzeCsvSchemaOutputSchema } from "../../../schemas/virtual.js";
-import { validateSameDirPath } from "../../../../../utils/validate-path.js";
+import { validateSameDirPath, assertSafeIoPath } from "../../../../../utils/index.js";
 import { getAuthContext } from "../../../../../auth/auth-context.js";
 
 export function createAnalyzeCsvSchemaTool(
@@ -75,20 +75,38 @@ export function createAnalyzeCsvSchemaTool(
         };
       }
 
-      const validation = validateSameDirPath(
-        input.filePath,
-        adapter.getConfiguredPath(),
-      );
-      if (!validation.valid) {
-        return {
-          success: false,
-          error: validation.error || "Path validation failed",
-          code: "SECURITY_ERROR",
-          category: "validation",
-          hasHeader: false,
-          rowCount: 0,
-          columns: [],
-        };
+      const allowedIoRoots = adapter.getAllowedIoRoots();
+
+      if (allowedIoRoots !== undefined) {
+        try {
+          assertSafeIoPath(input.filePath, allowedIoRoots, false);
+        } catch (error: unknown) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Security error",
+            code: "SECURITY_ERROR",
+            category: "validation",
+            hasHeader: false,
+            rowCount: 0,
+            columns: [],
+          };
+        }
+      } else {
+        const validation = validateSameDirPath(
+          input.filePath,
+          adapter.getConfiguredPath(),
+        );
+        if (!validation.valid) {
+          return {
+            success: false,
+            error: validation.error || "Path validation failed",
+            code: "SECURITY_ERROR",
+            category: "validation",
+            hasHeader: false,
+            rowCount: 0,
+            columns: [],
+          };
+        }
       }
 
       const tempName = `_csv_analyze_${Date.now()}`;

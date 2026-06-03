@@ -13,7 +13,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-90.13%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-89.72%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
@@ -182,6 +182,7 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `OAUTH_CLOCK_TOLERANCE`     | `60`        | Clock tolerance in seconds (`--oauth-clock-tolerance`)                    |
 | `MCP_ENABLE_HSTS`           | `false`     | Enable HSTS header (`--enable-hsts`)                                      |
 | `NO_AUTH_ENFORCEMENT`       | `false`     | Explicitly bypass auth enforcement for HTTP (`--no-auth-enforcement`)     |
+| `ALLOWED_IO_ROOTS`          | —           | JSON array or comma-separated list of absolute paths allowed for IO operations |
 | `LOG_LEVEL`                 | `info`      | Log verbosity: `debug`, `info`, `warning`, `error`                        |
 | `METADATA_CACHE_TTL_MS`     | `5000`      | Schema cache TTL in ms (auto-invalidated on DDL)                          |
 | `CODEMODE_ISOLATION`        | `isolate`   | Code Mode sandbox: `isolate` (isolated-vm native) or `worker`             |
@@ -204,7 +205,7 @@ For remote access or web-based clients:
 docker run --rm -p 3000:3000 \
   -v ./data:/app/data \
   writenotenow/db-mcp:latest \
-  --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native /app/data/database.db
+  --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native /app/data/database.db --allowed-io-roots /app/data
 ```
 
 > [!IMPORTANT]
@@ -234,7 +235,8 @@ docker run --rm -p 3000:3000 \
   writenotenow/db-mcp:latest \
   --transport http --port 3000 --server-host 0.0.0.0 \
   --oauth-enabled --oauth-issuer http://keycloak:8080/realms/db-mcp --oauth-audience db-mcp-server \
-  --sqlite-native /app/data/database.db
+  --sqlite-native /app/data/database.db \
+  --allowed-io-roots /app/data
 ```
 
 **Scopes:** `full`, `read`, `write`, `admin`, `db:{name}`, `table:{db}:{table}`. See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for provider configuration.

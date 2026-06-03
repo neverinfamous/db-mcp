@@ -62,7 +62,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **WHERE clause validation** — Core and stats tools enforce strict structured arrays (`WhereCondition[]`), completely eliminating SQL injection vectors present in legacy string-based WHERE properties. For raw query tools, a blocklist rejects dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, hex string injection, `GLOB` leading wildcards, and `RANDOMBLOB`/`ZEROBLOB` memory allocation DoS. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
 - ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
 - ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
-- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). This validation strictly enforces exact directory matching, blocking access even to legitimate subdirectories. _Note: In-memory databases (`:memory:`) bypass path validation by design._
+- ✅ **Path Traversal Prevention** — database exports, backups, dumps, and CSV imports enforce strict path boundaries preventing arbitrary file reads/writes (e.g. `sqlite_dump`, `sqlite_backup`, `sqlite_create_csv_virtual_table`). All filesystem operations are strictly sandboxed using symlink-aware realpath resolution (`assertSafeIoPath`). To prevent ambient filesystem authority, configuring `ALLOWED_IO_ROOTS` is a **hard requirement** when starting the server with HTTP transport. For stdio/local transports, if unconfigured, operations fallback to strictly matching the directory of the primary database. _Note: In-memory databases (`:memory:`) bypass path validation by design._
 - ✅ **DDL Validation** — Migration tools (`sqlite_migration_apply`, `sqlite_migration_rollback`) use `validateMigrationSql` to strictly prevent unauthorized DDL commands such as `ATTACH`, `DETACH`, `PRAGMA`, and `LOAD_EXTENSION`.
 - ✅ **JWT claims sanitization** — prototype-polluting keys (`__proto__`, `constructor`, `prototype`) are filtered from OAuth token payloads before spreading into claims objects
 
@@ -138,6 +138,10 @@ When running in HTTP mode (`--transport http`), the following security measures 
 - ✅ **Graceful degradation** — when auth is disabled (stdio transport, local dev), session ownership is not enforced (owner is `undefined`)
 
 > **⚠️ In-Memory Sessions:** Session state (including ownership binding) is stored in-memory. Server restarts clear all sessions, forcing clients to re-establish. In multi-instance deployments, sessions are not shared across instances — use sticky sessions at the load balancer or implement a shared session store for production clusters.
+
+### **Filesystem Hard Gate**
+
+- ✅ **`ALLOWED_IO_ROOTS` Requirement** — To prevent ambient filesystem authority in remote deployments, the HTTP transport will **refuse to start** unless `ALLOWED_IO_ROOTS` (via env var or CLI flag) is explicitly configured. This ensures administrators explicitly define exactly which directory paths the server is authorized to interact with.
 
 ### **Request Size Limits**
 

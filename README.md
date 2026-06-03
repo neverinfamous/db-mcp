@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-90.13%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-89.72%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -433,6 +433,7 @@ MCP prompts provide AI-assisted database workflows:
 | `MCP_RATE_LIMIT_MAX`        | `100`       | Max requests/minute per IP (HTTP transport)                                    |
 | `CSV_EXTENSION_PATH`        | —           | Custom path to CSV extension binary (native only)                              |
 | `SPATIALITE_PATH`           | —           | Custom path to SpatiaLite extension binary (native only)                       |
+| `ALLOWED_IO_ROOTS`          | —           | JSON array or comma-separated list of absolute paths allowed for IO operations |
 | `MCP_AUTH_TOKEN`            | —           | Simple bearer token for HTTP auth (CLI: `--auth-token`)                        |
 | `AUDIT_LOG`                 | —           | Audit log file path, or `stderr` (CLI: `--audit-log`)                          |
 | `AUDIT_REDACT`              | `true`      | Redact tool arguments from audit entries (CLI: `--audit-no-redact` to disable) |
@@ -451,6 +452,7 @@ Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --
 Auth:         --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
 Database:     --sqlite <path>  |  --sqlite-native <path>  [--encryption-key <key>]
 Extensions:   --csv  --spatialite                         (native only)
+Security:     --allowed-io-roots <paths>
 Audit:        --audit-log <path>  --audit-no-redact  --audit-reads  --audit-backup  --audit-backup-data
 Server:       --name <name>  --version <ver>  --metrics-export <type>  --tool-filter <filter>
 ```
@@ -505,7 +507,8 @@ For remote access, web-based clients, or HTTP-compatible MCP hosts, use the HTTP
 node dist/cli.js \
   --transport http \
   --port 3000 \
-  --sqlite-native ./database.db
+  --sqlite-native ./database.db \
+  --allowed-io-roots $(pwd)
 ```
 
 **Docker:**
@@ -515,7 +518,8 @@ docker run --rm -p 3000:3000 \
   -v ./data:/app/data \
   writenotenow/db-mcp:latest \
   --transport http --port 3000 \
-  --sqlite-native /app/data/database.db
+  --sqlite-native /app/data/database.db \
+  --allowed-io-roots /app/data
 ```
 
 The server supports **two MCP transport protocols simultaneously**, enabling both modern and legacy clients to connect:
@@ -537,7 +541,7 @@ Sessions are managed via the `Mcp-Session-Id` header.
 For serverless/stateless deployments where sessions are not needed:
 
 ```bash
-node dist/cli.js --transport http --port 3000 --stateless --sqlite-native ./database.db
+node dist/cli.js --transport http --port 3000 --stateless --sqlite-native ./database.db --allowed-io-roots $(pwd)
 ```
 
 In stateless mode: `GET /mcp` returns 405, `DELETE /mcp` returns 204, `/sse` and `/messages` return 404. Each `POST /mcp` creates a fresh transport.
@@ -570,6 +574,7 @@ node dist/cli.js \
   --transport http \
   --port 3000 \
   --sqlite-native ./database.db \
+  --allowed-io-roots $(pwd) \
   --oauth-enabled \
   --oauth-issuer http://localhost:8080/realms/db-mcp \
   --oauth-audience db-mcp-server

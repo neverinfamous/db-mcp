@@ -32,6 +32,7 @@ function createMockAdapter(isNative = true) {
     executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
     isNativeBackend: vi.fn().mockReturnValue(isNative),
     getConfiguredPath: vi.fn().mockReturnValue("/tmp/test.db"),
+    getAllowedIoRoots: vi.fn().mockReturnValue(undefined),
   } as any;
 }
 

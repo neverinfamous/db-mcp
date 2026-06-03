@@ -38,6 +38,7 @@ test.describe("Rate Limiting", () => {
         env: {
           ...process.env,
           MCP_RATE_LIMIT_MAX: "5",
+          ALLOWED_IO_ROOTS: process.cwd(),
         },
       },
     );
@@ -126,6 +127,7 @@ test.describe("Rate Limiting", () => {
         env: {
           ...process.env,
           MCP_RATE_LIMIT_MAX: "3",
+          ALLOWED_IO_ROOTS: process.cwd(),
         },
       },
     );
@@ -214,6 +216,7 @@ test.describe("Rate Limiting", () => {
         env: {
           ...process.env,
           MCP_RATE_LIMIT_MAX: "2",
+          ALLOWED_IO_ROOTS: process.cwd(),
         },
       },
     );

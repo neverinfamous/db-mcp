@@ -13,6 +13,7 @@ import { admin, adminFs, readOnly } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
   validateSameDirPath,
+  assertSafeIoPath,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 
@@ -386,20 +387,42 @@ export function createAttachDatabaseTool(
           };
         }
 
-        // Security: validate filepath is within the same directory as the primary DB
-        const pathCheck = validateSameDirPath(
-          input.filepath,
-          adapter.getConfiguredPath(),
-        );
-        if (!pathCheck.valid) {
-          return {
-            success: false,
-            error: pathCheck.error,
-            code: "SECURITY_ERROR",
-          };
-        }
+        let escapedPath: string;
+        let finalResolvedPath: string;
+        const allowedIoRoots = adapter.getAllowedIoRoots();
 
-        const escapedPath = pathCheck.resolvedPath.replace(/'/g, "''");
+        if (allowedIoRoots !== undefined) {
+          try {
+            assertSafeIoPath(input.filepath, allowedIoRoots);
+            // In attach, we need the raw path or resolved path? It should be passed to sqlite.
+            // If they passed a relative path, we resolve it.
+            const resolvedPath = input.filepath; // or path.resolve
+            escapedPath = resolvedPath.replace(/'/g, "''");
+            finalResolvedPath = resolvedPath;
+          } catch (error: unknown) {
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : "Security error",
+              code: "SECURITY_ERROR",
+            };
+          }
+        } else {
+          // Security: validate filepath is within the same directory as the primary DB
+          const pathCheck = validateSameDirPath(
+            input.filepath,
+            adapter.getConfiguredPath(),
+          );
+          if (!pathCheck.valid) {
+            return {
+              success: false,
+              error: pathCheck.error,
+              code: "SECURITY_ERROR",
+            };
+          }
+
+          escapedPath = pathCheck.resolvedPath.replace(/'/g, "''");
+          finalResolvedPath = pathCheck.resolvedPath;
+        }
         await adapter.rawQuery(
           `ATTACH DATABASE '${escapedPath}' AS "${input.alias.replace(/"/g, '""')}"`,
         );
@@ -408,7 +431,7 @@ export function createAttachDatabaseTool(
           success: true,
           message: `Database attached as '${input.alias}'`,
           alias: input.alias,
-          filepath: pathCheck.resolvedPath.split(/[\\/]/).pop() ?? "",
+          filepath: finalResolvedPath.split(/[\\/]/).pop() ?? "",
         };
       } catch (error: unknown) {
         return formatHandlerError(error);

@@ -8,6 +8,7 @@
 import { createServer, DEFAULT_CONFIG } from "./server/mcp-server.js";
 import { VERSION } from "./version.js";
 import { logger } from "./utils/logger/index.js";
+import { parseAllowedIoRoots } from "./utils/security-utils.js";
 import type {
   McpServerConfig,
   DatabaseConfig,
@@ -189,6 +190,11 @@ function parseArgs(): {
       if (metricsValue === "prometheus") {
         metricsExport = "prometheus";
       }
+    } else if (arg === "--allowed-io-roots") {
+      const rootsValue = args[++i];
+      if (rootsValue) {
+        config.allowedIoRoots = parseAllowedIoRoots(rootsValue);
+      }
     } else if (arg === "--config" || arg === "-c") {
       const pathValue = args[++i];
       if (pathValue) {
@@ -279,6 +285,9 @@ Audit Options:
   --audit-reads             Also log read-scoped tool invocations
   --audit-backup            Enable pre-mutation DDL snapshots
   --audit-backup-data       Include sample data rows in snapshots
+
+Security Options:
+  --allowed-io-roots <paths> Allowlisted filesystem roots for IO operations (comma-separated or JSON array)
 
 Server Options:
   --config, -c <path>       Load configuration from YAML/JSON file
@@ -410,6 +419,12 @@ function loadEnvConfig(): Partial<McpServerConfig> {
   // Metrics from environment
   if (process.env["METRICS_EXPORT"] === "prometheus") {
     config.metricsExport = "prometheus";
+  }
+
+  // Allowed IO Roots from environment
+  const allowedIoRoots = process.env["ALLOWED_IO_ROOTS"];
+  if (allowedIoRoots) {
+    config.allowedIoRoots = parseAllowedIoRoots(allowedIoRoots);
   }
 
   if (databases.length > 0) {

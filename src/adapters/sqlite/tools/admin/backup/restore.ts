@@ -10,7 +10,7 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
-import { validateSameDirPath } from "../../../../../utils/index.js";
+import { validateSameDirPath, assertSafeIoPath } from "../../../../../utils/index.js";
 import {
   buildProgressContext,
   sendProgress,
@@ -112,30 +112,56 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      const resolvedPath = nodePath.resolve(input.sourcePath);
+      let escapedPath: string;
+      const allowedIoRoots = adapter.getAllowedIoRoots();
 
-      // Security: validate sourcePath is within the same directory as the primary DB
-      const pathCheck = validateSameDirPath(
-        input.sourcePath,
-        adapter.getConfiguredPath(),
-      );
-      if (!pathCheck.valid) {
-        return {
-          ...formatHandlerError(new ValidationError(pathCheck.error)),
-          sourcePath: input.sourcePath,
-        };
+      if (allowedIoRoots !== undefined) {
+        try {
+          assertSafeIoPath(input.sourcePath, allowedIoRoots);
+          const resolvedPath = nodePath.resolve(input.sourcePath);
+          if (!fs.existsSync(resolvedPath)) {
+            return {
+              ...formatHandlerError(
+                new ValidationError(`Source file not found: ${input.sourcePath}`),
+              ),
+              sourcePath: input.sourcePath,
+            };
+          }
+          escapedPath = resolvedPath.replace(/'/g, "''");
+        } catch (error: unknown) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Security error",
+            code: "SECURITY_ERROR",
+            sourcePath: input.sourcePath,
+          };
+        }
+      } else {
+        const resolvedPath = nodePath.resolve(input.sourcePath);
+
+        // Security: validate sourcePath is within the same directory as the primary DB
+        const pathCheck = validateSameDirPath(
+          input.sourcePath,
+          adapter.getConfiguredPath(),
+        );
+        if (!pathCheck.valid) {
+          return {
+            ...formatHandlerError(new ValidationError(pathCheck.error)),
+            sourcePath: input.sourcePath,
+          };
+        }
+
+        if (!fs.existsSync(resolvedPath)) {
+          return {
+            ...formatHandlerError(
+              new ValidationError(`Source file not found: ${input.sourcePath}`),
+            ),
+            sourcePath: input.sourcePath,
+          };
+        }
+
+        escapedPath = pathCheck.resolvedPath.replace(/'/g, "''");
       }
-
-      if (!fs.existsSync(resolvedPath)) {
-        return {
-          ...formatHandlerError(
-            new ValidationError(`Source file not found: ${input.sourcePath}`),
-          ),
-          sourcePath: input.sourcePath,
-        };
-      }
-
-      const escapedPath = pathCheck.resolvedPath.replace(/'/g, "''");
 
       await adapter.executeReadQuery("PRAGMA integrity_check(1)");
 

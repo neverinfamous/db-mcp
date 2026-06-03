@@ -10,7 +10,8 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
-import { validateSameDirPath } from "../../../../../utils/index.js";
+import nodePath from "node:path";
+import { validateSameDirPath, assertSafeIoPath } from "../../../../../utils/index.js";
 import { SqlDumpSchema, SqlDumpOutputSchema } from "../../../schemas/admin.js";
 import {
   sendProgress,
@@ -60,27 +61,44 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      // Security: validate outputPath is within the same directory as the primary DB
-      const pathCheck = validateSameDirPath(
-        input.outputPath,
-        adapter.getConfiguredPath(),
-      );
+      let resolvedPath: string;
+      const allowedIoRoots = adapter.getAllowedIoRoots();
 
-      // Hard reject any path traversal attempts (F04 defense in depth)
-      if (input.outputPath.includes("..") || !pathCheck.valid) {
-        return {
-          success: false,
-          error: !pathCheck.valid
-            ? pathCheck.error
-            : "Invalid path: must not contain '..'",
-          code: "SECURITY_ERROR",
-          path: input.outputPath,
-        };
+      if (allowedIoRoots !== undefined) {
+        try {
+          assertSafeIoPath(input.outputPath, allowedIoRoots);
+          resolvedPath = nodePath.resolve(input.outputPath);
+        } catch (error: unknown) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Security error",
+            code: "SECURITY_ERROR",
+            path: input.outputPath,
+          };
+        }
+      } else {
+        // Security: validate outputPath is within the same directory as the primary DB
+        const pathCheck = validateSameDirPath(
+          input.outputPath,
+          adapter.getConfiguredPath(),
+        );
+
+        // Hard reject any path traversal attempts (F04 defense in depth)
+        if (input.outputPath.includes("..") || !pathCheck.valid) {
+          return {
+            success: false,
+            error: !pathCheck.valid
+              ? pathCheck.error
+              : "Invalid path: must not contain '..'",
+            code: "SECURITY_ERROR",
+            path: input.outputPath,
+          };
+        }
+        resolvedPath = pathCheck.resolvedPath;
       }
 
       const progress = buildProgressContext(context);
       const start = Date.now();
-      const resolvedPath = pathCheck.resolvedPath;
 
       await sendProgress(progress, 1, 4, "Preparing dump file...");
 
