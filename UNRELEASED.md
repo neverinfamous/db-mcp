@@ -23,6 +23,8 @@
 - Split complex tool handlers (`audit-tools.ts`, `window.ts`) into sub-modules and grouped exports via barrel files to adhere to complexity boundaries.
 - Replaced generic `Error` classes with domain-specific `ValidationError`, `ConfigurationError`, etc., in core auth and validation logic.
 - Updated server instructions (`gotchas.md`) to formally document structured `ValidationError` responses.
+- Added `(opt-in)` annotation to `sqlite.migration` in Code Mode groups list (`gotchas.md`) to match the `(Native-only)` pattern.
+- Added cross-group dependency note to `sqlite_hybrid_search` in `text.md` (requires FTS5 + vector column).
 
 ### Fixed
 
@@ -41,6 +43,7 @@
 - Synced `AUDIT_REDACT` default to `true` in `.env.example` and `mcp-config-example.json` to match `cli.ts`.
 - Synced `tool-reference.md` to the `db-mcp.wiki` repository to ensure accurate tool counts and schemas.
 - Configured `ALLOWED_IO_ROOTS` in test scripts (`verify-schemas.mjs` and `test-zod-errors.mjs`) to automatically silence fallback sandbox warnings when executing the stdio transport.
+- Generation script README exclusion now uses case-insensitive prefix matching (`readme*`), matching its documented behavior.
 
 ### Security
 
