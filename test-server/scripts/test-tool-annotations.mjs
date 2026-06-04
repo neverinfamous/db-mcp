@@ -30,7 +30,7 @@ import { spawn } from "child_process";
 
 const projectDir = "C:\\Users\\chris\\Desktop\\db-mcp";
 
-/** Expected total tool count: 175 inventory (170 group + 5 audit) + 6 built-in */
+/** Expected total tool count: 177 inventory (170 group + 7 audit) + 4 built-in */
 const EXPECTED_TOOL_COUNT = 181;
 
 /**

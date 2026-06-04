@@ -171,55 +171,59 @@ All tools should return errors as strongly-typed structured objects instead of t
 **Error path testing:**
 
 🔴 31. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
-🔴 23. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
-🔴 24. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
-🔴 25. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
-🔴 26. `sqlite_count({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 27. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 28. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 29. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
+🔴 32. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
+🔴 33. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
+🔴 34. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
+🔴 35. `sqlite_count({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 36. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 37. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 38. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
 🔴 39. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
 🔴 40. `sqlite_enable_versioning({table: "nonexistent_table_xyz"})` → `{success: false}`
 🔴 41. `sqlite_disable_versioning({table: "nonexistent_table_xyz"})` → `{success: false}`
 🔴 42. `sqlite_check_version({table: "nonexistent_table_xyz", rowId: 1})` → `{success: false}`
 🔴 43. `sqlite_conditional_update({table: "nonexistent_table_xyz", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "x"}, expectedVersion: 1})` → `{success: false}`
 
-**OCC Error Paths (requires versioned table):** 44. `sqlite_create_table({table: "temp_core_occ_err", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → setup 45. `sqlite_write_query({query: "INSERT INTO temp_core_occ_err (id, val) VALUES (1, 'initial')"})` → setup 46. `sqlite_enable_versioning({table: "temp_core_occ_err"})` → setup
+**OCC Error Paths (requires versioned table):**
+44. `sqlite_create_table({table: "temp_core_occ_err", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → setup
+45. `sqlite_write_query({query: "INSERT INTO temp_core_occ_err (id, val) VALUES (1, 'initial')"})` → setup
+46. `sqlite_enable_versioning({table: "temp_core_occ_err"})` → setup
 🔴 47. `sqlite_write_query({query: "UPDATE temp_core_occ_err SET val = 'bad' WHERE id = 1"})` → `{success: false}` (ConflictError: missing expectedVersion)
 🔴 48. `sqlite_upsert({table: "temp_core_occ_err", data: {id: 1, val: "bad"}, conflictColumns: ["id"]})` → `{success: false}` (ConflictError: missing expectedVersion)
-🔴 49. `sqlite_conditional_update({table: "temp_core_occ_err", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "bad"}, expectedVersion: 99})` → `{success: false}` (ConflictError: expectedVersion mismatch) 50. `sqlite_drop_table({table: "temp_core_occ_err"})` → cleanup
+🔴 49. `sqlite_conditional_update({table: "temp_core_occ_err", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "bad"}, expectedVersion: 99})` → `{success: false}` (ConflictError: expectedVersion mismatch)
+50. `sqlite_drop_table({table: "temp_core_occ_err"})` → cleanup
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 31. `sqlite_read_query({})` → handler error
-🔴 32. `sqlite_write_query({})` → handler error
-🔴 33. `sqlite_upsert({})` → handler error
-🔴 34. `sqlite_batch_insert({})` → handler error
-🔴 35. `sqlite_count({})` → handler error
-🔴 36. `sqlite_exists({})` → handler error
-🔴 37. `sqlite_truncate({})` → handler error
-🔴 38. `sqlite_date_add({})` → handler error
-🔴 60. `sqlite_date_diff({})` → handler error
-🔴 61. `sqlite_enable_versioning({})` → handler error
-🔴 62. `sqlite_disable_versioning({})` → handler error
-🔴 63. `sqlite_check_version({})` → handler error
-🔴 64. `sqlite_conditional_update({})` → handler error
+🔴 51. `sqlite_read_query({})` → handler error
+🔴 52. `sqlite_write_query({})` → handler error
+🔴 53. `sqlite_upsert({})` → handler error
+🔴 54. `sqlite_batch_insert({})` → handler error
+🔴 55. `sqlite_count({})` → handler error
+🔴 56. `sqlite_exists({})` → handler error
+🔴 57. `sqlite_truncate({})` → handler error
+🔴 58. `sqlite_date_add({})` → handler error
+🔴 59. `sqlite_date_diff({})` → handler error
+🔴 60. `sqlite_enable_versioning({})` → handler error
+🔴 61. `sqlite_disable_versioning({})` → handler error
+🔴 62. `sqlite_check_version({})` → handler error
+🔴 63. `sqlite_conditional_update({})` → handler error
 
 **Built-in tools** — these take no required params, so `{}` should return a successful response (confirming graceful handling):
 
-🔴 65. `server_info({})` → should succeed (no required params)
-🔴 66. `server_health({})` → should succeed (no required params)
-🔴 67. `list_adapters({})` → should succeed (no required params)
+🔴 64. `server_info({})` → should succeed (no required params)
+🔴 65. `server_health({})` → should succeed (no required params)
+🔴 66. `list_adapters({})` → should succeed (no required params)
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 68. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
-🔴 69. `sqlite_check_version({table: "test_orders", rowId: "abc"})` → handler error
-🔴 70. `sqlite_conditional_update({table: "test_orders", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "x"}, expectedVersion: "abc"})` → handler error
+🔴 67. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
+🔴 68. `sqlite_check_version({table: "test_orders", rowId: "abc"})` → handler error
+🔴 69. `sqlite_conditional_update({table: "test_orders", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "x"}, expectedVersion: "abc"})` → handler error
 
 ---
 

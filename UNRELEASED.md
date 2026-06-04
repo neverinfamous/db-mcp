@@ -25,6 +25,7 @@
 - Updated server instructions (`gotchas.md`) to formally document structured `ValidationError` responses.
 - Added `(opt-in)` annotation to `sqlite.migration` in Code Mode groups list (`gotchas.md`) to match the `(Native-only)` pattern.
 - Added cross-group dependency note to `sqlite_hybrid_search` in `text.md` (requires FTS5 + vector column).
+- Standardized test prompts (`test-codemode/*.md`, `test-advanced/*.md`, `test-tool-groups/*.md`) to enforce strict sequential numbering and aligned error reporting architecture checks with the latest structured error and Zod validation standards.
 
 ### Fixed
 
@@ -45,6 +46,7 @@
 - Configured `ALLOWED_IO_ROOTS` in test scripts (`verify-schemas.mjs` and `test-zod-errors.mjs`) to automatically silence fallback sandbox warnings when executing the stdio transport.
 - Generation script README exclusion now uses case-insensitive prefix matching (`readme*`), matching its documented behavior.
 - Removed unused devDependency `rimraf` from `package.json` to improve dependency hygiene.
+- Inaccurate Native-only tool counts in advanced test suite READMEs and prompt instructions (e.g. FTS5, SpatiaLite, and Window functions).
 
 ### Security
 

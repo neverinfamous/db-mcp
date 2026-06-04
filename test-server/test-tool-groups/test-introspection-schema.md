@@ -120,17 +120,32 @@ All tools should return errors as strongly-typed structured objects instead of t
 - `sqlite_constraint_analysis`
 - `sqlite_migration_risks`
 
-## Phase 1: Zod Validation Sweep
+## Phase 1: Core Check (batched)
+
+1. `sqlite_dependency_graph({table: "test_orders"})` → should return dependency graph
+2. `sqlite_topological_sort({})` → should return sorted tables
+3. `sqlite_cascade_simulator({table: "test_users", operation: "delete"})` → should simulate cascade
+4. `sqlite_schema_snapshot({})` → should return schema snapshot
+5. `sqlite_schema_diff({baseline: [], target: []})` → verify diff behavior
+6. `sqlite_constraint_analysis({table: "test_users"})` → should return constraints
+7. `sqlite_migration_risks({statements: ["DROP TABLE test_users"]})` → should identify data loss risks
+
+**Error path testing:**
+
+🔴 8. `sqlite_dependency_graph({table: "nonexistent_table_xyz"})` → structured error
+🔴 9. `sqlite_cascade_simulator({table: "nonexistent_table_xyz", operation: "delete"})` → structured error
+
+## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 1. `sqlite_dependency_graph({})` → handler error (or success if no required params)
-🔴 2. `sqlite_topological_sort({})` → handler error (or success if no required params)
-🔴 3. `sqlite_schema_snapshot({})` → handler error (or success if no required params)
-🔴 4. `sqlite_schema_diff({})` → handler error (both `baseline` and `target` required)
-🔴 5. `sqlite_constraint_analysis({})` → handler error (or success if no required params)
-🔴 6. `sqlite_migration_risks({})` → handler error
-🔴 7. `sqlite_cascade_simulator({})` → handler error (requires `table`)
+🔴 10. `sqlite_dependency_graph({})` → handler error (or success if no required params)
+🔴 11. `sqlite_topological_sort({})` → handler error (or success if no required params)
+🔴 12. `sqlite_schema_snapshot({})` → handler error (or success if no required params)
+🔴 13. `sqlite_schema_diff({})` → handler error (both `baseline` and `target` required)
+🔴 14. `sqlite_constraint_analysis({})` → handler error (or success if no required params)
+🔴 15. `sqlite_migration_risks({})` → handler error
+🔴 16. `sqlite_cascade_simulator({})` → handler error (requires `table`)
 
 ---
 

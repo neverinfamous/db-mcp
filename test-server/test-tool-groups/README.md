@@ -16,7 +16,7 @@
 | `test-stats-advanced.md`            | stats-advanced            | 6N/0W               | Window functions `[NATIVE ONLY]`                     |
 | `test-vector-read.md`               | vector-read               | 7 + Code Mode       | Identical Native/WASM                                |
 | `test-vector-write.md`              | vector-write              | 4                   | Identical Native/WASM                                |
-| `test-admin-core.md`                | admin-core                | 24N/23W + Code Mode | `dump` is `[NATIVE ONLY]`                            |
+| `test-admin-core.md`                | admin-core                | 23N/22W + Code Mode | `dump` is `[NATIVE ONLY]`                            |
 | `test-admin-extensions.md`          | admin-extensions          | 8                   | CSV, series, rtree                                   |
 | `test-admin-audit.md`               | admin-audit               | 7                   | Audit snapshot management, search, and server config |
 | `test-transactions.md`              | transactions              | 8 + Code Mode       | `[NATIVE ONLY]`                                      |
@@ -26,7 +26,7 @@
 | `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode       | Identical Native/WASM                                |
 | `test-migration.md`                 | migration                 | 6 + Code Mode       | Identical Native/WASM                                |
 
-**Inventory total**: 179 Native / 152 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+**Inventory total**: 177 Native / 150 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Pre-requisites
 

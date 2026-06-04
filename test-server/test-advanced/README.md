@@ -47,9 +47,9 @@ When testing against a **WASM backend** (`--sqlite` flag, sql.js adapter), follo
 
 - **`[NATIVE ONLY]` items**: Skip all categories and individual test items annotated with `[NATIVE ONLY]`.
 - **Transactions prompt**: Skip entirely — all 8 transaction tools are `[NATIVE ONLY]`.
-- **Window function items** (stats Category 4): Skip — 6 window tools are Native-only.
-- **SpatiaLite items** (geo Category 5): Skip — 7 SpatiaLite tools are Native-only.
-- **FTS5 items** (text Category 6): Skip — 5 FTS5 tools are Native-only.
+- **Window function items** (stats Phase 4): Skip — 7 window tools are Native-only.
+- **SpatiaLite items** (geo Phase 5): Skip — 7 SpatiaLite tools are Native-only.
+- **FTS5 items** (text Phase 6): Skip — 4 FTS5 tools are Native-only.
 
 #### Graceful Degradation (Don't Skip — Validate Errors)
 

@@ -150,36 +150,36 @@ All tools should return errors as strongly-typed structured objects instead of t
 20. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
 21. `sqlite_fts_create({sourceTable: "test_embeddings", columns: ["content"], ftsTable: "test_embeddings_fts"})` → FTS virtual table created
 22. `sqlite_fts_rebuild({table: "test_embeddings_fts"})` → rebuild index before searching
-    22.5. `sqlite_hybrid_search({table: "test_embeddings", query: "database", queryVector: [0.1, 0.2, -0.1, 0.3, -0.2, 0.4, 0.1, -0.5], vectorColumn: "embedding", ftsTable: "test_embeddings_fts"})` → results combining vector distance and FTS
-23. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist
+23. `sqlite_hybrid_search({table: "test_embeddings", query: "database", queryVector: [0.1, 0.2, -0.1, 0.3, -0.2, 0.4, 0.1, -0.5], vectorColumn: "embedding", ftsTable: "test_embeddings_fts"})` → results combining vector distance and FTS
+24. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist
 
 **Error path testing:**
 
-🔴 24. `sqlite_fuzzy_match({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error with code `COLUMN_NOT_FOUND`
-🔴 25. `sqlite_fts_search({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
-🔴 26. `sqlite_fts_search({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` `[NATIVE ONLY]` → should gracefully handle malformed FTS syntax without crashing the parser (via `sanitizeFtsQuery`)
+🔴 25. `sqlite_fuzzy_match({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error with code `COLUMN_NOT_FOUND`
+🔴 26. `sqlite_fts_search({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+🔴 27. `sqlite_fts_search({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` `[NATIVE ONLY]` → should gracefully handle malformed FTS syntax without crashing the parser (via `sanitizeFtsQuery`)
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 27. `sqlite_fuzzy_match({})` → handler error
-🔴 28. `sqlite_phonetic_match({})` → handler error
-🔴 29. `sqlite_advanced_search({})` → handler error
-🔴 30. `sqlite_text_sentiment({})` → handler error
-🔴 31. `sqlite_fts_create({})` `[NATIVE ONLY]` → handler error
-🔴 32. `sqlite_fts_search({})` `[NATIVE ONLY]` → handler error
-🔴 33. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
-🔴 34. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
-🔴 35. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
-🔴 36. `sqlite_hybrid_search({})` `[NATIVE ONLY]` → handler error
+🔴 28. `sqlite_fuzzy_match({})` → handler error
+🔴 29. `sqlite_phonetic_match({})` → handler error
+🔴 30. `sqlite_advanced_search({})` → handler error
+🔴 31. `sqlite_text_sentiment({})` → handler error
+🔴 32. `sqlite_fts_create({})` `[NATIVE ONLY]` → handler error
+🔴 33. `sqlite_fts_search({})` `[NATIVE ONLY]` → handler error
+🔴 34. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
+🔴 35. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
+🔴 36. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
+🔴 37. `sqlite_hybrid_search({})` `[NATIVE ONLY]` → handler error
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 37. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "test", maxDistance: "abc"})` → handler error
-🔴 38. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error
+🔴 38. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "test", maxDistance: "abc"})` → handler error
+🔴 39. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error
 
 ---
 

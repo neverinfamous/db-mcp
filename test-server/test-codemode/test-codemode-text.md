@@ -173,21 +173,21 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 ## Phase 3: Text Write Tool (temp table)
 
-27. `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected
-28. Revert: `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"})` → 1 row reverted
+29. `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected
+30. Revert: `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"})` → 1 row reverted
 
 ## Phase 4: Text Domain Errors (batched)
 
-🔴 29. `sqlite.text.regexMatch({table: "nonexistent_xyz", column: "x", pattern: "."})` → `{success: false}`
-🔴 30. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → `{success: false}`
-🔴 31. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → `{success: false}`
-🔴 32. `sqlite.text.ftsSearch({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` `[NATIVE ONLY]` → should gracefully handle malformed FTS syntax without crashing the parser (via `sanitizeFtsQuery`)
+🔴 31. `sqlite.text.regexMatch({table: "nonexistent_xyz", column: "x", pattern: "."})` → `{success: false}`
+🔴 32. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → `{success: false}`
+🔴 33. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → `{success: false}`
+🔴 34. `sqlite.text.ftsSearch({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` `[NATIVE ONLY]` → should gracefully handle malformed FTS syntax without crashing the parser (via `sanitizeFtsQuery`)
 
 ## Phase 5: Gotcha Edge Cases (batched)
 
-33. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptop Pro 15", tokenize: false, maxDistance: 3})` → full-string matching (default tokenizes into words and matches per-token, gotcha #10)
-34. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test Metaphone algorithm variant (default is Soundex)
-35. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["phonetic"]})` → single technique instead of all 3 — verify it works in isolation
+35. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptop Pro 15", tokenize: false, maxDistance: 3})` → full-string matching (default tokenizes into words and matches per-token, gotcha #10)
+36. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test Metaphone algorithm variant (default is Soundex)
+37. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["phonetic"]})` → single technique instead of all 3 — verify it works in isolation
 
 ## Phase 6: Multi-Step Workflow
 
@@ -269,32 +269,32 @@ Expected: `beforeCount: > 0`, `afterCount: > 0` — validates that `ftsCreate` a
 
 ## Phase 7: Zod Validation Sweep
 
-🔴 36. `sqlite.text.regexExtract({})` → `{success: false}`
-🔴 37. `sqlite.text.regexMatch({})` → `{success: false}`
-🔴 38. `sqlite.text.split({})` → `{success: false}`
-🔴 39. `sqlite.text.concat({})` → `{success: false}`
-🔴 40. `sqlite.text.replace({})` → `{success: false}`
-🔴 41. `sqlite.text.trim({})` → `{success: false}`
-🔴 42. `sqlite.text.case({})` → `{success: false}`
-🔴 43. `sqlite.text.substring({})` → `{success: false}`
-🔴 44. `sqlite.text.fuzzyMatch({})` → `{success: false}`
-🔴 45. `sqlite.text.phoneticMatch({})` → `{success: false}`
-🔴 46. `sqlite.text.normalize({})` → `{success: false}`
-🔴 47. `sqlite.text.validate({})` → `{success: false}`
-🔴 48. `sqlite.text.advancedSearch({})` → `{success: false}`
-🔴 49. `sqlite.text.sentiment({})` → `{success: false}`
-🔴 50. `sqlite.text.ftsCreate({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 51. `sqlite.text.ftsSearch({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 52. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 53. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 54. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 55. `sqlite.text.hybridSearch({})` → `{success: false}`
+🔴 38. `sqlite.text.regexExtract({})` → `{success: false}`
+🔴 39. `sqlite.text.regexMatch({})` → `{success: false}`
+🔴 40. `sqlite.text.split({})` → `{success: false}`
+🔴 41. `sqlite.text.concat({})` → `{success: false}`
+🔴 42. `sqlite.text.replace({})` → `{success: false}`
+🔴 43. `sqlite.text.trim({})` → `{success: false}`
+🔴 44. `sqlite.text.case({})` → `{success: false}`
+🔴 45. `sqlite.text.substring({})` → `{success: false}`
+🔴 46. `sqlite.text.fuzzyMatch({})` → `{success: false}`
+🔴 47. `sqlite.text.phoneticMatch({})` → `{success: false}`
+🔴 48. `sqlite.text.normalize({})` → `{success: false}`
+🔴 49. `sqlite.text.validate({})` → `{success: false}`
+🔴 50. `sqlite.text.advancedSearch({})` → `{success: false}`
+🔴 51. `sqlite.text.sentiment({})` → `{success: false}`
+🔴 52. `sqlite.text.ftsCreate({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 53. `sqlite.text.ftsSearch({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 54. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 55. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 56. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 57. `sqlite.text.hybridSearch({})` → `{success: false}`
 
 ## Phase 8: Wrong-Type Numeric Coercion
 
-🔴 56. `sqlite.text.fuzzyMatch({table: "test_users", column: "username", search: "test", maxDistance: "abc"})` → handler error, NOT raw MCP `-32602`
-🔴 57. `sqlite.text.substring({table: "test_users", column: "username", start: "abc", length: 5})` → handler error, NOT raw MCP
-🔴 58. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error, NOT raw MCP
+🔴 58. `sqlite.text.fuzzyMatch({table: "test_users", column: "username", search: "test", maxDistance: "abc"})` → handler error, NOT raw MCP `-32602`
+🔴 59. `sqlite.text.substring({table: "test_users", column: "username", start: "abc", length: 5})` → handler error, NOT raw MCP
+🔴 60. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error, NOT raw MCP
 
 ---
 
