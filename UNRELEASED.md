@@ -2,6 +2,7 @@
 
 ### Added
 
+- Contextual `README.md` files to core directories (`.agents`, `.github`, `config`, `extensions`, `scripts`, `src`, `tests`) to improve repository documentation and agent navigability.
 - `TimeoutError`, `RateLimitError`, and `ConflictError` typed error classes.
 - Code Mode errors surface as structured typed errors instead of generic internals.
 - HTTP rate limit responses return structured JSON with `code`, `category`, `suggestion`, and `recoverable` fields.
