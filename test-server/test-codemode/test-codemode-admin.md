@@ -157,7 +157,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 ## Phase 1: Pragma & Inspection — Happy Paths (batched)
 
-1. `sqlite.admin.pragmaDatabaseList()` → verify database path matches `test.db`
+1. `sqlite.admin.pragmaDatabaseList()` → verify database path matches `test-encrypted.db`
 2. `sqlite.admin.pragmaCompileOptions()` → list of compile options
 3. `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` → filtered to FTS options
 4. `sqlite.admin.pragmaSettings({pragma: "journal_mode"})` → `{value: "wal"}`

@@ -144,7 +144,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 ## Phase 1: PRAGMA Diagnostics (batched)
 
-1. `sqlite_pragma_database_list` → verify database path matches `test.db`
+1. `sqlite_pragma_database_list` → verify database path matches `test-encrypted.db`
 2. `sqlite_index_stats` → verify index statistics for test database
 3. `sqlite_dbstat({summarize: true})` → per-table storage metrics
 4. `sqlite_integrity_check` → `ok` result
