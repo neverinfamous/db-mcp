@@ -44,6 +44,7 @@
 - Synced `tool-reference.md` to the `db-mcp.wiki` repository to ensure accurate tool counts and schemas.
 - Configured `ALLOWED_IO_ROOTS` in test scripts (`verify-schemas.mjs` and `test-zod-errors.mjs`) to automatically silence fallback sandbox warnings when executing the stdio transport.
 - Generation script README exclusion now uses case-insensitive prefix matching (`readme*`), matching its documented behavior.
+- Removed unused devDependency `rimraf` from `package.json` to improve dependency hygiene.
 
 ### Security
 
