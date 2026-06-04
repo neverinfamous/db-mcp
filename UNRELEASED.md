@@ -63,6 +63,7 @@
 - Fixed `sqlite_dependency_graph` to accept an optional `table` parameter, properly validate its existence, and filter the returned graph to only include nodes and edges connected to the specified table.
 - Standardized the output format of the `json-write` tool group by ensuring `sqlite_json_set`, `sqlite_json_remove`, and `sqlite_json_array_append` return a descriptive `message` field on successful execution.
 - Fixed `findSuggestion` regex pattern for missing column errors (`has no column named`) to correctly capture the column name, surfacing it in structured error responses instead of returning `unknown`.
+- Fixed missing `column` parameter in `sqlite_json_insert` test instructions in `test-codemode-advanced-json.md`.
 
 ### Security
 

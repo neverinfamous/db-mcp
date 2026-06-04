@@ -187,7 +187,7 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
 
 ## Phase 4: Write Operation Safety (batched)
 
-19. Create `stress_json_write` table → insert 3 JSON documents → perform `sqlite.json.set`, `sqlite.json.remove`, `sqlite.json.insert` → verify mutations → cleanup
+19. Create `stress_json_write` table → insert 3 JSON documents → perform `sqlite.json.set`, `sqlite.json.remove`, `sqlite.json.insert({table: "stress_json_write", column: "data", data: {"new": "row"}})` → verify mutations → cleanup
     > **Note:** `sqlite_json_insert` is a **row-level INSERT** (creates new row with JSON data, provided via the `data` parameter), not a path-level JSON insert.
 20. `sqlite.json.normalizeColumn(...)` on `stress_json_write` → verify keys sorted/compacted without data loss
 
