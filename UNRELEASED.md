@@ -54,6 +54,7 @@
 - Generation script README exclusion now uses case-insensitive prefix matching (`readme*`).
 - Removed unused devDependency `rimraf` from `package.json`.
 - Inaccurate Native-only tool counts in advanced test suite READMEs and prompt instructions.
+- Refactored vector tool handlers to throw proper `ValidationError` and `ResourceNotFoundError` subclasses instead of returning raw error objects, ensuring structured responses include `category` and `recoverable` properties.
 
 ### Security
 

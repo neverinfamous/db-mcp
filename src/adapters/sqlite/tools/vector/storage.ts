@@ -16,7 +16,7 @@ import {
   destructive,
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
 import {
   VectorStoreOutputSchema,
   VectorBatchStoreOutputSchema,
@@ -49,10 +49,7 @@ export function createVectorCreateTableTool(
         const input = VectorCreateTableSchema.parse(params);
 
         if (input.dimensions < 1) {
-          return {
-            success: false,
-            error: "Dimensions must be at least 1",
-          };
+          throw new ValidationError("Dimensions must be at least 1");
         }
 
         // Validate and quote table name
@@ -167,11 +164,9 @@ export function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
         const input = VectorStoreSchema.parse(params);
 
         if (input.vector.length === 0) {
-          return {
-            success: false,
-            error:
-              "vector is required and must be a non-empty array of numbers",
-          };
+          throw new ValidationError(
+            "vector is required and must be a non-empty array of numbers",
+          );
         }
 
         // Validate and quote identifiers
@@ -181,6 +176,7 @@ export function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Validate dimensions against table schema
         let hasDimsColumn = false;
+        let expectedDims: number | undefined;
         try {
           const dims = await validateDimensions(
             adapter,
@@ -189,19 +185,19 @@ export function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
             input.vectorColumn,
           );
           hasDimsColumn = dims.hasDimsColumn;
-
-          if (
-            dims.expectedDims !== undefined &&
-            input.vector.length !== dims.expectedDims
-          ) {
-            return {
-              success: false,
-              error: `Dimension mismatch: vector has ${input.vector.length} dimensions but table expects ${dims.expectedDims}`,
-              code: "DIMENSION_MISMATCH",
-            };
-          }
+          expectedDims = dims.expectedDims;
         } catch {
           // Table lacks dimensions column — skip validation
+        }
+
+        if (
+          expectedDims !== undefined &&
+          input.vector.length !== expectedDims
+        ) {
+          throw new ValidationError(
+            `Dimension mismatch: vector has ${input.vector.length} dimensions but table expects ${expectedDims}`,
+            "DIMENSION_MISMATCH"
+          );
         }
 
         const vectorJson = JSON.stringify(input.vector);
@@ -263,10 +259,11 @@ export function createVectorBatchStoreTool(
             input.table,
           ]);
           if (!checkResult.rows || checkResult.rows.length === 0) {
-            return {
-              success: false,
-              error: `Table '${input.table}' does not exist`,
-            };
+            throw new ResourceNotFoundError(
+              `Table '${input.table}' does not exist`,
+              "TABLE_NOT_FOUND",
+              { resourceType: "table", resourceName: input.table }
+            );
           }
           return {
             success: true,
@@ -280,6 +277,7 @@ export function createVectorBatchStoreTool(
 
         // Validate dimensions against table schema
         let hasDimsColumn = false;
+        let expectedDims: number | undefined;
         try {
           const dims = await validateDimensions(
             adapter,
@@ -288,21 +286,21 @@ export function createVectorBatchStoreTool(
             input.vectorColumn,
           );
           hasDimsColumn = dims.hasDimsColumn;
-
-          if (dims.expectedDims !== undefined) {
-            for (let i = 0; i < input.items.length; i++) {
-              const item = input.items[i];
-              if (item && item.vector.length !== dims.expectedDims) {
-                return {
-                  success: false,
-                  error: `Dimension mismatch at item[${i}]: vector has ${item.vector.length} dimensions but table expects ${dims.expectedDims}`,
-                  code: "DIMENSION_MISMATCH",
-                };
-              }
-            }
-          }
+          expectedDims = dims.expectedDims;
         } catch {
           // Table lacks dimensions column — skip validation
+        }
+
+        if (expectedDims !== undefined) {
+          for (let i = 0; i < input.items.length; i++) {
+            const item = input.items[i];
+            if (item && item.vector.length !== expectedDims) {
+              throw new ValidationError(
+                `Dimension mismatch at item[${i}]: vector has ${item.vector.length} dimensions but table expects ${expectedDims}`,
+                "DIMENSION_MISMATCH"
+              );
+            }
+          }
         }
 
         let stored = 0;

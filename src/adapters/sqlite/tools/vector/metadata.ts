@@ -13,7 +13,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   VectorCountOutputSchema,
   VectorStatsOutputSchema,
@@ -221,14 +221,9 @@ export function createVectorNormalizeTool(): ToolDefinition {
         //       const queryParams: unknown[] = [];
 
         if (input.vector.length === 0) {
-          return Promise.resolve({
-            success: false,
-            error:
-              "vector is required and must be a non-empty array of numbers",
-            code: "VALIDATION_ERROR",
-            category: "validation",
-            recoverable: false,
-          });
+          throw new ValidationError(
+            "vector is required and must be a non-empty array of numbers",
+          );
         }
 
         const normalized = normalizeVector(input.vector);
@@ -266,22 +261,13 @@ export function createVectorDistanceTool(): ToolDefinition {
         //       const queryParams: unknown[] = [];
 
         if (input.vector1.length === 0 || input.vector2.length === 0) {
-          return Promise.resolve({
-            success: false,
-            error:
-              "vector1 and vector2 are required and must be non-empty arrays of numbers",
-            code: "VALIDATION_ERROR",
-            category: "validation",
-            recoverable: false,
-          });
+          throw new ValidationError(
+            "vector1 and vector2 are required and must be non-empty arrays of numbers",
+          );
         }
 
         if (input.vector1.length !== input.vector2.length) {
-          return Promise.resolve({
-            success: false,
-            error: "Vector dimensions must match",
-            code: "DIMENSION_MISMATCH",
-          });
+          throw new ValidationError("Vector dimensions must match", "DIMENSION_MISMATCH");
         }
 
         let result: number;
@@ -296,13 +282,9 @@ export function createVectorDistanceTool(): ToolDefinition {
             result = 1 - cosineSimilarity(input.vector1, input.vector2);
             break;
           default:
-            return Promise.resolve({
-              success: false,
-              error: `Invalid metric '${input.metric}'. Valid values: cosine, euclidean, dot`,
-              code: "VALIDATION_ERROR",
-              category: "validation",
-              recoverable: false,
-            });
+            throw new ValidationError(
+              `Invalid metric '${input.metric}'. Valid values: cosine, euclidean, dot`
+            );
         }
 
         return Promise.resolve({

@@ -18,7 +18,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
 import {
   VectorSearchOutputSchema,
   VectorGetOutputSchema,
@@ -44,11 +44,9 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
         const input = VectorSearchSchema.parse(params);
 
         if (input.queryVector.length === 0) {
-          return {
-            success: false,
-            error:
-              "queryVector is required and must be a non-empty array of numbers",
-          };
+          throw new ValidationError(
+            "queryVector is required and must be a non-empty array of numbers",
+          );
         }
 
         // Validate and quote identifiers
@@ -115,10 +113,9 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
                 score = cosineSimilarity(queryVector, storedVector);
                 break;
               default:
-                return {
-                  success: false,
-                  error: `Invalid metric '${input.metric}'. Valid values: cosine, euclidean, dot`,
-                };
+                throw new ValidationError(
+                  `Invalid metric '${input.metric}'. Valid values: cosine, euclidean, dot`
+                );
             }
 
             scored.push({
@@ -210,29 +207,20 @@ export function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
         const result = await adapter.executeReadQuery(sql, [input.id]);
 
         if (!result.rows || result.rows.length === 0) {
-          return {
-            success: false,
-            error: "Vector not found",
-            code: "VECTOR_NOT_FOUND",
-          };
+          throw new ResourceNotFoundError("Vector not found", "VECTOR_NOT_FOUND", { resourceType: "vector", resourceName: String(input.id) });
         }
 
         const row = result.rows[0];
         if (!row) {
-          return {
-            success: false,
-            error: "Vector not found",
-            code: "VECTOR_NOT_FOUND",
-          };
+          throw new ResourceNotFoundError("Vector not found", "VECTOR_NOT_FOUND", { resourceType: "vector", resourceName: String(input.id) });
         }
 
         // Check if the vector column exists in the row data
         const rawVector = row[input.vectorColumn];
         if (rawVector === undefined || rawVector === null) {
-          return {
-            success: false,
-            error: `Column '${input.vectorColumn}' not found or contains NULL. Available columns: ${Object.keys(row).join(", ")}`,
-          };
+          throw new ValidationError(
+            `Column '${input.vectorColumn}' not found or contains NULL. Available columns: ${Object.keys(row).join(", ")}`
+          );
         }
         const vectorData = parseVector(rawVector);
 
