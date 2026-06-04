@@ -55,6 +55,7 @@
 - Removed unused devDependency `rimraf` from `package.json`.
 - Inaccurate Native-only tool counts in advanced test suite READMEs and prompt instructions.
 - Refactored vector tool handlers to throw proper `ValidationError` and `ResourceNotFoundError` subclasses instead of returning raw error objects, ensuring structured responses include `category` and `recoverable` properties.
+- Fixed missing error codes and categories for structured error responses in the `admin-audit` tool group, ensuring `sqlite_server_config` and backup tools meet the Structured Error Response Pattern requirements.
 
 ### Security
 

@@ -155,6 +155,8 @@ export function registerAuditBackupTools(
         const errRes = {
           success: false,
           error: `Snapshot not found: ${filename}`,
+          code: "NOT_FOUND",
+          category: "not_found",
         };
         return {
           content: [
@@ -280,6 +282,8 @@ export function registerAuditBackupTools(
         const errRes = {
           success: false,
           error: `Snapshot not found: ${filename}`,
+          code: "NOT_FOUND",
+          category: "not_found",
         };
         return {
           content: [
@@ -298,6 +302,8 @@ export function registerAuditBackupTools(
         const errRes = {
           success: false,
           error: "No connected adapter available",
+          code: "INTERNAL_ERROR",
+          category: "internal",
         };
         return {
           content: [
@@ -422,19 +428,16 @@ export function registerAuditBackupTools(
           structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error: unknown) {
-        const errRes = {
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        };
+        const structured = formatHandlerError(error);
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(errRes, null, 2),
+              text: JSON.stringify(structured, null, 2),
             },
           ],
           isError: true,
-          structuredContent: errRes as unknown as Record<string, unknown>,
+          structuredContent: structured as unknown as Record<string, unknown>,
         };
       }
     },
@@ -502,6 +505,8 @@ export function registerAuditBackupTools(
         const errRes = {
           success: false,
           error: `Snapshot not found: ${filename}`,
+          code: "NOT_FOUND",
+          category: "not_found",
         };
         return {
           content: [
@@ -520,6 +525,8 @@ export function registerAuditBackupTools(
         const errRes = {
           success: false,
           error: "Snapshot contains no DDL statements",
+          code: "VALIDATION_ERROR",
+          category: "validation",
         };
         return {
           content: [
@@ -538,6 +545,8 @@ export function registerAuditBackupTools(
         const errRes = {
           success: false,
           error: "No connected adapter available",
+          code: "INTERNAL_ERROR",
+          category: "internal",
         };
         return {
           content: [
@@ -626,19 +635,16 @@ export function registerAuditBackupTools(
           structuredContent: result,
         };
       } catch (error: unknown) {
-        const errRes = {
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        };
+        const structured = formatHandlerError(error);
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(errRes, null, 2),
+              text: JSON.stringify(structured, null, 2),
             },
           ],
           isError: true,
-          structuredContent: errRes as unknown as Record<string, unknown>,
+          structuredContent: structured as unknown as Record<string, unknown>,
         };
       }
     },

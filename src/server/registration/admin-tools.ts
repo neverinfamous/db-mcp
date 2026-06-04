@@ -8,6 +8,7 @@ import {
 } from "../../auth/scopes/enforcement.js";
 import { getAuthContext } from "../../auth/auth-context.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
+import { formatHandlerError } from "../../utils/errors/index.js";
 
 /**
  * Register administrative tools
@@ -102,6 +103,7 @@ export function registerAdminTools(server: McpServer): void {
                         success: false,
                         error: `Invalid log level: ${value}. Must be one of: ${validLevels.join(", ")}`,
                         code: "INVALID_CONFIG",
+                        category: "validation",
                       },
                       null,
                       2,
@@ -146,6 +148,7 @@ export function registerAdminTools(server: McpServer): void {
                     success: false,
                     error: "Missing setting or value for set action",
                     code: "INVALID_CONFIG",
+                    category: "validation",
                   },
                   null,
                   2,
@@ -160,27 +163,27 @@ export function registerAdminTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({ success: false, error: "Invalid action" }),
+              text: JSON.stringify({ 
+                success: false, 
+                error: "Invalid action",
+                code: "INVALID_CONFIG",
+                category: "validation"
+              }),
             },
           ],
           isError: true,
         };
       } catch (error) {
+        const structured = formatHandlerError(error);
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(
-                {
-                  success: false,
-                  error: error instanceof Error ? error.message : String(error),
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify(structured, null, 2),
             },
           ],
           isError: true,
+          structuredContent: structured as unknown as Record<string, unknown>,
         };
       }
     },
