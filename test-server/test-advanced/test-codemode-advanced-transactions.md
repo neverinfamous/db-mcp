@@ -128,7 +128,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 ## Phase 1: Aborted Transaction Recovery (batched)
 
-1. `sqlite.transactions.begin()` → get transaction ID
+1. `sqlite.transactions.begin()` → verify started (no transaction ID returned)
 2. `sqlite.transactions.execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → should fail
 3. Start new transaction → verify it works normally (no lingering aborted state)
 
