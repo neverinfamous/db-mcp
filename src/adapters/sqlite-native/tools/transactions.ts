@@ -32,11 +32,11 @@ const BeginTransactionSchema = z.object({
     .describe(
       "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
     ),
-});
+}).strict();
 
 const SavepointSchema = z.object({
   name: z.string().describe("Savepoint name"),
-});
+}).strict();
 
 const ExecuteInTransactionSchema = z.object({
   statements: z
@@ -47,7 +47,7 @@ const ExecuteInTransactionSchema = z.object({
     .optional()
     .default(true)
     .describe("If true, rollback all changes when any statement fails"),
-});
+}).strict();
 
 /**
  * Get all transaction tools

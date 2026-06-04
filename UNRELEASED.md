@@ -64,6 +64,7 @@
 - Standardized the output format of the `json-write` tool group by ensuring `sqlite_json_set`, `sqlite_json_remove`, and `sqlite_json_array_append` return a descriptive `message` field on successful execution.
 - Fixed `findSuggestion` regex pattern for missing column errors (`has no column named`) to correctly capture the column name, surfacing it in structured error responses instead of returning `unknown`.
 - Fixed missing `column` parameter in `sqlite_json_insert` test instructions in `test-codemode-advanced-json.md`.
+- Added `.strict()` to `BeginTransactionSchema`, `SavepointSchema`, and `ExecuteInTransactionSchema` in the `transactions` tool group to enforce strict Zod validation and prevent silent parameter ignoring.
 
 ### Security
 
