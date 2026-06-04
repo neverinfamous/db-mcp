@@ -11,6 +11,7 @@
 - HTTP stateful session enforcement: 30-minute idle timeout, 24-hour absolute TTL, and in-flight request locks.
 - Optimistic Concurrency Control (OCC) tools in the `core` group: `sqlite_enable_versioning`, `sqlite_disable_versioning`, `sqlite_check_version`, and `sqlite_conditional_update`.
 - Automatic `snake_case` to `camelCase` parameter mapping in validation schemas and the Code Mode V8 proxy.
+- `verify-schemas.mjs` and `test-zod-errors.mjs` to `test-server/scripts/` to validate protocol-level `outputSchema` definitions and SDK Zod validation boundary interception.
 
 ### Changed
 
@@ -39,6 +40,7 @@
 - Updated outdated `Last updated` date in `test-server/code-map.md`.
 - Synced `AUDIT_REDACT` default to `true` in `.env.example` and `mcp-config-example.json` to match `cli.ts`.
 - Synced `tool-reference.md` to the `db-mcp.wiki` repository to ensure accurate tool counts and schemas.
+- Configured `ALLOWED_IO_ROOTS` in test scripts (`verify-schemas.mjs` and `test-zod-errors.mjs`) to automatically silence fallback sandbox warnings when executing the stdio transport.
 
 ### Security
 

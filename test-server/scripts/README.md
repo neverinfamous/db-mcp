@@ -25,6 +25,12 @@ node test-server/scripts/test-progress.mjs
 # 5. Test resource subscriptions and notifications
 node test-server/scripts/test-subscriptions-raw.mjs
 node test-server/scripts/test-subscriptions-sdk.mjs
+
+# 6. Test tool output schema presence
+node test-server/scripts/verify-schemas.mjs
+
+# 7. Test strict Zod validation boundary
+node test-server/scripts/test-zod-errors.mjs
 ```
 
 ## What they verify
@@ -35,6 +41,8 @@ node test-server/scripts/test-subscriptions-sdk.mjs
 - **test-progress.mjs**: Starts the server and verifies that progress notifications are successfully emitted across 8 supported tools. This includes a custom JavaScript busy-wait loop inside `sqlite_execute_code`, several long-running database operations (vacuum, backup, restore, dump, optimize, migration_apply), and the chunked row streaming behavior of `sqlite_read_query` (`stream: true`).
 - **test-subscriptions-raw.mjs**: Connects to the server over `stdio` without the official MCP SDK to manually test raw JSON-RPC subscription handling and verify that subscriptions are successfully registered and notifications are emitted despite the stateless `stdio` environment.
 - **test-subscriptions-sdk.mjs**: Connects to the server using the official MCP SDK to test subscription capabilities using the official Client SDK.
+- **verify-schemas.mjs**: Validates that all tools (except `sqlite_execute_code`) correctly serialize an `outputSchema` definition for client ingestion.
+- **test-zod-errors.mjs**: Invokes the server and intentionally passes invalid argument types to verify that the SDK-level Zod validation exceptions are properly intercepted and formatted as standard `VALIDATION_ERROR` responses rather than leaking internal `-32602` error traces.
 
 ## Utilities
 
