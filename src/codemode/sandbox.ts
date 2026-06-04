@@ -24,6 +24,9 @@ import {
 /**
  * A sandboxed execution context using isolated-vm
  */
+const GROUP_NAME_REGEX = /^[a-zA-Z0-9_]+$/;
+const astCache = new Map<string, acorn.Node>();
+const MAX_AST_CACHE_SIZE = 500;
 export class CodeModeSandbox {
   private readonly options: Required<SandboxOptions>;
   private disposed = false;
@@ -60,10 +63,9 @@ export class CodeModeSandbox {
       };
     }
 
-    const groupNameRegex = /^[a-zA-Z0-9_]+$/;
     for (const groupName of Object.keys(apiBindings)) {
       if (
-        !groupNameRegex.test(groupName) ||
+        !GROUP_NAME_REGEX.test(groupName) ||
         groupName === "__proto__" ||
         groupName === "constructor" ||
         groupName === "prototype"
@@ -78,42 +80,49 @@ export class CodeModeSandbox {
 
     try {
       const wrappedCode = `async function __wrapper() { ${code} }`;
-      const ast = acorn.parse(wrappedCode, {
-        ecmaVersion: "latest",
-        sourceType: "script",
-      });
-      const validateAst = (node: unknown): void => {
-        if (node === null || node === undefined || typeof node !== "object")
-          return;
-        const n = node as Record<string, unknown>;
-        if (n["type"] === "WithStatement") {
-          throw new ValidationError(
-            "'with' statements are forbidden in sandbox code.",
-          );
-        }
-        if (
-          n["type"] === "MemberExpression" &&
-          n["object"] !== null &&
-          n["object"] !== undefined &&
-          typeof n["object"] === "object" &&
-          (n["object"] as Record<string, unknown>)["type"] === "Identifier"
-        ) {
-          const objName = (n["object"] as Record<string, unknown>)[
-            "name"
-          ] as string;
+      if (!astCache.has(wrappedCode)) {
+        const ast = acorn.parse(wrappedCode, {
+          ecmaVersion: "latest",
+          sourceType: "script",
+        });
+        const validateAst = (node: unknown): void => {
+          if (node === null || node === undefined || typeof node !== "object")
+            return;
+          const n = node as Record<string, unknown>;
+          if (n["type"] === "WithStatement") {
+            throw new ValidationError(
+              "'with' statements are forbidden in sandbox code.",
+            );
+          }
           if (
-            ["process", "require", "global", "globalThis"].includes(objName)
+            n["type"] === "MemberExpression" &&
+            n["object"] !== null &&
+            n["object"] !== undefined &&
+            typeof n["object"] === "object" &&
+            (n["object"] as Record<string, unknown>)["type"] === "Identifier"
           ) {
-            throw new ValidationError(`Access to '${objName}' is forbidden.`);
+            const objName = (n["object"] as Record<string, unknown>)[
+              "name"
+            ] as string;
+            if (
+              ["process", "require", "global", "globalThis"].includes(objName)
+            ) {
+              throw new ValidationError(`Access to '${objName}' is forbidden.`);
+            }
           }
-        }
-        for (const key in n) {
-          if (key !== "loc" && key !== "start" && key !== "end") {
-            validateAst(n[key]);
+          for (const key in n) {
+            if (key !== "loc" && key !== "start" && key !== "end") {
+              validateAst(n[key]);
+            }
           }
+        };
+        validateAst(ast);
+        if (astCache.size >= MAX_AST_CACHE_SIZE) {
+          const firstKey = astCache.keys().next().value;
+          if (firstKey) astCache.delete(firstKey);
         }
-      };
-      validateAst(ast);
+        astCache.set(wrappedCode, ast);
+      }
     } catch (e: unknown) {
       return {
         success: false,
@@ -277,11 +286,10 @@ export class CodeModeSandbox {
       const MAX_RPC_CALLS = 100;
 
       // Inject apiBindings
+      let batchedScript = "";
       for (const [groupName, groupValue] of Object.entries(apiBindings)) {
         if (typeof groupValue === "object" && groupValue !== null) {
-          context.evalSync(
-            `globalThis.sqlite[${JSON.stringify(groupName)}] = {};`,
-          );
+          batchedScript += `globalThis.sqlite[${JSON.stringify(groupName)}] = {};\n`;
           for (const [methodName, methodFn] of Object.entries(groupValue)) {
             if (typeof methodFn === "function") {
               const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
@@ -307,11 +315,9 @@ export class CodeModeSandbox {
               refCleanup.push(fnRef);
               const refName = `fnRef_${groupName}_${methodName}`;
               context.global.setSync(refName, fnRef);
-              context.evalSync(`
-                globalThis.sqlite[${JSON.stringify(groupName)}][${JSON.stringify(methodName)}] = async (...args) => {
+              batchedScript += `globalThis.sqlite[${JSON.stringify(groupName)}][${JSON.stringify(methodName)}] = async (...args) => {
                   return await globalThis[${JSON.stringify(refName)}].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
-                };
-              `);
+                };\n`;
             }
           }
         } else if (typeof groupValue === "function") {
@@ -338,12 +344,14 @@ export class CodeModeSandbox {
           refCleanup.push(fnRef);
           const refName = `fnRef_${groupName}`;
           context.global.setSync(refName, fnRef);
-          context.evalSync(`
-            globalThis.sqlite[${JSON.stringify(groupName)}] = async (...args) => {
+          batchedScript += `globalThis.sqlite[${JSON.stringify(groupName)}] = async (...args) => {
               return await globalThis[${JSON.stringify(refName)}].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
-            };
-          `);
+            };\n`;
         }
+      }
+      
+      if (batchedScript.length > 0) {
+        context.evalSync(batchedScript);
       }
 
       context.evalSync(`

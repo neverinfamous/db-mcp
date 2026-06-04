@@ -16,6 +16,9 @@ import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { ModuleLogger } from "../../utils/logger/index.js";
 import { normalizeSqliteParams } from "../sqlite-helpers.js";
 
+const RETURNING_REGEX = /\bRETURNING\b/i;
+const INSERT_REGEX = /^\s*INSERT\s/i;
+
 const log = createModuleLogger("SQLITE");
 
 /**
@@ -35,8 +38,7 @@ export function translateSqliteError(
   const details: Record<string, unknown> = { sql };
 
   if (match?.code === "TABLE_NOT_FOUND") {
-    const tableMatch = /no such table[:\s]*(['"]?)([\w.]+)\1/i.exec(message);
-    const tableName = tableMatch ? tableMatch[2] : "unknown";
+    const tableName = match.match?.[2] ?? "unknown";
     throw new ResourceNotFoundError(
       `Table '${tableName}' not found`,
       "TABLE_NOT_FOUND",
@@ -51,10 +53,7 @@ export function translateSqliteError(
   }
 
   if (match?.code === "COLUMN_NOT_FOUND") {
-    const colMatch =
-      /no such column[:\s]*(['"]?)([\w.]+)\1/i.exec(message) ??
-      /has no column named[:\s]*(['"]?)([\w.]+)\1/i.exec(message);
-    const colName = colMatch ? colMatch[2] : "unknown";
+    const colName = match.match?.[2] ?? "unknown";
     throw new ResourceNotFoundError(
       `Column '${colName}' not found`,
       "COLUMN_NOT_FOUND",
@@ -176,7 +175,7 @@ export function executeWrite(
     let rows: Record<string, unknown>[] = [];
 
     // sql.js db.run does not return rows. If RETURNING is used, we must use exec.
-    if (/\bRETURNING\b/i.test(sql)) {
+    if (RETURNING_REGEX.test(sql)) {
       const results = normalizedParams
         ? db.exec(sql, normalizedParams)
         : db.exec(sql);
@@ -195,7 +194,7 @@ export function executeWrite(
 
     let lastInsertId: number | undefined;
     try {
-      if (/^\s*INSERT\s/i.test(sql) && !/\bRETURNING\b/i.test(sql)) {
+      if (INSERT_REGEX.test(sql) && !RETURNING_REGEX.test(sql)) {
         const rowidResult = db.exec("SELECT last_insert_rowid()");
         if (rowidResult[0]?.values[0]) {
           lastInsertId = Number(rowidResult[0].values[0][0]);

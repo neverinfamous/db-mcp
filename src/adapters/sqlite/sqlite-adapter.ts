@@ -49,6 +49,8 @@ import {
   fallBackGetSchema,
 } from "./sqlite-adapter/schema.js";
 
+const DDL_NAME_REGEX = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i;
+
 /**
  * SQLite Database Adapter
  *
@@ -179,7 +181,7 @@ export class SqliteAdapter extends DatabaseAdapter {
 
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
-      const match = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i.exec(sql);
+      const match = DDL_NAME_REGEX.exec(sql);
       if (match?.[1] && this.schemaManager) {
         this.schemaManager.clearTableCache(match[1]);
       } else {
@@ -211,7 +213,7 @@ export class SqliteAdapter extends DatabaseAdapter {
 
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
-      const match = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i.exec(sql);
+      const match = DDL_NAME_REGEX.exec(sql);
       if (match?.[1] && this.schemaManager) {
         this.schemaManager.clearTableCache(match[1]);
       } else {
@@ -454,8 +456,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       trimmed.startsWith("SELECT") ||
       trimmed.startsWith("EXPLAIN") ||
       (trimmed.startsWith("PRAGMA") &&
-        !sql.includes("=") &&
-        !sql.includes("("));
+        !sql.includes("="));
 
     const release = isRead
       ? await this.rwLock.acquireRead()

@@ -22,6 +22,9 @@
 - Simplified `gotchas.md` by moving tool-specific instructions to native tool group URIs.
 - Consolidated and expanded agent prompts and E2E tests to validate `ALLOWED_IO_ROOTS`, OCC lifecycle, and chunked streaming.
 - Split complex tool handlers (`audit-tools.ts`, `window.ts`) into sub-modules and grouped exports via barrel files to adhere to complexity boundaries.
+- Extracted inner-loop RegExp constants, added match extraction caching, and simplified string error heuristics for an 8% boost to error serialization overhead.
+- Optimized `ReadWriteLock` under high-concurrency WASM loads by replacing quadratic `Array.shift()` array splicing with queue-head indexing and enforced reader-writer fairness boundaries.
+- Accelerated Code Mode AST parsing with an LRU cache, skipping `acorn.parse` re-runs, and introduced single-pass batched script API injections inside `isolated-vm`.
 - Replaced generic `Error` classes with domain-specific `ValidationError`, `ConfigurationError`, etc., in core auth and validation logic.
 - Updated server instructions (`gotchas.md`) to formally document structured `ValidationError` responses.
 - Added `(opt-in)` annotation to `sqlite.migration` in Code Mode groups list (`gotchas.md`) to match the `(Native-only)` pattern.

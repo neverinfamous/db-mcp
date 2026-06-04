@@ -269,6 +269,9 @@ const ERROR_SUGGESTIONS: {
   },
 ];
 
+const suggestionCache = new Map<string, ReturnType<typeof findSuggestion>>();
+const MAX_CACHE_SIZE = 1000;
+
 /**
  * Find a suggestion for an error message
  */
@@ -276,15 +279,36 @@ export function findSuggestion(message: string): {
   suggestion: string;
   category?: ErrorCategory | undefined;
   code?: string | undefined;
+  match?: RegExpExecArray | null;
 } | null {
+  const cached = suggestionCache.get(message);
+  if (cached) {
+    // Refresh LRU
+    suggestionCache.delete(message);
+    suggestionCache.set(message, cached);
+    return cached;
+  }
+
+  let result: ReturnType<typeof findSuggestion> = null;
+
   for (const entry of ERROR_SUGGESTIONS) {
-    if (entry.pattern.test(message)) {
-      return {
+    const match = entry.pattern.exec(message);
+    if (match) {
+      result = {
         suggestion: entry.suggestion,
         category: entry.category,
         code: entry.code,
+        match,
       };
+      break;
     }
   }
-  return null;
+
+  if (suggestionCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = suggestionCache.keys().next().value;
+    if (firstKey) suggestionCache.delete(firstKey);
+  }
+  
+  suggestionCache.set(message, result);
+  return result;
 }
