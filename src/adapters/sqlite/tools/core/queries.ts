@@ -322,7 +322,8 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Handle streaming if requested and a progressToken is available
-        if (input.stream) {
+        // Note: Code Mode explicitly degrades gracefully to full buffering.
+        if (input.stream && !_context.isCodeMode) {
           const progressCtx = buildProgressContext(_context);
           if (progressCtx) {
             const chunksEmitted = await streamResultRows(

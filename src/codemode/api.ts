@@ -207,6 +207,7 @@ function createGroupApi(
           ? { progressToken: baseContext.progressToken }
           : {}),
         ...(baseContext?.auth !== undefined ? { auth: baseContext.auth } : {}),
+        isCodeMode: true,
       };
 
       const result = await tool.handler(normalizedParams, context);
