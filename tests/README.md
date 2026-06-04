@@ -11,6 +11,7 @@ This directory contains comprehensive testing suites for the `db-mcp` project, s
 - **`auth/`, `codemode/`, `cli/`, `filtering/`, `observability/`, `transports/`**: Integration tests for respective core systems.
 
 ## Running Tests
+
 - **Unit & Integration**: `pnpm test` (Uses Vitest; unit tests are co-located in `src/`).
 - **E2E**: Executed via Playwright or designated Vitest config (`pnpm run test:e2e`).
 - **Benchmarks**: See the `benchmarks/` directory for specific execution commands.

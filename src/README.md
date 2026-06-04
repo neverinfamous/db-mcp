@@ -16,4 +16,4 @@ This directory contains the primary TypeScript source code for the `db-mcp` serv
 - **`types/`**: Global TypeScript interfaces and type definitions.
 - **`utils/`**: Shared helper functions and utility libraries.
 
-*Note: Unit tests for specific modules are typically co-located alongside the source files (e.g., `module.test.ts`).*
+_Note: Unit tests for specific modules are typically co-located alongside the source files (e.g., `module.test.ts`)._

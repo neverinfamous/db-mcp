@@ -92,17 +92,16 @@ All tools should return errors as strongly-typed structured objects instead of t
 }
 ```
 
-| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Type                 | Source                                                                          | What you see                                                                                                              | Verdict            |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | **Handler error** ✅ | Handler catches error and returns `{success: false, error: "...", code: "..."}` | Parseable JSON object with `success`, `error`, `code` (e.g., `VALIDATION_ERROR`, `CONFLICT_ERROR`), and `category` fields | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                                      | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field     | Bug — report as ❌ |
 
 ## Naming & Cleanup
 
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
-  
 
 ---
 
@@ -184,14 +183,10 @@ All tools should return errors as strongly-typed structured objects instead of t
 🔴 42. `sqlite_check_version({table: "nonexistent_table_xyz", rowId: 1})` → `{success: false}`
 🔴 43. `sqlite_conditional_update({table: "nonexistent_table_xyz", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "x"}, expectedVersion: 1})` → `{success: false}`
 
-**OCC Error Paths (requires versioned table):**
-44. `sqlite_create_table({table: "temp_core_occ_err", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → setup
-45. `sqlite_write_query({query: "INSERT INTO temp_core_occ_err (id, val) VALUES (1, 'initial')"})` → setup
-46. `sqlite_enable_versioning({table: "temp_core_occ_err"})` → setup
+**OCC Error Paths (requires versioned table):** 44. `sqlite_create_table({table: "temp_core_occ_err", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → setup 45. `sqlite_write_query({query: "INSERT INTO temp_core_occ_err (id, val) VALUES (1, 'initial')"})` → setup 46. `sqlite_enable_versioning({table: "temp_core_occ_err"})` → setup
 🔴 47. `sqlite_write_query({query: "UPDATE temp_core_occ_err SET val = 'bad' WHERE id = 1"})` → `{success: false}` (ConflictError: missing expectedVersion)
 🔴 48. `sqlite_upsert({table: "temp_core_occ_err", data: {id: 1, val: "bad"}, conflictColumns: ["id"]})` → `{success: false}` (ConflictError: missing expectedVersion)
-🔴 49. `sqlite_conditional_update({table: "temp_core_occ_err", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "bad"}, expectedVersion: 99})` → `{success: false}` (ConflictError: expectedVersion mismatch)
-50. `sqlite_drop_table({table: "temp_core_occ_err"})` → cleanup
+🔴 49. `sqlite_conditional_update({table: "temp_core_occ_err", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "bad"}, expectedVersion: 99})` → `{success: false}` (ConflictError: expectedVersion mismatch) 50. `sqlite_drop_table({table: "temp_core_occ_err"})` → cleanup
 
 ## Phase 2: Zod Validation Sweep
 
