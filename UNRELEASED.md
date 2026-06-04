@@ -31,6 +31,7 @@
 - Added `(opt-in)` annotation to `sqlite.migration` in Code Mode groups list to match the `(Native-only)` pattern.
 - Added cross-group dependency note to `sqlite_hybrid_search` in `text.md`.
 - Standardized test prompts to enforce strict sequential numbering and aligned error reporting architecture checks.
+- Optimized `sqlite_schema_snapshot` to use `compact: true` by default to reduce LLM context token consumption.
 
 ### Fixed
 
@@ -53,9 +54,11 @@
 - Configured `ALLOWED_IO_ROOTS` in test scripts to automatically silence fallback sandbox warnings when executing the stdio transport.
 - Generation script README exclusion now uses case-insensitive prefix matching (`readme*`).
 - Removed unused devDependency `rimraf` from `package.json`.
-- Inaccurate Native-only tool counts in advanced test suite READMEs and prompt instructions.
+- Fixed inaccurate Native-only tool counts in advanced test suite READMEs and prompt instructions.
 - Refactored vector tool handlers to throw proper `ValidationError` and `ResourceNotFoundError` subclasses instead of returning raw error objects, ensuring structured responses include `category` and `recoverable` properties.
 - Fixed missing error codes and categories for structured error responses in the `admin-audit` tool group, ensuring `sqlite_server_config` and backup tools meet the Structured Error Response Pattern requirements.
+- Fixed `sqlite_cascade_simulator` schema to case-insensitively parse the `operation` parameter instead of failing Zod validation on lowercase inputs.
+- Fixed `sqlite_schema_diff` schema to dynamically coerce empty array payloads (`[]`) into empty schema snapshot objects, fixing validation errors for empty baseline/target inputs.
 
 ### Security
 

@@ -255,7 +255,9 @@ describe("Introspection Schema Tools", () => {
     });
 
     it("should support compact mode", async () => {
-      const full = (await tools.get("sqlite_schema_snapshot")?.({})) as {
+      const full = (await tools.get("sqlite_schema_snapshot")?.({
+        compact: false,
+      })) as {
         snapshot: {
           tables: { columns?: unknown[] }[];
         };

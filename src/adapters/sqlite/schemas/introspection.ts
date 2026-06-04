@@ -434,8 +434,9 @@ export const SchemaSnapshotSchema = z
     compact: z
       .boolean()
       .optional()
+      .default(true)
       .describe(
-        "Omit column details from tables section for reduced payload (default: false)",
+        "Omit column details from tables section for reduced payload (default: true)",
       ),
     excludeSystemTables: z
       .boolean()
@@ -444,7 +445,7 @@ export const SchemaSnapshotSchema = z
         "Exclude SpatiaLite system tables, views, indexes, and triggers (default: true)",
       ),
   })
-  .default({});
+  .default({ compact: true });
 export type SchemaSnapshotInput = z.infer<typeof SchemaSnapshotSchema>;
 
 export const MigrationRisksSchema = z
@@ -533,7 +534,10 @@ export const CascadeSimulatorSchema = z
       .default("")
       .describe("Table name to simulate deletion from"),
     operation: z
-      .enum(["DELETE", "DROP", "TRUNCATE"])
+      .preprocess(
+        (val) => (typeof val === "string" ? val.toUpperCase() : val),
+        z.enum(["DELETE", "DROP", "TRUNCATE"])
+      )
       .optional()
       .describe("Operation to simulate (default: DELETE)"),
     compact: z
@@ -645,13 +649,19 @@ export const SchemaDiffOutputSchema = z
 export const SchemaDiffSchema = z
   .object({
     baseline: z
-      .union([z.literal("current"), SchemaSnapshotShape])
+      .preprocess(
+        (val) => (Array.isArray(val) ? (val.length === 0 ? {} : { tables: val }) : val),
+        z.union([z.literal("current"), SchemaSnapshotShape])
+      )
       .optional()
       .describe(
         "Baseline schema — 'current' to snapshot live DB, or an inline snapshot object from a previous sqlite_schema_snapshot call",
       ),
     target: z
-      .union([z.literal("current"), SchemaSnapshotShape])
+      .preprocess(
+        (val) => (Array.isArray(val) ? (val.length === 0 ? {} : { tables: val }) : val),
+        z.union([z.literal("current"), SchemaSnapshotShape])
+      )
       .optional()
       .describe(
         "Target schema to compare against baseline — 'current' to snapshot live DB, or an inline snapshot object",
