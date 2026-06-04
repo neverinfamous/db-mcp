@@ -32,6 +32,7 @@
 - Added cross-group dependency note to `sqlite_hybrid_search` in `text.md`.
 - Standardized test prompts to enforce strict sequential numbering and aligned error reporting architecture checks.
 - Optimized `sqlite_schema_snapshot` to use `compact: true` by default to reduce LLM context token consumption.
+- Optimized `sqlite_stats_sample` by reducing the default `sampleSize` from 100 to 20 and the maximum cap from 1000 to 50, significantly reducing payload size and LLM context token consumption.
 
 ### Fixed
 
@@ -61,6 +62,7 @@
 - Fixed `sqlite_schema_diff` schema to dynamically coerce empty array payloads (`[]`) into empty schema snapshot objects, fixing validation errors for empty baseline/target inputs.
 - Fixed `sqlite_dependency_graph` to accept an optional `table` parameter, properly validate its existence, and filter the returned graph to only include nodes and edges connected to the specified table.
 - Standardized the output format of the `json-write` tool group by ensuring `sqlite_json_set`, `sqlite_json_remove`, and `sqlite_json_array_append` return a descriptive `message` field on successful execution.
+- Fixed `findSuggestion` regex pattern for missing column errors (`has no column named`) to correctly capture the column name, surfacing it in structured error responses instead of returning `unknown`.
 
 ### Security
 

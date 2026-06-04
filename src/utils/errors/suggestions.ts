@@ -71,7 +71,7 @@ const ERROR_SUGGESTIONS: {
     code: "COLUMN_NOT_FOUND",
   },
   {
-    pattern: /has no column named/i,
+    pattern: /has no column named\s+(['"]?)([\w.]+)\1/i,
     suggestion:
       "Column not found in target table. Use sqlite_describe_table to verify column names before INSERT or UPDATE.",
     category: ErrorCategory.RESOURCE,

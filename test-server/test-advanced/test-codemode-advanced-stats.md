@@ -205,7 +205,7 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 31. Create `stress_stats_empty (id INTEGER PRIMARY KEY)` (no rows). `sqlite.stats.statsSample({table: "stress_stats_empty", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
 32. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1})` → exactly 1 row
-33. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 200 (total rows), verify `sampleSize` vs actual returned
+33. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 50 (max sample size), verify `sampleSize` vs actual returned
 34. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
 35. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, whereClause: "sensor_id = 1"})` → filtered sample, verify all returned rows have `sensor_id: 1`
 36. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 0})` → structured error or empty result (boundary: zero sample)

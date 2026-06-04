@@ -493,7 +493,7 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
 }
 
 /** Hard cap for sample size to prevent excessive memory usage */
-const MAX_SAMPLE_SIZE = 1000;
+const MAX_SAMPLE_SIZE = 50;
 
 /**
  * Random sample
