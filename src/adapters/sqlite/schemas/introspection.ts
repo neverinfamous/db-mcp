@@ -488,6 +488,10 @@ export type ConstraintAnalysisInput = z.infer<typeof ConstraintAnalysisSchema>;
 
 export const DependencyGraphSchema = z
   .object({
+    table: z
+      .string()
+      .optional()
+      .describe("Optional table name to filter the graph"),
     includeRowCounts: z
       .boolean()
       .optional()

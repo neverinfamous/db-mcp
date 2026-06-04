@@ -184,6 +184,7 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
 
         return {
           success: true,
+          message: `Set value at ${input.path} in ${table}.${column}`,
           rowsAffected: result.rowsAffected,
           ...(result.rowsAffected === 0
             ? {
@@ -238,6 +239,7 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
 
         return {
           success: true,
+          message: `Removed value at ${input.path} from ${table}.${column}`,
           rowsAffected: result.rowsAffected,
           ...(result.rowsAffected === 0
             ? {
@@ -423,6 +425,7 @@ export function createJsonArrayAppendTool(
 
         return {
           success: true,
+          message: `Appended to ${input.path} in ${table}.${column}`,
           rowsAffected: result.rowsAffected,
         };
       } catch (error: unknown) {

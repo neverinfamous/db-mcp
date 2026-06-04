@@ -59,6 +59,8 @@
 - Fixed missing error codes and categories for structured error responses in the `admin-audit` tool group, ensuring `sqlite_server_config` and backup tools meet the Structured Error Response Pattern requirements.
 - Fixed `sqlite_cascade_simulator` schema to case-insensitively parse the `operation` parameter instead of failing Zod validation on lowercase inputs.
 - Fixed `sqlite_schema_diff` schema to dynamically coerce empty array payloads (`[]`) into empty schema snapshot objects, fixing validation errors for empty baseline/target inputs.
+- Fixed `sqlite_dependency_graph` to accept an optional `table` parameter, properly validate its existence, and filter the returned graph to only include nodes and edges connected to the specified table.
+- Standardized the output format of the `json-write` tool group by ensuring `sqlite_json_set`, `sqlite_json_remove`, and `sqlite_json_array_append` return a descriptive `message` field on successful execution.
 
 ### Security
 
