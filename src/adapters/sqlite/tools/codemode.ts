@@ -346,7 +346,8 @@ function initializePool(): void {
   });
 
   setDefaultSandboxMode(mode);
-  pool = createSandboxPool(mode, undefined, { timeoutMs: 30000 });
+  const strictIsolation = process.env["CODE_MODE_STRICT_ISOLATION"] !== "false";
+  pool = createSandboxPool(mode, undefined, { timeoutMs: 30000, strictIsolation });
   pool.initialize();
 
   logger.info(`Code Mode initialized with ${mode} sandbox`, {

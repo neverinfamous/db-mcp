@@ -143,6 +143,13 @@ export class CodeModeSandbox {
     }
 
     if (!ivmLib) {
+      if (this.options.strictIsolation) {
+        return {
+          success: false,
+          error: "Security Error: isolated-vm native bindings failed to load. Code Mode strict isolation is enabled and node:vm fallback is prohibited.",
+          metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+        };
+      }
       const vm = await import("node:vm");
       const logs: string[] = [];
       interface SandboxEnv {

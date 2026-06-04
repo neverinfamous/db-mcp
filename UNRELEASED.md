@@ -55,6 +55,7 @@
 
 ### Security
 
+- **Hard Gate**: Code Mode strictly fail-closes if `isolated-vm` native bindings fail to load (configurable via `CODE_MODE_STRICT_ISOLATION`), preventing insecure fallbacks to `node:vm`.
 - **Hard Gate**: HTTP transports fail to start if `ALLOWED_IO_ROOTS` is omitted.
 - Stdio transport defaults to no filesystem access (empty `ALLOWED_IO_ROOTS`) if omitted.
 - Hardened all filesystem-touching tools to use symlink-aware realpath resolution (`assertSafeIoPath`).
