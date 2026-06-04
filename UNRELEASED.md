@@ -30,6 +30,7 @@
 ### Fixed
 
 - Missing `PROJECT_REGISTRY` and `TEAM_DB_PATH` variables in `mcp-config-example.json` and `.env.example`.
+- Fixed `ci-health-monitor` failing in strict mode by updating `issues: write` permission to `issues: read` and explicitly adding `add-comment` to safe-outputs.
 - Enforced single quotes in YAML frontmatter for agentic workflows (`docs-drift-detector.md`, `ci-health-monitor.md`, `wiki-drift-detector.md`) and recompiled locks.
 - Synchronized tool counts and versions in `DOCKER_README.md` and `SECURITY.md`.
 - Refactored `ErrorCategory` enum to a literal union type to reduce runtime footprint.

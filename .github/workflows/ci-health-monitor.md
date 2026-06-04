@@ -19,6 +19,8 @@ network:
 
 permissions:
   contents: read
+  actions: read
+  issues: read
 
 safe-outputs:
   report-failure-as-issue: false
@@ -26,6 +28,9 @@ safe-outputs:
     title-prefix: "[ci-health] "
     labels: ["maintenance", "ci-cd"]
     max: 1
+  add-comment:
+    max: 3
+    discussions: false
   noop:
     max: 1
 
