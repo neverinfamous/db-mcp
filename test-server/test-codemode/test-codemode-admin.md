@@ -215,7 +215,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 30. `sqlite.admin.reindex({target: "test_products"})` → reindex all indexes on specific table, success
 31. `sqlite.admin.reindex({target: "idx_orders_status"})` → reindex specific index, success
 32. `sqlite.admin.wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
-33. `sqlite.admin.wal({action: "disable"})` → `{success: false}` with `DB_QUERY_FAILED` "database is locked" (expected behavior in Code Mode due to active connections), then `sqlite.admin.wal({action: "enable"})` → `{success: true}` (verifies it remained in WAL)
+33. `sqlite.admin.wal({action: "disable"})` → Native: `{success: false}` with `DB_QUERY_FAILED` "database is locked" (due to active connections). WASM: `{success: true}` (virtual FS does not enforce connection locks). Then `sqlite.admin.wal({action: "enable"})` → `{success: true}`
 34. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
 35. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages`, then `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
@@ -223,7 +223,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 > Use absolute paths where required
 
-36. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Depends on backup file existing from Phase 4. If not present, note dependency. Expect structured success with `alias` and `filepath`.
+36. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Depends on backup file existing from Phase 4. If not present, note dependency. Expect structured success with `alias` and `filepath`. (Note: In WASM mode, this succeeds by transparently creating an empty virtual file in the WASM virtual filesystem).
 37. `sqlite.admin.pragmaDatabaseList()` → verify `temp_attached` appears in attached databases list
 38. `sqlite.admin.detachDatabase({alias: "temp_attached"})` → success with `message`
 39. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
