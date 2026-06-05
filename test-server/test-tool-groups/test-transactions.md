@@ -135,7 +135,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 ## Phase 1: Full Lifecycle (batched)
 
 1. `sqlite_transaction_status` → `{status: "none", active: false}` (no active transaction)
-2. `sqlite_transaction_begin` → capture transaction ID
+2. `sqlite_transaction_begin` → success (deferred mode)
 3. `sqlite_transaction_status` → `{status: "active", active: true}`
 4. `sqlite_transaction_rollback` → rollback entire transaction, verify success
 5. `sqlite_transaction_status` → `{status: "none", active: false}` (back to none)
