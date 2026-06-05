@@ -446,6 +446,15 @@ function createExecuteInTransactionTool(
           adapter.commitTransaction();
         }
 
+        if (results.length > 50) {
+          const omitted = results.length - 50;
+          results.splice(50);
+          results.push({
+            statement: "TRUNCATED",
+            error: `Results array truncated. Omitted ${omitted} results to conserve payload size.`,
+          });
+        }
+
         return {
           success,
           error: success ? undefined : "Transaction completed with errors",
@@ -481,11 +490,21 @@ function createExecuteInTransactionTool(
           rollbackMessage = `Transaction failed to start: ${message}`;
         }
 
+        const totalExecuted = results.length;
+        if (results.length > 50) {
+          const omitted = results.length - 50;
+          results.splice(50);
+          results.push({
+            statement: "TRUNCATED",
+            error: `Results array truncated. Omitted ${omitted} results to conserve payload size.`,
+          });
+        }
+
         return {
           ...formatted,
           error: formatted.error ?? rollbackMessage,
           message: rollbackMessage,
-          statementsExecuted: results.length,
+          statementsExecuted: totalExecuted,
           results,
         };
       }
