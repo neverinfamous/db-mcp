@@ -142,7 +142,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 9. `sqlite_fts_create({sourceTable: "test_users", columns: ["username", "bio"], ftsTable: "temp_users_fts"})` → FTS5 virtual table created
 10. `sqlite_fts_rebuild({table: "temp_users_fts"})` → rebuild index before searching
 11. `sqlite_fts_search({table: "temp_users_fts", query: "test*"})` → verify results from test_users data (prefix query needed since no standalone "test" token exists)
-12. Cleanup: `sqlite_drop_table({table: "temp_users_fts"})` (drop the temp FTS table using sqlite_write_query or core drop_table)
+12. Cleanup: `sqlite_core_drop_table({table: "temp_users_fts"})` (drop the temp FTS table using sqlite_write_query or core drop_table)
 13. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite"})` → at least 1 result (article 1: "Introduction to SQLite")
 14. `sqlite_fts_headline({table: "test_articles_fts", query: "SQLite"})` → verify highlighted snippets are returned
 15. `sqlite_fts_search({table: "test_articles_fts", query: "MCP protocol"})` → matches article 3: "The Model Context Protocol Explained"
