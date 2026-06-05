@@ -7,7 +7,7 @@ sqlite_integrity_check({ maxErrors: 10 }); // check for corruption
 sqlite_optimize({ analyze: true, reindex: true }); // optimize performance
 sqlite_vacuum(); // reclaim space
 sqlite_analyze({ table: "orders" }); // update statistics for query planner
-sqlite_dbstat({ summarize: true }); // storage stats (⚠️ summarize native-only; WASM returns counts only)
+sqlite_dbstat(); // storage stats (⚠️ summarize native-only; WASM returns counts only)
 sqlite_reindex(); // rebuild all indexes
 sqlite_reindex({ target: "idx_users_email" }); // rebuild specific index
 sqlite_reindex({ target: "orders" }); // rebuild all indexes for a table

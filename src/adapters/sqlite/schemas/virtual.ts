@@ -204,7 +204,7 @@ export const DbStatSchema = z.object({
   summarize: z
     .boolean()
     .optional()
-    .default(false)
+    .default(true)
     .describe(
       "If true, return aggregated per-table stats instead of raw page-level data",
     ),

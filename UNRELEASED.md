@@ -34,6 +34,7 @@
 - Optimized `sqlite_schema_snapshot` to use `compact: true` by default to reduce LLM context token consumption.
 - Optimized `sqlite_stats_sample` by reducing the default `sampleSize` from 100 to 20 and the maximum cap from 1000 to 50, significantly reducing payload size and LLM context token consumption.
 - Optimized `sqlite_transaction_execute` payload by truncating the returned `results` array to a maximum of 50 items and omitting excess successful execution details, significantly reducing LLM context token consumption.
+- Optimized `sqlite_dbstat` payload by changing the default value of the `summarize` parameter from `false` to `true`, preventing excessive raw page-level payloads and reducing LLM context token consumption.
 
 ### Fixed
 
