@@ -738,7 +738,7 @@ export const EnableVersioningOutputSchema = z
 export const DisableVersioningSchema = z.object({
   table: z.string().describe("Name of the table to disable versioning for"),
   tableName: z.string().optional().describe("Alias for table"),
-  ifExists: z.boolean().optional().default(true),
+  ifExists: z.boolean().optional().default(false),
 });
 
 export const DisableVersioningOutputSchema = z

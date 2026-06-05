@@ -66,6 +66,7 @@
 - Fixed `findSuggestion` regex pattern for missing column errors (`has no column named`) to correctly capture the column name, surfacing it in structured error responses instead of returning `unknown`.
 - Fixed missing `column` parameter in `sqlite_json_insert` test instructions in `test-codemode-advanced-json.md`.
 - Added `.strict()` to `BeginTransactionSchema`, `SavepointSchema`, and `ExecuteInTransactionSchema` in the `transactions` tool group to enforce strict Zod validation and prevent silent parameter ignoring.
+- Changed `DisableVersioningSchema` to set `ifExists` to `false` by default, ensuring `sqlite_disable_versioning` properly throws a structured validation error instead of failing silently when invoked on a nonexistent table.
 
 ### Security
 
