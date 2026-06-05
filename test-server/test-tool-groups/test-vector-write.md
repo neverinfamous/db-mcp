@@ -130,7 +130,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 4. Verify rows stored: `sqlite_vector_count({table: "temp_vector_test"})` → `{count: 3}` (use the direct tool or code mode)
 5. `sqlite_vector_delete({table: "temp_vector_test", idColumn: "id", ids: [1]})` → success
 6. Verify deletion: `sqlite_vector_count({table: "temp_vector_test"})` → `{count: 2}`
-7. Cleanup: `sqlite_drop_table({table: "temp_vector_test"})` (using core tool)
+7. Cleanup: `sqlite_execute_code({code: "await sqlite.core.dropTable({table: 'temp_vector_test'})"})` (using global code mode tool)
 
 **Error path testing:**
 
