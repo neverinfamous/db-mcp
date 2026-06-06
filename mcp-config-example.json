@@ -9,6 +9,10 @@
         "-v",
         "./data:/app/data",
         "-e",
+        "PROJECT_REGISTRY",
+        "-e",
+        "TEAM_DB_PATH",
+        "-e",
         "MCP_HOST",
         "-e",
         "LOG_LEVEL",
@@ -58,6 +62,8 @@
         "AUDIT_BACKUP_DATA",
         "-e",
         "AUDIT_LOG",
+        "-e",
+        "ALLOWED_IO_ROOTS",
         "writenotenow/db-mcp:latest",
         "--sqlite-native",
         "/app/data/my-database.db",
@@ -71,6 +77,8 @@
         "/tmp/db-mcp-logs/audit.jsonl"
       ],
       "env": {
+        "PROJECT_REGISTRY": "<path_placeholder>",
+        "TEAM_DB_PATH": "<path_placeholder>",
         "MCP_HOST": "0.0.0.0",
         "LOG_LEVEL": "info",
         "METADATA_CACHE_TTL_MS": "5000",
@@ -92,10 +100,11 @@
         "MCP_ENABLE_HSTS": "false",
         "NO_AUTH_ENFORCEMENT": "false",
         "AUDIT_BACKUP": "false",
-        "AUDIT_REDACT": "false",
+        "AUDIT_REDACT": "true",
         "AUDIT_READS": "false",
         "AUDIT_BACKUP_DATA": "false",
-        "AUDIT_LOG": "/tmp/db-mcp-logs/audit.jsonl"
+        "AUDIT_LOG": "/tmp/db-mcp-logs/audit.jsonl",
+        "ALLOWED_IO_ROOTS": "[\"/app/data\"]"
       }
     }
   }

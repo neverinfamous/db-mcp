@@ -8,7 +8,10 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 
 1. Basic deterministic tool group checklists (located in `../test-tool-groups/*.md`) MUST be successfully passed before running these advanced tests.
 2. Code Mode basic tests (located in `../test-codemode/*.md`) MUST be successfully passed.
-3. The testing database MUST be freshly seeded via `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to ensure deterministic results.
+3. The testing database MUST be freshly seeded via `node C:\Users\chris\Desktop\db-mcp\test-server\reset-database.mjs` to ensure deterministic results.
+4. The MCP server MUST be started with the `ALLOWED_IO_ROOTS` environment variable configured (e.g., set to the db-mcp repository root), otherwise it will hard-fail to start and block file-based tool tests (like CSV generation or database dumps).
+5. **Session Timeouts**: If using the HTTP transport, note that sessions will strictly expire after 30 minutes of inactivity and have an absolute TTL of 24 hours. Ensure your manual testing flows account for these timeouts.
+6. **Streaming Validation**: When testing `sqlite.core.readQuery`, setting `stream: true` instructs the server to stream results. Since Code Mode doesn't expose the client's `_meta.progressToken`, verify that the system gracefully degrades to full buffering without throwing errors.
 
 ## File Inventory
 
@@ -30,7 +33,7 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 1. **Strict Code Mode Only:** All advanced stress tests must be executed entirely via `sqlite_execute_code`. Direct tool calls are forbidden unless specifically instructed for baseline comparison.
 2. **Sequential Grouping:** Execute only **one markdown file at a time**. Report findings, fix errors, apply updates to the changelog, and commit before advancing to the next file.
 3. **Payload Optimization (Token Monitoring):** Monitor `metrics.tokenEstimate` on every response. If extremely large unbounded responses are produced, flag as 📦 **Payload Issue**.
-4. **Structured Error Adherence:** When testing boundary failure parameters, assert that the handler outputs a proper structured error (`{success: false, error: "..."}`) rather than leaking raw SQLite errors.
+4. **Structured Error Adherence:** When testing boundary failure parameters, assert that the handler outputs a proper structured error (`{success: false, "error": "..."}`) rather than leaking raw SQLite errors. Ensure timeouts (e.g., infinite loops in Code Mode) correctly yield a `TimeoutError` and rate limits yield a `RateLimitError`.
 5. **No Persistent Pollution:** After finishing a file, verify all `stress_*` tables/views/indexes are dropped. No test state should bleed into the next run.
 6. **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
 7. **Documentation Parity & Test Prompt Integrity**: Only update files in `src/constants/server-instructions` (or test prompts) if the code's behavior is mathematically/logically correct and intended, but the documentation is inaccurate, outdated, or lacking specificity. You SHOULD directly edit the markdown test files in this directory to fix factual errors, broken code blocks, or incorrect test assertions.
@@ -44,9 +47,9 @@ When testing against a **WASM backend** (`--sqlite` flag, sql.js adapter), follo
 
 - **`[NATIVE ONLY]` items**: Skip all categories and individual test items annotated with `[NATIVE ONLY]`.
 - **Transactions prompt**: Skip entirely — all 8 transaction tools are `[NATIVE ONLY]`.
-- **Window function items** (stats Category 4): Skip — 6 window tools are Native-only.
-- **SpatiaLite items** (geo Category 5): Skip — 7 SpatiaLite tools are Native-only.
-- **FTS5 items** (text Category 6): Skip — 5 FTS5 tools are Native-only.
+- **Window function items** (stats Phase 4): Skip — 7 window tools are Native-only.
+- **SpatiaLite items** (geo Phase 5): Skip — 7 SpatiaLite tools are Native-only.
+- **FTS5 items** (text Phase 6): Skip — 4 FTS5 tools are Native-only.
 
 #### Graceful Degradation (Don't Skip — Validate Errors)
 

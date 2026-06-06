@@ -48,6 +48,9 @@
 > [!NOTE]
 > **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
+> [!IMPORTANT]
+> **Testing Code Mode**: Do NOT write test scripts to the filesystem. Pass your JavaScript snippets directly to the `sqlite_execute_code` tool's `code` parameter. Do NOT wrap your tests in monolithic `try/catch` blocks that suppress or transform the server's natural error output. You must allow the server to return its native structured error responses so you can evaluate them against the standards below.
+
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 >
@@ -79,22 +82,30 @@
 
 ### Structured Error Response Pattern
 
-All tools should return errors as structured objects instead of throwing. The expected pattern:
+All tools should return errors as strongly-typed structured objects instead of throwing. The expected pattern:
 
 ```json
-{ "success": false, "error": "Human-readable error message" }
+{
+  "success": false,
+  "error": "Human-readable error message",
+  "code": "VALIDATION_ERROR",
+  "category": "validation",
+  "recoverable": false,
+  "metrics": { ... }
+}
 ```
 
-| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+| Type                 | Source                                                                          | What you see                                                                                                              | Verdict            |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "...", code: "..."}` | Parseable JSON object with `success`, `error`, `code` (e.g., `VALIDATION_ERROR`, `CONFLICT_ERROR`), and `category` fields | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                                      | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field     | Bug — report as ❌ |
 
 ## Naming & Cleanup
 
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -131,7 +142,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 9. `sqlite_fts_create({sourceTable: "test_users", columns: ["username", "bio"], ftsTable: "temp_users_fts"})` → FTS5 virtual table created
 10. `sqlite_fts_rebuild({table: "temp_users_fts"})` → rebuild index before searching
 11. `sqlite_fts_search({table: "temp_users_fts", query: "test*"})` → verify results from test_users data (prefix query needed since no standalone "test" token exists)
-12. Cleanup: `sqlite_drop_table({table: "temp_users_fts"})` (drop the temp FTS table using sqlite_write_query or core drop_table)
+12. Cleanup: `sqlite_core_drop_table({table: "temp_users_fts"})` (drop the temp FTS table using sqlite_write_query or core drop_table)
 13. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite"})` → at least 1 result (article 1: "Introduction to SQLite")
 14. `sqlite_fts_headline({table: "test_articles_fts", query: "SQLite"})` → verify highlighted snippets are returned
 15. `sqlite_fts_search({table: "test_articles_fts", query: "MCP protocol"})` → matches article 3: "The Model Context Protocol Explained"
@@ -142,36 +153,36 @@ All tools should return errors as structured objects instead of throwing. The ex
 20. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
 21. `sqlite_fts_create({sourceTable: "test_embeddings", columns: ["content"], ftsTable: "test_embeddings_fts"})` → FTS virtual table created
 22. `sqlite_fts_rebuild({table: "test_embeddings_fts"})` → rebuild index before searching
-    22.5. `sqlite_hybrid_search({table: "test_embeddings", query: "database", queryVector: [0.1, 0.2, -0.1, 0.3, -0.2, 0.4, 0.1, -0.5], vectorColumn: "embedding", ftsTable: "test_embeddings_fts"})` → results combining vector distance and FTS
-23. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist
+23. `sqlite_hybrid_search({table: "test_embeddings", query: "database", queryVector: [0.1, 0.2, -0.1, 0.3, -0.2, 0.4, 0.1, -0.5], vectorColumn: "embedding", ftsTable: "test_embeddings_fts"})` → results combining vector distance and FTS
+24. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist
 
 **Error path testing:**
 
-🔴 24. `sqlite_fuzzy_match({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error with code `COLUMN_NOT_FOUND`
-🔴 25. `sqlite_fts_search({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
-🔴 26. `sqlite_fts_search({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` `[NATIVE ONLY]` → should gracefully handle malformed FTS syntax without crashing the parser (via `sanitizeFtsQuery`)
+🔴 25. `sqlite_fuzzy_match({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error with code `COLUMN_NOT_FOUND`
+🔴 26. `sqlite_fts_search({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+🔴 27. `sqlite_fts_search({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` `[NATIVE ONLY]` → should gracefully handle malformed FTS syntax without crashing the parser (via `sanitizeFtsQuery`)
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 27. `sqlite_fuzzy_match({})` → handler error
-🔴 28. `sqlite_phonetic_match({})` → handler error
-🔴 29. `sqlite_advanced_search({})` → handler error
-🔴 30. `sqlite_text_sentiment({})` → handler error
-🔴 31. `sqlite_fts_create({})` `[NATIVE ONLY]` → handler error
-🔴 32. `sqlite_fts_search({})` `[NATIVE ONLY]` → handler error
-🔴 33. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
-🔴 34. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
-🔴 35. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
-🔴 36. `sqlite_hybrid_search({})` `[NATIVE ONLY]` → handler error
+🔴 28. `sqlite_fuzzy_match({})` → handler error
+🔴 29. `sqlite_phonetic_match({})` → handler error
+🔴 30. `sqlite_advanced_search({})` → handler error
+🔴 31. `sqlite_text_sentiment({})` → handler error
+🔴 32. `sqlite_fts_create({})` `[NATIVE ONLY]` → handler error
+🔴 33. `sqlite_fts_search({})` `[NATIVE ONLY]` → handler error
+🔴 34. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
+🔴 35. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
+🔴 36. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
+🔴 37. `sqlite_hybrid_search({})` `[NATIVE ONLY]` → handler error
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 37. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "test", maxDistance: "abc"})` → handler error
-🔴 38. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error
+🔴 38. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "test", maxDistance: "abc"})` → handler error
+🔴 39. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error
 
 ---
 

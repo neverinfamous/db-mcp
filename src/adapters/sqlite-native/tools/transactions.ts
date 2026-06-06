@@ -32,11 +32,11 @@ const BeginTransactionSchema = z.object({
     .describe(
       "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
     ),
-});
+}).strict();
 
 const SavepointSchema = z.object({
   name: z.string().describe("Savepoint name"),
-});
+}).strict();
 
 const ExecuteInTransactionSchema = z.object({
   statements: z
@@ -47,7 +47,7 @@ const ExecuteInTransactionSchema = z.object({
     .optional()
     .default(true)
     .describe("If true, rollback all changes when any statement fails"),
-});
+}).strict();
 
 /**
  * Get all transaction tools
@@ -113,7 +113,7 @@ function createTransactionStatusTool(
       "Check whether a transaction is currently active. " +
       "Returns status and a boolean flag. Read-only — does not alter transaction state.",
     group: "transactions",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     outputSchema: TransactionStatusOutputSchema,
     annotations: readOnly("Transaction Status"),
     requiredScopes: ["read"],
@@ -148,7 +148,7 @@ function createCommitTransactionTool(
     description:
       "Commit the current transaction, making all changes permanent.",
     group: "transactions",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     outputSchema: TransactionCommitOutputSchema,
     annotations: write("Commit Transaction"),
     requiredScopes: ["write"],
@@ -178,7 +178,7 @@ function createRollbackTransactionTool(
     description: "Rollback the current transaction, discarding all changes.",
     group: "transactions",
     outputSchema: TransactionRollbackOutputSchema,
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     annotations: write("Rollback Transaction"),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
@@ -446,6 +446,15 @@ function createExecuteInTransactionTool(
           adapter.commitTransaction();
         }
 
+        if (results.length > 50) {
+          const omitted = results.length - 50;
+          results.splice(50);
+          results.push({
+            statement: "TRUNCATED",
+            error: `Results array truncated. Omitted ${omitted} results to conserve payload size.`,
+          });
+        }
+
         return {
           success,
           error: success ? undefined : "Transaction completed with errors",
@@ -481,11 +490,21 @@ function createExecuteInTransactionTool(
           rollbackMessage = `Transaction failed to start: ${message}`;
         }
 
+        const totalExecuted = results.length;
+        if (results.length > 50) {
+          const omitted = results.length - 50;
+          results.splice(50);
+          results.push({
+            statement: "TRUNCATED",
+            error: `Results array truncated. Omitted ${omitted} results to conserve payload size.`,
+          });
+        }
+
         return {
           ...formatted,
           error: formatted.error ?? rollbackMessage,
           message: rollbackMessage,
-          statementsExecuted: results.length,
+          statementsExecuted: totalExecuted,
           results,
         };
       }

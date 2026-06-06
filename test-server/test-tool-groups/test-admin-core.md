@@ -48,6 +48,9 @@
 > [!NOTE]
 > **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
+> [!IMPORTANT]
+> **Testing Code Mode**: Do NOT write test scripts to the filesystem. Pass your JavaScript snippets directly to the `sqlite_execute_code` tool's `code` parameter. Do NOT wrap your tests in monolithic `try/catch` blocks that suppress or transform the server's natural error output. You must allow the server to return its native structured error responses so you can evaluate them against the standards below.
+
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 >
@@ -79,16 +82,23 @@
 
 ### Structured Error Response Pattern
 
-All tools should return errors as structured objects instead of throwing. The expected pattern:
+All tools should return errors as strongly-typed structured objects instead of throwing. The expected pattern:
 
 ```json
-{ "success": false, "error": "Human-readable error message" }
+{
+  "success": false,
+  "error": "Human-readable error message",
+  "code": "VALIDATION_ERROR",
+  "category": "validation",
+  "recoverable": false,
+  "metrics": { ... }
+}
 ```
 
-| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+| Type                 | Source                                                                          | What you see                                                                                                              | Verdict            |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "...", code: "..."}` | Parseable JSON object with `success`, `error`, `code` (e.g., `VALIDATION_ERROR`, `CONFLICT_ERROR`), and `category` fields | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                                      | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field     | Bug — report as ❌ |
 
 ## Naming & Cleanup
 
@@ -113,12 +123,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_drop_view`
 - `sqlite_dbstat`
 - `sqlite_vacuum`
-- `sqlite_backup`
+- `sqlite_backup` [NATIVE ONLY]
 - `sqlite_analyze`
 - `sqlite_integrity_check`
 - `sqlite_optimize`
-- `sqlite_restore`
-- `sqlite_verify_backup`
+- `sqlite_restore` [NATIVE ONLY]
+- `sqlite_verify_backup` [NATIVE ONLY]
 - `sqlite_index_stats`
 - `sqlite_pragma_compile_options`
 - `sqlite_pragma_database_list`
@@ -128,8 +138,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 - `sqlite_attach_database`
 - `sqlite_detach_database`
-- `sqlite_vacuum_into`
-- `sqlite_dump [NATIVE ONLY]`
+- `sqlite_vacuum_into` [NATIVE ONLY]
+- `sqlite_dump` [NATIVE ONLY]
 - `sqlite_reindex`
 - `sqlite_wal`
 - _(Code Mode executor)_
@@ -137,7 +147,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 1: PRAGMA Diagnostics (batched)
 
-1. `sqlite_pragma_database_list` → verify database path matches `test.db`
+1. `sqlite_pragma_database_list` → verify database path matches `test-encrypted.db` (or a virtual WASM path)
 2. `sqlite_index_stats` → verify index statistics for test database
 3. `sqlite_dbstat({summarize: true})` → per-table storage metrics
 4. `sqlite_integrity_check` → `ok` result
@@ -152,10 +162,10 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 2: Backup/Restore (batched)
 
-13. `sqlite_backup({targetPath: "<absolute-path>/test-server/test-backup.db"})` → success with backup file info (⚠️ use absolute path — relative paths resolve from IDE CWD)
-14. `sqlite_verify_backup({backupPath: "<absolute-path>/test-server/test-backup.db"})` → integrity verified
-15. `sqlite_restore({sourcePath: "<absolute-path>/test-server/test-backup.db"})` → restore from backup, verify success
-16. `sqlite_dump({outputPath: "<absolute-path>/test-server/test-dump.sql"})` → success with `path` and `durationMs`
+13. `sqlite_backup({targetPath: "<absolute-path>/test-server/test-backup.db"})` → success with backup file info (⚠️ use absolute path — relative paths resolve from IDE CWD) [NATIVE ONLY]
+14. `sqlite_verify_backup({backupPath: "<absolute-path>/test-server/test-backup.db"})` → integrity verified [NATIVE ONLY]
+15. `sqlite_restore({sourcePath: "<absolute-path>/test-server/test-backup.db"})` → restore from backup, verify success [NATIVE ONLY]
+16. `sqlite_dump({outputPath: "<absolute-path>/test-server/test-dump.sql"})` → success with `path` and `durationMs` [NATIVE ONLY]
 17. Cleanup: note backup file location for manual removal if desired
 
 ## Phase 3: Database Management (batched)
@@ -163,7 +173,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 18. `sqlite_attach_database({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Expect structured success with `alias` and `filepath`. (Requires test-backup.db from step 13)
 19. `sqlite_pragma_database_list()` → verify `temp_attached` appears in attached databases list
 20. `sqlite_detach_database({alias: "temp_attached"})` → success with `message`
-21. `sqlite_vacuum_into({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
+21. `sqlite_vacuum_into({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes` [NATIVE ONLY]
 
 ## Phase 4: View Management (batched)
 
@@ -171,70 +181,75 @@ All tools should return errors as structured objects instead of throwing. The ex
 23. `sqlite_list_views` → verify `temp_view_orders` present
 24. `sqlite_drop_view({viewName: "temp_view_orders"})` → success
 
-## Phase 6: REINDEX (batched)
+## Phase 5: REINDEX (batched)
 
-26. `sqlite_reindex({})` → reindex entire database, success with `durationMs`
-27. `sqlite_reindex({target: "test_products"})` → reindex all indexes on specific table, success
-28. `sqlite_reindex({target: "idx_orders_status"})` → reindex specific index, success
+25. `sqlite_reindex({})` → reindex entire database, success with `durationMs`
+26. `sqlite_reindex({target: "test_products"})` → reindex all indexes on specific table, success
+27. `sqlite_reindex({target: "idx_orders_status"})` → reindex specific index, success
 
-## Phase 7: WAL Management (batched)
+## Phase 6: WAL Management (batched)
 
-29. `sqlite_wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
-30. `sqlite_wal({action: "disable"})` → `{success: false, error: "Write query failed: database is locked"}` (expected domain error since MCP server holds active connections to WAL DB), then `sqlite_wal({action: "enable"})` → `{success: true}` (verifies WAL is still enabled)
-31. `sqlite_wal({action: "enable"})` → `{success: true, message: "WAL mode is already enabled"}` (already in WAL)
-32. `sqlite_wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`, then `sqlite_wal({action: "checkpoint", checkpointMode: "FULL"})` → success
+28. `sqlite_wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
+29. `sqlite_wal({action: "disable"})` → `{success: false, error: "Write query failed: database is locked"}` (expected domain error since MCP server holds active connections to WAL DB in native; in WASM this succeeds), then `sqlite_wal({action: "enable"})` → `{success: true}` (verifies WAL is still enabled, or re-enabled in WASM)
+30. `sqlite_wal({action: "enable"})` → `{success: true, message: "WAL mode is already enabled"}` (already in WAL)
+31. `sqlite_wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`, then `sqlite_wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
 **Code mode testing:**
 
-33. `sqlite_execute_code({code: "const result = await sqlite.admin.integrityCheck(); return result;"})` → `ok` result
-34. `sqlite_execute_code({code: "const result = await sqlite.admin.pragmaSettings({pragma: 'journal_mode'}); return result;"})` → `{pragma: "journal_mode", value: "wal"}`
+32. `sqlite_execute_code({code: "const result = await sqlite.admin.integrityCheck(); return result;"})` → `ok` result
+33. `sqlite_execute_code({code: "const result = await sqlite.admin.pragmaSettings({pragma: 'journal_mode'}); return result;"})` → `{pragma: "journal_mode", value: "wal"}`
 
 **Error path testing:**
 
-🔴 35. `sqlite_pragma_table_info({table: "nonexistent_table_xyz"})` → report behavior
-🔴 36. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` → structured error
-🔴 37. `sqlite_attach_database({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
-🔴 38. `sqlite_attach_database({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
-🔴 39. `sqlite_detach_database({alias: "main"})` → `{success: false}` (cannot detach main)
-🔴 40. `sqlite_detach_database({alias: "nonexistent_alias"})` → `{success: false}`
-🔴 41. `sqlite_dump({outputPath: "../../../etc/passwd"})` → `{success: false}` (path traversal rejection)
-🔴 42. `sqlite_reindex({target: "nonexistent_xyz"})` → `{success: false}` (no such index or table)
-🔴 43. `sqlite_reindex({target: "../../etc/passwd"})` → `{success: false}` (identifier validation)
-🔴 44. `sqlite_backup({targetPath: "../../../etc/evil.db"})` → `{success: false}` (path traversal rejection)
-🔴 45. `sqlite_restore({sourcePath: "nonexistent_backup_xyz.db"})` → `{success: false}`
-🔴 46. `sqlite_create_view({viewName: "temp_bad_view", selectQuery: "SELEKT * FROM nowhere"})` → `{success: false}` (invalid SQL)
-🔴 47. `sqlite_drop_view({viewName: "nonexistent_view_xyz"})` → `{success: false}`
-🔴 48. `sqlite_vacuum_into({outputPath: "../../../etc/evil.db"})` → `{success: false}` (path traversal rejection)
-🔴 49. `sqlite_wal({action: "invalid_action_xyz"})` → `{success: false}` (invalid action value)
+🔴 34. `sqlite_pragma_table_info({table: "nonexistent_table_xyz"})` → report behavior
+🔴 35. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` → structured error
+🔴 36. `sqlite_attach_database({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
+🔴 37. `sqlite_attach_database({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
+🔴 38. `sqlite_detach_database({alias: "main"})` → `{success: false}` (cannot detach main)
+🔴 39. `sqlite_detach_database({alias: "nonexistent_alias"})` → `{success: false}`
+🔴 40. `sqlite_dump({outputPath: "../../../etc/passwd"})` → `{success: false}` (path traversal rejection)
+🔴 41. `sqlite_reindex({target: "nonexistent_xyz"})` → `{success: false}` (no such index or table)
+🔴 42. `sqlite_reindex({target: "../../etc/passwd"})` → `{success: false}` (identifier validation)
+🔴 43. `sqlite_backup({targetPath: "../../../etc/evil.db"})` → `{success: false}` (path traversal rejection)
+🔴 44. `sqlite_restore({sourcePath: "nonexistent_backup_xyz.db"})` → `{success: false}`
+🔴 45. `sqlite_create_view({viewName: "temp_bad_view", selectQuery: "SELEKT * FROM nowhere"})` → `{success: false}` (invalid SQL)
+🔴 46. `sqlite_drop_view({viewName: "nonexistent_view_xyz"})` → `{success: false}`
+🔴 47. `sqlite_vacuum_into({outputPath: "../../../etc/evil.db"})` → `{success: false}` (path traversal rejection)
+🔴 48. `sqlite_wal({action: "invalid_action_xyz"})` → `{success: false}` (invalid action value)
+🔴 49. `sqlite_attach_database({filepath: "C:\\Windows\\System32\\calc.exe", alias: "evil"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 50. `sqlite_dump({outputPath: "C:\\Windows\\System32\\dump.sql"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 51. `sqlite_vacuum_into({outputPath: "C:\\Windows\\System32\\vacuum.db"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 52. `sqlite_backup({targetPath: "C:\\Windows\\System32\\backup.db"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 53. `sqlite_restore({sourcePath: "C:\\Windows\\System32\\backup.db"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
 
-## Phase 8: Zod Validation Sweep
+## Phase 7: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 50. `sqlite_backup({})` → handler error
-🔴 51. `sqlite_restore({})` → handler error
-🔴 52. `sqlite_verify_backup({})` → handler error
-🔴 53. `sqlite_pragma_table_info({})` → handler error
-🔴 54. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
+🔴 54. `sqlite_backup({})` → handler error
+🔴 55. `sqlite_restore({})` → handler error
+🔴 56. `sqlite_verify_backup({})` → handler error
+🔴 57. `sqlite_pragma_table_info({})` → handler error
+🔴 58. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
 
-🔴 56. `sqlite_create_view({})` → handler error
-🔴 57. `sqlite_drop_view({})` → handler error
-🔴 58. `sqlite_dbstat({})` → handler error (or success if no required params)
-🔴 59. `sqlite_attach_database({})` → handler error
-🔴 60. `sqlite_detach_database({})` → handler error
-🔴 61. `sqlite_vacuum_into({})` → handler error
-🔴 62. `sqlite_dump({})` → handler error
-🔴 63. `sqlite_reindex({})` → success (target is optional — reindexes entire database)
-🔴 64. `sqlite_wal({})` → handler error (action is required)
-🔴 65. `sqlite_analyze({})` → success (no required params)
-🔴 66. `sqlite_integrity_check({})` → success (no required params)
-🔴 67. `sqlite_optimize({})` → success (no required params)
-🔴 68. `sqlite_pragma_optimize({})` → success (no required params)
-🔴 69. `sqlite_vacuum({})` → success (no required params)
-🔴 70. `sqlite_pragma_compile_options({})` → success (no required params)
-🔴 71. `sqlite_pragma_database_list({})` → success (no required params)
-🔴 72. `sqlite_list_views({})` → success (no required params)
-🔴 73. `sqlite_index_stats({})` → success (no required params)
+🔴 59. `sqlite_create_view({})` → handler error
+🔴 60. `sqlite_drop_view({})` → handler error
+🔴 61. `sqlite_dbstat({})` → handler error (or success if no required params)
+🔴 62. `sqlite_attach_database({})` → handler error
+🔴 63. `sqlite_detach_database({})` → handler error
+🔴 64. `sqlite_vacuum_into({})` → handler error
+🔴 65. `sqlite_dump({})` → handler error
+🔴 66. `sqlite_reindex({})` → success (target is optional — reindexes entire database)
+🔴 67. `sqlite_wal({})` → handler error (action is required)
+🔴 68. `sqlite_analyze({})` → success (no required params)
+🔴 69. `sqlite_integrity_check({})` → success (no required params)
+🔴 70. `sqlite_optimize({})` → success (no required params)
+🔴 71. `sqlite_pragma_optimize({})` → success (no required params)
+🔴 72. `sqlite_vacuum({})` → success (no required params)
+🔴 73. `sqlite_pragma_compile_options({})` → success (no required params)
+🔴 74. `sqlite_pragma_database_list({})` → success (no required params)
+🔴 75. `sqlite_list_views({})` → success (no required params)
+🔴 76. `sqlite_index_stats({})` → success (no required params)
 
 ---
 

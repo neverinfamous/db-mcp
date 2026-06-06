@@ -8,6 +8,7 @@ import { adminFs } from "../../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
   validateSameDirPath,
+  assertSafeIoPath,
 } from "../../../../../utils/index.js";
 import {
   formatHandlerError,
@@ -45,21 +46,39 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
-        // Security: validate filePath is within the same directory as the primary DB
-        const pathCheck = validateSameDirPath(
-          input.filePath,
-          adapter.getConfiguredPath(),
-        );
-        if (!pathCheck.valid) {
-          return {
-            success: false,
-            error: pathCheck.error,
-            code: "SECURITY_ERROR",
-            category: "security",
-            message: "",
-            sql: "",
-            columns: [],
-          };
+        const allowedIoRoots = adapter.getAllowedIoRoots();
+
+        if (allowedIoRoots !== undefined) {
+          try {
+            assertSafeIoPath(input.filePath, allowedIoRoots, false);
+          } catch (error: unknown) {
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : "Security error",
+              code: "SECURITY_ERROR",
+              category: "security",
+              message: "",
+              sql: "",
+              columns: [],
+            };
+          }
+        } else {
+          // Security: validate filePath is within the same directory as the primary DB
+          const pathCheck = validateSameDirPath(
+            input.filePath,
+            adapter.getConfiguredPath(),
+          );
+          if (!pathCheck.valid) {
+            return {
+              success: false,
+              error: pathCheck.error,
+              code: "SECURITY_ERROR",
+              category: "security",
+              message: "",
+              sql: "",
+              columns: [],
+            };
+          }
         }
 
         const { available: csvAvailable } = await isCsvModuleAvailable(adapter);

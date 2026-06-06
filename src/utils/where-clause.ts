@@ -11,7 +11,7 @@
  *
  * Adapted from postgres-mcp reference implementation for SQLite.
  */
-
+import { ValidationError } from "./errors/classes.js";
 /**
  * Error thrown when an unsafe WHERE clause is detected
  */
@@ -333,7 +333,7 @@ export function buildWhereClause(
 
     for (const cond of conditions) {
       if (!allowedOperators.has(cond.operator.toUpperCase())) {
-        throw new Error(`Invalid operator: ${cond.operator}`);
+        throw new ValidationError(`Invalid operator: ${cond.operator}`);
       }
       const col = `"${cond.column.replace(/"/g, '""')}"`;
       if (cond.operator.toUpperCase() === "IN" && Array.isArray(cond.value)) {

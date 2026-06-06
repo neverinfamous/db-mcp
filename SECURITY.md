@@ -62,7 +62,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **WHERE clause validation** — Core and stats tools enforce strict structured arrays (`WhereCondition[]`), completely eliminating SQL injection vectors present in legacy string-based WHERE properties. For raw query tools, a blocklist rejects dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, hex string injection, `GLOB` leading wildcards, and `RANDOMBLOB`/`ZEROBLOB` memory allocation DoS. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
 - ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
 - ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
-- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). This validation strictly enforces exact directory matching, blocking access even to legitimate subdirectories. _Note: In-memory databases (`:memory:`) bypass path validation by design._
+- ✅ **Path Traversal Prevention** — database exports, backups, dumps, and CSV imports enforce strict path boundaries preventing arbitrary file reads/writes (e.g. `sqlite_dump`, `sqlite_backup`, `sqlite_create_csv_virtual_table`). All filesystem operations are strictly sandboxed using symlink-aware realpath resolution (`assertSafeIoPath`). To prevent ambient filesystem authority, configuring `ALLOWED_IO_ROOTS` is a **hard requirement** when starting the server with HTTP transport. For stdio/local transports, if unconfigured, operations fallback to strictly matching the directory of the primary database. _Note: In-memory databases (`:memory:`) bypass path validation by design._
 - ✅ **DDL Validation** — Migration tools (`sqlite_migration_apply`, `sqlite_migration_rollback`) use `validateMigrationSql` to strictly prevent unauthorized DDL commands such as `ATTACH`, `DETACH`, `PRAGMA`, and `LOAD_EXTENSION`.
 - ✅ **JWT claims sanitization** — prototype-polluting keys (`__proto__`, `constructor`, `prototype`) are filtered from OAuth token payloads before spreading into claims objects
 
@@ -137,7 +137,17 @@ When running in HTTP mode (`--transport http`), the following security measures 
 - ✅ **Session ownership binding** — each session is bound to the authenticated subject (`req.auth.sub`) at creation. Every subsequent POST, GET (SSE stream, including legacy SSE connections), and DELETE request verifies that the requester's identity matches the session owner, preventing cross-client session hijack (CWE-284, CWE-639)
 - ✅ **Graceful degradation** — when auth is disabled (stdio transport, local dev), session ownership is not enforced (owner is `undefined`)
 
-> **⚠️ In-Memory Sessions:** Session state (including ownership binding) is stored in-memory. Server restarts clear all sessions, forcing clients to re-establish. In multi-instance deployments, sessions are not shared across instances — use sticky sessions at the load balancer or implement a shared session store for production clusters.
+### **Session Timeout Enforcement**
+
+- ✅ **Idle timeout** — Sessions inactive for 30 minutes are automatically expired and cleaned up via a 1-minute sweep interval.
+- ✅ **Absolute TTL** — Sessions have a hard 24-hour maximum lifetime regardless of activity, forcing periodic re-authentication.
+- ✅ **In-flight protection** — Sessions with active requests are skipped by the sweep timer to prevent mid-request disconnection.
+
+> **⚠️ In-Memory Sessions:** Session state (including ownership binding and timeout tracking) is stored in-memory. Server restarts clear all sessions, forcing clients to re-establish. In multi-instance deployments, sessions are not shared across instances — use sticky sessions at the load balancer or implement a shared session store for production clusters.
+
+### **Filesystem Hard Gate**
+
+- ✅ **`ALLOWED_IO_ROOTS` Requirement** — To prevent ambient filesystem authority in remote deployments, the HTTP transport will **refuse to start** unless `ALLOWED_IO_ROOTS` (via env var or CLI flag) is explicitly configured. This ensures administrators explicitly define exactly which directory paths the server is authorized to interact with.
 
 ### **Request Size Limits**
 
@@ -225,7 +235,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 ## 🔄 **CI/CD Security**
 
 - ✅ **CodeQL analysis** — automated static analysis on push/PR
-- ✅ **npm audit** — dependency vulnerability checking (audit-level: moderate)
+- ✅ **pnpm audit** — dependency vulnerability checking (audit-level: moderate)
 - ✅ **Secrets scanning** — dedicated workflow on push and PR (defense-in-depth for direct pushes to main)
 - ✅ **Lockfile integrity** — SHA-256 hash and `git diff --exit-code` verification before `npm ci` to detect post-checkout tampering
 - ✅ **Patch drift detection** — weekly CI workflow validates Dockerfile patches and package.json overrides against upstream versions
@@ -329,6 +339,9 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] CI/CD concurrent execution block safeguards
 - [x] Unauthenticated HTTP transport implicitly fails closed without `--no-auth-enforcement` flag
 - [x] Session ID format and length validation (UUIDv4) for stateful transport
+- [x] Session idle timeout enforcement (30-minute default, 1-minute sweep)
+- [x] Session absolute TTL enforcement (24-hour hard cap)
+- [x] In-flight request protection during session expiry sweep
 
 - [x] WebAssembly and SharedArrayBuffer blocked in Code Mode sandbox
 - [x] File I/O functions (`WRITEFILE`, `READFILE`) blocked in restore tool
@@ -401,6 +414,7 @@ docker pull writenotenow/db-mcp:latest
 
 | Version | Supported |
 | ------- | --------- |
+| 4.x.x   | ✅        |
 | 3.x.x   | ✅        |
 | 2.x.x   | ✅        |
 | 1.x.x   | ❌        |
@@ -424,7 +438,7 @@ We appreciate responsible disclosure and will acknowledge your contribution in o
 ## 🔄 **Security Updates**
 
 - **Container updates**: Rebuild Docker images when base images are updated
-- **Dependency updates**: Keep npm packages updated via `npm audit` and manual dependency upgrades
+- **Dependency updates**: Keep pnpm packages updated via `pnpm audit` and manual dependency upgrades
 - **Database maintenance**: Run `ANALYZE` and `VACUUM` regularly for optimal performance
 - **Security patches**: Apply host system security updates
 

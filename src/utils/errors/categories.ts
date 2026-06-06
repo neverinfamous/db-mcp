@@ -7,26 +7,32 @@
 /**
  * Error categories for classification and handling
  */
-export enum ErrorCategory {
+export const ErrorCategory = {
   /** Input validation failures (invalid names, paths, types) */
-  VALIDATION = "validation",
+  VALIDATION: "validation",
   /** Database connection issues */
-  CONNECTION = "connection",
+  CONNECTION: "connection",
   /** SQL execution errors */
-  QUERY = "query",
+  QUERY: "query",
   /** Authorization/permission failures */
-  PERMISSION = "permission",
+  PERMISSION: "permission",
   /** Configuration/setup issues */
-  CONFIGURATION = "config",
+  CONFIGURATION: "config",
   /** Missing resources (tables, columns, views) */
-  RESOURCE = "resource",
+  RESOURCE: "resource",
   /** Authentication failures (invalid credentials, expired tokens) */
-  AUTHENTICATION = "authentication",
+  AUTHENTICATION: "authentication",
   /** Authorization failures (insufficient scope/permissions) */
-  AUTHORIZATION = "authorization",
+  AUTHORIZATION: "authorization",
   /** Unexpected internal errors */
-  INTERNAL = "internal",
-}
+  INTERNAL: "internal",
+  /** Execution timeout errors */
+  TIMEOUT: "timeout",
+  /** Rate limit enforcement errors */
+  RATE_LIMIT: "rate_limit",
+} as const;
+
+export type ErrorCategory = (typeof ErrorCategory)[keyof typeof ErrorCategory];
 
 /**
  * Structured error response format

@@ -14,6 +14,7 @@ import type {
 import { AuthServerDiscoveryError } from "./errors.js";
 import { createModuleLogger, ERROR_CODES } from "../utils/logger/index.js";
 import { DbMcpError, ErrorCategory } from "../utils/errors/index.js";
+import { ConfigurationError } from "../utils/errors/classes.js";
 
 const logger = createModuleLogger("AUTH");
 
@@ -53,7 +54,7 @@ export class AuthorizationServerDiscovery {
         url.hostname === "127.0.0.1" ||
         url.hostname === "[::1]";
       if (!isLocalDev) {
-        throw new Error(
+        throw new ConfigurationError(
           `Security: Authorization server URL must use HTTPS in production. ` +
             `Got: ${this.authServerUrl}. ` +
             `Set NODE_ENV=development to allow HTTP for local testing.`,

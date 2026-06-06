@@ -26,6 +26,7 @@ import { logger } from "../utils/logger/index.js";
 
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
+import { ValidationError } from "../utils/errors/classes.js";
 import { AuditLogger } from "../audit/logger.js";
 import { SystemDb } from "../observability/system-db.js";
 import { BackupManager } from "../audit/backup-manager.js";
@@ -33,11 +34,13 @@ import { metrics } from "../observability/metrics.js";
 import { createAuditInterceptor } from "../audit/interceptor.js";
 import type { AuditInterceptor } from "../audit/interceptor.js";
 import {
-  registerBuiltInTools,
-  registerHelpResources,
   registerAuditResource,
   registerAuditBackupTools,
   registerAuditSearchTool,
+} from "./registration/audit-tools/index.js";
+import {
+  registerBuiltInTools,
+  registerHelpResources,
   registerObservabilityResources,
   registerAdminTools,
 } from "./registration/index.js";
@@ -117,6 +120,29 @@ export class DbMcpServer {
   constructor(config: McpServerConfig) {
     this.config = config;
 
+    // Resolve dynamic roots for explicit isolation if not explicitly provided
+    let allowedIoRoots = config.allowedIoRoots;
+    if (!allowedIoRoots) {
+      if (config.transport === "http") {
+        const errorMsg = `FATAL: Refusing to bind HTTP transport without explicit ALLOWED_IO_ROOTS. You MUST specify --allowed-io-roots (or ALLOWED_IO_ROOTS env var) to prevent ambient filesystem authority.`;
+        logger.error(errorMsg, { module: "SERVER" });
+        process.exit(1);
+      }
+      allowedIoRoots = []; // Empty array means NO filesystem access
+      logger.warning(
+        "⚠️ SECURITY WARNING: ALLOWED_IO_ROOTS not explicitly provided. Defaulting to empty array (NO filesystem access). You MUST specify --allowed-io-roots (or ALLOWED_IO_ROOTS env var) to enable filesystem tools.",
+        { module: "SERVER" },
+      );
+    } else {
+      logger.info("IO sandbox configured", {
+        module: "SERVER",
+        allowedRoots: allowedIoRoots,
+      });
+    }
+
+    // Ensure the resolved roots are saved back to config so adapters get them
+    this.config.allowedIoRoots = allowedIoRoots;
+
     // Initialize tool filter from config or environment (needed for help resources)
     this.toolFilter = config.toolFilter
       ? parseToolFilter(config.toolFilter)
@@ -170,7 +196,7 @@ export class DbMcpServer {
           ) &&
           !uri.startsWith("sqlite://table/")
         ) {
-          throw new Error(`Resource ${uri} is not subscribable`);
+          throw new ValidationError(`Resource ${uri} is not subscribable`);
         }
 
         this.subscriptionManager.subscribe(
@@ -295,6 +321,13 @@ export class DbMcpServer {
 
     // Store adapter
     this.adapters.set(adapterId, adapter);
+
+    // Inject allowed IO roots if supported
+    if ("setAllowedIoRoots" in adapter) {
+      (
+        adapter as { setAllowedIoRoots: (roots: string[] | undefined) => void }
+      ).setAllowedIoRoots(this.config.allowedIoRoots);
+    }
 
     // Inject audit interceptor if available (narrowed for type-only import)
     if (this.auditInterceptor && "setAuditInterceptor" in adapter) {

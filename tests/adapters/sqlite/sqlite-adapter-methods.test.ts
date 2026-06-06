@@ -47,10 +47,9 @@ describe("SqliteAdapter - not connected", () => {
     expect(health.connected).toBe(false);
   });
 
-  it("executeReadQuery should throw when not connected", () => {
+  it("executeReadQuery should throw when not connected", async () => {
     const adapter = createSqliteAdapter();
-    // ensureConnected() throws synchronously before any promise is returned
-    expect(() => adapter.executeReadQuery("SELECT 1")).toThrow();
+    await expect(adapter.executeReadQuery("SELECT 1")).rejects.toThrow();
   });
 
   it("getDatabase should throw when not connected", () => {
@@ -102,7 +101,7 @@ describe("SqliteAdapter - connected (in-memory)", () => {
     expect(caps.vector).toBe(true);
     expect(caps.geospatial).toBe(false);
     expect(caps.transactions).toBe(true);
-    expect(caps.connectionPooling).toBe(false);
+    expect(caps.connectionPooling).toBe(true);
   });
 
   it("getSupportedToolGroups should include all groups", async () => {
@@ -192,7 +191,7 @@ describe("SqliteAdapter - connected (in-memory)", () => {
     );
     const info = await adapter.describeTable("dt_test");
     expect(info.name).toBe("dt_test");
-    expect(info.columns.length).toBeGreaterThan(0);
+    expect(info?.columns?.length).toBeGreaterThan(0);
   });
 
   it("getIndexes should return indexes", async () => {
@@ -280,12 +279,12 @@ describe("SqliteAdapter - connected (in-memory)", () => {
     await adapter.disconnect();
   });
 
-  it("ensureConnected should throw if db is null but connected is true", () => {
+  it("ensureConnected should throw if db is null but connected is true", async () => {
     adapter = createSqliteAdapter();
     (adapter as any).connected = true;
     (adapter as any).db = null;
 
-    expect(() => adapter.executeReadQuery("SELECT 1")).toThrow(
+    await expect(adapter.executeReadQuery("SELECT 1")).rejects.toThrow(
       "Not connected to database",
     );
   });

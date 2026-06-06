@@ -48,6 +48,9 @@
 > [!NOTE]
 > **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
+> [!IMPORTANT]
+> **Testing Code Mode**: Do NOT write test scripts to the filesystem. Pass your JavaScript snippets directly to the `sqlite_execute_code` tool's `code` parameter. Do NOT wrap your tests in monolithic `try/catch` blocks that suppress or transform the server's natural error output. You must allow the server to return its native structured error responses so you can evaluate them against the standards below.
+
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 >
@@ -79,22 +82,30 @@
 
 ### Structured Error Response Pattern
 
-All tools should return errors as structured objects instead of throwing. The expected pattern:
+All tools should return errors as strongly-typed structured objects instead of throwing. The expected pattern:
 
 ```json
-{ "success": false, "error": "Human-readable error message" }
+{
+  "success": false,
+  "error": "Human-readable error message",
+  "code": "VALIDATION_ERROR",
+  "category": "validation",
+  "recoverable": false,
+  "metrics": { ... }
+}
 ```
 
-| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+| Type                 | Source                                                                          | What you see                                                                                                              | Verdict            |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "...", code: "..."}` | Parseable JSON object with `success`, `error`, `code` (e.g., `VALIDATION_ERROR`, `CONFLICT_ERROR`), and `category` fields | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                                      | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field     | Bug — report as ❌ |
 
 ## Naming & Cleanup
 
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -194,7 +205,7 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 31. Create `stress_stats_empty (id INTEGER PRIMARY KEY)` (no rows). `sqlite.stats.statsSample({table: "stress_stats_empty", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
 32. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1})` → exactly 1 row
-33. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 200 (total rows), verify `sampleSize` vs actual returned
+33. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 50 (max sample size), verify `sampleSize` vs actual returned
 34. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
 35. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, whereClause: "sensor_id = 1"})` → filtered sample, verify all returned rows have `sensor_id: 1`
 36. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 0})` → structured error or empty result (boundary: zero sample)

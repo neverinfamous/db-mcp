@@ -9,7 +9,7 @@ import type { HttpTransportState } from "../types.js";
 import { JSONRPC_SERVER_ERROR } from "../types.js";
 import { asIncoming, asServerResponse } from "../type-adapters.js";
 import { Mutex } from "./mutex.js";
-import { verifySessionOwner } from "./stateful.js";
+import { verifySessionOwner, touchSession } from "./stateful.js";
 
 const logger = createModuleLogger("HTTP");
 const connectionMutex = new Mutex();
@@ -35,6 +35,9 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
     void (async () => {
       try {
         state.sseTransports.set(sseTransport.sessionId, sseTransport);
+        // Track session activity and creation time
+        touchSession(state, sseTransport.sessionId);
+        state.sessionCreatedAt.set(sseTransport.sessionId, Date.now());
         // H-2: Bind SSE session to the authenticated identity
         state.sessionOwners.set(sseTransport.sessionId, req.auth?.sub);
 
@@ -45,6 +48,8 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
           });
           state.sseTransports.delete(sseTransport.sessionId);
           state.sessionOwners.delete(sseTransport.sessionId);
+          state.sessionLastActivity.delete(sseTransport.sessionId);
+          state.sessionCreatedAt.delete(sseTransport.sessionId);
 
           // Clean up subscriptions
           if ("subscriptionManager" in server) {
@@ -132,6 +137,8 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
     req.on("close", () => {
       state.sseTransports.delete(sseTransport.sessionId);
       state.sessionOwners.delete(sseTransport.sessionId);
+      state.sessionLastActivity.delete(sseTransport.sessionId);
+      state.sessionCreatedAt.delete(sseTransport.sessionId);
     });
   });
 
@@ -178,6 +185,8 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
       });
       return;
     }
+
+    touchSession(state, sessionId);
 
     void sseTransport
       .handlePostMessage(

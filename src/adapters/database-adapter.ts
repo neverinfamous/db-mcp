@@ -189,6 +189,22 @@ export abstract class DatabaseAdapter extends EventEmitter {
     return this.auditInterceptor;
   }
 
+  protected allowedIoRoots?: string[] | undefined;
+
+  /**
+   * Inject the allowed IO roots for filesystem boundary enforcement.
+   */
+  setAllowedIoRoots(roots: string[] | undefined): void {
+    this.allowedIoRoots = roots;
+  }
+
+  /**
+   * Get the allowed IO roots for filesystem boundary enforcement.
+   */
+  getAllowedIoRoots(): string[] | undefined {
+    return this.allowedIoRoots;
+  }
+
   // ===========================================================================
   // Tool Registration
   // ===========================================================================

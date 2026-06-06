@@ -7,7 +7,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -48,6 +48,9 @@
 > [!NOTE]
 > **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
+> [!IMPORTANT]
+> **Testing Code Mode**: Do NOT write test scripts to the filesystem. Pass your JavaScript snippets directly to the `sqlite_execute_code` tool's `code` parameter. Do NOT wrap your tests in monolithic `try/catch` blocks that suppress or transform the server's natural error output. You must allow the server to return its native structured error responses so you can evaluate them against the standards below.
+
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 >
@@ -79,22 +82,30 @@
 
 ### Structured Error Response Pattern
 
-All tools should return errors as structured objects instead of throwing. The expected pattern:
+All tools should return errors as strongly-typed structured objects instead of throwing. The expected pattern:
 
 ```json
-{ "success": false, "error": "Human-readable error message" }
+{
+  "success": false,
+  "error": "Human-readable error message",
+  "code": "VALIDATION_ERROR",
+  "category": "validation",
+  "recoverable": false,
+  "metrics": { ... }
+}
 ```
 
-| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+| Type                 | Source                                                                          | What you see                                                                                                              | Verdict            |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "...", code: "..."}` | Parseable JSON object with `success`, `error`, `code` (e.g., `VALIDATION_ERROR`, `CONFLICT_ERROR`), and `category` fields | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                                      | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field     | Bug — report as ❌ |
 
 ## Naming & Cleanup
 
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -123,12 +134,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 2. `sqlite_virtual_table_info({tableName: "test_articles_fts"})` → verify module and column info (Native)
 3. `sqlite_generate_series({start: 1, stop: 5, step: 1})` → 5 values
 4. `sqlite_create_rtree_table({tableName: "temp_rtree_test", dimensions: 2})` → R-Tree virtual table created with 2D bounding box columns
-5. `sqlite_create_series_table({tableName: "temp_series_test", start: 1, stop: 10})` → regular table created with 10 rows (not a virtual table — see gotcha #14)
+5. `sqlite_create_series_table({tableName: "temp_series_test", start: 1, stop: 10})` → regular table created with 10 rows (not a virtual table)
 6. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_rtree_test"})` and `sqlite_drop_table({table: "temp_series_test"})` (series is a regular table — use core `sqlite_drop_table`)
 
 **CSV:**
 
-7. `sqlite_analyze_csv_schema({filePath: "<absolute-path>/test-server/sample.csv"})` → inferred column types (⚠️ CSV requires absolute paths — see gotcha #13)
+7. `sqlite_analyze_csv_schema({filePath: "<absolute-path>/test-server/sample.csv"})` → inferred column types (⚠️ CSV requires absolute paths — see Server-Level Rule #1 in gotchas.md)
 8. `sqlite_create_csv_table({tableName: "temp_csv_test", filePath: "<absolute-path>/test-server/sample.csv"})` → virtual table created
 9. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_csv_test"})`
 
@@ -138,25 +149,27 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 11. `sqlite_drop_virtual_table({tableName: "nonexistent_vtable_xyz", ifExists: false})` → `{success: false}`
 🔴 12. `sqlite_create_csv_table({tableName: "temp_csv_bad", filePath: "C:\\nonexistent\\path\\file.csv"})` → `{success: false}`
 🔴 13. `sqlite_create_rtree_table({tableName: "test_products", dimensions: 2})` → `{success: false}` (table already exists)
+🔴 14. `sqlite_create_csv_table({tableName: "temp_csv_bad", filePath: "C:\\Windows\\System32\\secrets.csv"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 15. `sqlite_analyze_csv_schema({filePath: "C:\\Windows\\System32\\secrets.csv"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 14. `sqlite_virtual_table_info({})` → handler error
-🔴 15. `sqlite_drop_virtual_table({})` → handler error
-🔴 16. `sqlite_create_csv_table({})` → handler error
-🔴 17. `sqlite_analyze_csv_schema({})` → handler error
-🔴 18. `sqlite_create_rtree_table({})` → handler error
-🔴 19. `sqlite_create_series_table({})` → handler error
-🔴 20. `sqlite_generate_series({})` → handler error
+🔴 16. `sqlite_virtual_table_info({})` → handler error
+🔴 17. `sqlite_drop_virtual_table({})` → handler error
+🔴 18. `sqlite_create_csv_table({})` → handler error
+🔴 19. `sqlite_analyze_csv_schema({})` → handler error
+🔴 20. `sqlite_create_rtree_table({})` → handler error
+🔴 21. `sqlite_create_series_table({})` → handler error
+🔴 22. `sqlite_generate_series({})` → handler error
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 21. `sqlite_generate_series({start: "abc", stop: 5, step: 1})` → handler error
-🔴 22. `sqlite_create_series_table({tableName: "temp_coercion_test", start: 1, stop: "abc"})` → handler error
+🔴 23. `sqlite_generate_series({start: "abc", stop: 5, step: 1})` → handler error
+🔴 24. `sqlite_create_series_table({tableName: "temp_coercion_test", start: 1, stop: "abc"})` → handler error
 
 ---
 

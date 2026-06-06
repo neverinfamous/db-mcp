@@ -190,7 +190,13 @@ export function setupRateLimiting(state: HttpTransportState): void {
     skip: (req) => req.path === "/health",
     handler: (_req, res, _next, options) => {
       res.status(options.statusCode).json({
+        success: false,
         error: "Too Many Requests",
+        code: "RATE_LIMIT_ERROR",
+        category: "rate_limit",
+        suggestion:
+          "Wait before retrying. Reduce request frequency or configure MCP_RATE_LIMIT_MAX.",
+        recoverable: true,
       });
     },
   });

@@ -98,6 +98,8 @@ adminToolNames.push(
   "sqlite_audit_diff_backup",
   "sqlite_audit_restore_backup",
   "drop_table", // explicitly admin since it is destructive, despite being in core
+  "enable_versioning", // admin scope needed for DDL
+  "disable_versioning", // admin scope needed for DDL
 );
 export const ADMIN_TOOLS: ReadonlySet<string> =
   withSqlitePrefix(adminToolNames);
@@ -120,6 +122,7 @@ export const READ_ONLY_TOOLS: ReadonlySet<string> = withSqlitePrefix([
   "list_constraints",
   "date_add",
   "date_diff",
+  "check_version",
   // JSON read operations
   "json_valid",
   "json_extract",
@@ -223,6 +226,7 @@ export const WRITE_TOOLS: ReadonlySet<string> = withSqlitePrefix([
   "create_trigger",
   "drop_trigger",
   "alter_table",
+  "conditional_update",
   // JSON write operations
   "json_insert",
   "json_update",

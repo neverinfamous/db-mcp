@@ -65,4 +65,8 @@ export interface McpServerConfig {
 
   /** Enable Prometheus metrics export at /metrics */
   metricsExport?: "prometheus";
+
+  /** Allowlisted filesystem roots for IO operations (backup, dump, attach, CSV).
+   *  Empty array = NO filesystem access. Undefined = legacy mode (same-dir validation). */
+  allowedIoRoots?: string[] | undefined;
 }

@@ -2,6 +2,13 @@
 
 **Directory Purpose**: This folder contains 12 self-contained, modular test prompts covering every tool group in `db-mcp`. These prompts are strictly designed for **Code Mode (`sqlite_execute_code`) validation only**.
 
+## Pre-requisites
+
+1. The testing database MUST be freshly seeded via `node C:\Users\chris\Desktop\db-mcp\test-server\reset-database.mjs` to ensure deterministic results.
+2. The MCP server MUST be started with the `ALLOWED_IO_ROOTS` environment variable configured (e.g., set to the db-mcp repository root), otherwise it will hard-fail to start and block file-based tool tests (like CSV generation or database dumps).
+3. **Session Timeouts**: If using the HTTP transport, note that sessions will strictly expire after 30 minutes of inactivity and have an absolute TTL of 24 hours. Ensure your manual testing flows account for these timeouts.
+4. **Streaming Validation**: When testing `sqlite.core.readQuery`, setting `stream: true` instructs the server to stream results. However, because Code Mode does not expose the client's `_meta.progressToken`, verify that the system gracefully degrades to full buffering without throwing errors.
+
 ## Agent Instructions
 
 When tasked with running tests from this folder, adhere to the following optimized protocol:
@@ -16,6 +23,7 @@ When tasked with running tests from this folder, adhere to the following optimiz
 
 - **Happy Path Parity**: Validate that Code Mode handler execution matches expected database behavior.
 - **Structured Error Path**: Ensure domain errors (e.g., nonexistent table) return an object `{"success": false, "error": "..."}` instead of crashing or leaking raw MCP errors.
+- **Timeouts & Rate Limits**: Validate that exceeding sandbox limits (e.g., via infinite loops) safely returns a `TimeoutError` (category: `timeout`), and exceeding rate limits returns a `RateLimitError` (category: `rate_limit`).
 - **Zod Resilience**: Pass `{}` with missing required parameters or invalid types. Verify that Zod errors are properly caught and formatted.
 - **Payload Limits**: If a response payload is excessively large, report it as a 📦 Payload issue.
 - **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
@@ -75,7 +83,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite.admin.pragmaCompileOptions()`                           | Includes `ENABLE_FTS5`                    | Shows `ENABLE_FTS3` instead                                           |
 | `sqlite.admin.pragmaCompileOptions({filter: "FTS"})`            | Matches FTS5                              | Matches FTS3                                                          |
 | `sqlite.core.listTables()` / `sqlite.admin.listVirtualTables()` | `test_articles_fts` present and queryable | `test_articles_fts` may appear in sqlite_master but FTS5 queries fail |
-| `sqlite.help()`                                                 | `totalMethods` reflects 167 tools         | `totalMethods` reflects 141 tools                                     |
+| `sqlite.help()`                                                 | `totalMethods` reflects 171 tools         | `totalMethods` reflects 144 tools                                     |
 | Phase 2.1 (sandbox prompt) top-level help                       | 10 groups listed                          | `transactions` group shows 0 methods                                  |
 
 #### WASM-Specific Degradation Prompt
@@ -87,19 +95,19 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 | File                                | Group         | Group Tools                                                              |
 | ----------------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `test-codemode-sandbox.md`          | sandbox       | Sandbox basics, API discoverability, security, readonly, state isolation |
-| `test-codemode-core.md`             | core          | 21                                                                       |
+| `test-codemode-core.md`             | core          | 25                                                                       |
 | `test-codemode-json.md`             | json          | 25                                                                       |
-| `test-codemode-text.md`             | text          | 20N/15W                                                                  |
+| `test-codemode-text.md`             | text          | 21N/16W                                                                  |
 | `test-codemode-stats.md`            | stats         | 23N/17W                                                                  |
 | `test-codemode-vector.md`           | vector        | 11                                                                       |
-| `test-codemode-admin.md`            | admin         | 31N/31W                                                                  |
+| `test-codemode-admin.md`            | admin         | 31N/30W                                                                  |
 | `test-codemode-transactions.md`     | transactions  | 8 `[NATIVE ONLY]`                                                        |
 | `test-codemode-geo.md`              | geo           | 11N/4W                                                                   |
 | `test-codemode-introspection.md`    | introspection | 10                                                                       |
 | `test-codemode-migration.md`        | migration     | 6                                                                        |
 | `test-codemode-wasm-degradation.md` | cross-group   | WASM-only graceful degradation                                           |
 
-**Group tools total**: 167 Native / 141 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt. Audit tools (7) are MCP-only and not covered here. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+**Group tools total**: 171 Native / 144 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt. Audit tools (7) are MCP-only and not covered here. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Recommended Execution Order
 

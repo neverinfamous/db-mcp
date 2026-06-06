@@ -34,6 +34,12 @@ import {
 import { createListConstraintsTool } from "./constraints.js";
 import { createDateAddTool, createDateDiffTool } from "./datetime.js";
 import { createAlterTableTool } from "./alter-table.js";
+import {
+  createEnableVersioningTool,
+  createDisableVersioningTool,
+  createCheckVersionTool,
+  createConditionalUpdateTool,
+} from "./versioning.js";
 
 // Re-export SpatiaLite system filters for external use
 export {
@@ -68,5 +74,9 @@ export function getCoreTools(adapter: SqliteAdapter): ToolDefinition[] {
     createDateAddTool(adapter),
     createDateDiffTool(adapter),
     createAlterTableTool(adapter),
+    createEnableVersioningTool(adapter),
+    createDisableVersioningTool(adapter),
+    createCheckVersionTool(adapter),
+    createConditionalUpdateTool(adapter),
   ];
 }

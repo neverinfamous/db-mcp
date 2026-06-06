@@ -9,6 +9,7 @@ import { CodeModeSandbox, SandboxPool } from "./sandbox.js";
 
 import { logger } from "../utils/logger/index.js";
 import type { SandboxOptions, PoolOptions, SandboxResult } from "./types.js";
+import { ConfigurationError } from "../utils/errors/classes.js";
 
 /**
  * Sandbox isolation mode
@@ -94,7 +95,7 @@ export function createSandbox(
   if (selectedMode === "isolate") {
     return CodeModeSandbox.create(options);
   }
-  throw new Error(
+  throw new ConfigurationError(
     "Only 'isolate' mode is supported. Worker mode was disabled for security.",
   );
 }
@@ -115,7 +116,7 @@ export function createSandboxPool(
   if (selectedMode === "isolate") {
     return new SandboxPool(poolOptions, sandboxOptions);
   }
-  throw new Error(
+  throw new ConfigurationError(
     "Only 'isolate' mode is supported. Worker mode was disabled for security.",
   );
 }

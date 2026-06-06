@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
 
@@ -88,9 +88,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
+
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a # v4.4.0
+        with:
+          version: 9.15.4
 
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
@@ -116,8 +120,8 @@ jobs:
             [ -z "$pkg" ] && continue
 
             # Check if the lockfile still needs this override
-            # by looking for the package in node_modules after npm ci
-            LATEST=$(npm view "$pkg" version 2>/dev/null || echo "unknown")
+            # by looking for the package in node_modules after pnpm install --frozen-lockfile
+            LATEST=$(pnpm view "$pkg" version 2>/dev/null || echo "unknown")
 
             if [ "$LATEST" = "$version" ]; then
               echo "✅ CURRENT: $pkg@$version — matches latest registry version"
@@ -131,4 +135,4 @@ jobs:
           echo ""
           echo "ℹ️  Overrides are intentional CVE patches for transitive dependencies."
           echo "   Remove an override only after confirming the parent dependency"
-          echo "   has adopted the fix and npm audit passes without it."
+          echo "   has adopted the fix and pnpm audit passes without it."

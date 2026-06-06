@@ -6,6 +6,7 @@
 
 import { createHash } from "node:crypto";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
+import { ValidationError } from "../../../../utils/errors/classes.js";
 
 // =============================================================================
 // Constants
@@ -75,7 +76,7 @@ export function validateMigrationSql(sql: string): void {
     upperSql.includes("PRAGMA ") ||
     upperSql.includes("LOAD_EXTENSION(")
   ) {
-    throw new Error(
+    throw new ValidationError(
       `Migration validation failed: unauthorized command or function call`,
     );
   }

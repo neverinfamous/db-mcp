@@ -22,49 +22,53 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
+
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a # v4.4.0
+        with:
+          version: 9.15.4
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: "pnpm"
 
       - name: Cache npm
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4.0.0
         with:
           path: ~/.npm
-          key: npm-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
+          key: npm-${{ matrix.node-version }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             npm-${{ matrix.node-version }}-
 
       - name: Verify lockfile integrity
         run: |
-          echo "Lockfile SHA-256: $(sha256sum package-lock.json | cut -d' ' -f1)"
-          git diff --exit-code package-lock.json || {
-            echo "::error::package-lock.json has been modified outside of git"
+          echo "Lockfile SHA-256: $(sha256sum pnpm-lock.yaml | cut -d' ' -f1)"
+          git diff --exit-code pnpm-lock.yaml || {
+            echo "::error::pnpm-lock.yaml has been modified outside of git"
             exit 1
           }
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Rebuild better-sqlite3 (explicitly allowed)
-        run: npm rebuild better-sqlite3 --ignore-scripts=false
+        run: pnpm rebuild better-sqlite3
 
       - name: Run ESLint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Run TypeScript check
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Run tests
-        run: npm run test
+        run: pnpm run test
 
   security-scan:
     runs-on: ubuntu-24.04
@@ -72,26 +76,30 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
+
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a # v4.4.0
+        with:
+          version: 9.15.4
 
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "24.x"
-          cache: "npm"
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: Run npm audit (all dependencies)
+      - name: Run pnpm audit (all dependencies)
         timeout-minutes: 10
-        run: npm audit --audit-level=moderate
+        run: pnpm audit --audit-level=moderate
 
-      - name: Run npm audit (production only)
+      - name: Run pnpm audit (production only)
         timeout-minutes: 10
-        run: npm audit --omit=dev --audit-level=moderate
+        run: pnpm audit --prod --audit-level=moderate
 
   # Smoke test: verify the Docker image builds and starts successfully
   # Catches dependency resolution failures that only surface after npm prune (#149)
@@ -112,7 +120,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
 
@@ -134,7 +142,7 @@ jobs:
       - name: Smoke test — HTTP transport starts
         run: |
           docker run --rm -d --name pr-smoke -p 3000:3000 pr-smoke-test:latest \
-            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite /tmp/test.db
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --allowed-io-roots /tmp --sqlite /tmp/test.db
           sleep 5
           if ! docker ps --filter name=pr-smoke --format '{{.Status}}' | grep -q "Up"; then
             echo "❌ Docker smoke test failed — container crashed (${{ matrix.platform }})"
@@ -155,7 +163,7 @@ jobs:
         run: |
           # Verify better-sqlite3 native bindings load correctly
           docker run --rm -d --name pr-smoke-native -p 3001:3000 pr-smoke-test:latest \
-            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite-native /tmp/test.db
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --allowed-io-roots /tmp --sqlite-native /tmp/test.db
           sleep 5
           if ! docker ps --filter name=pr-smoke-native --format '{{.Status}}' | grep -q "Up"; then
             echo "❌ Native SQLite smoke test failed (${{ matrix.platform }})"

@@ -8,6 +8,7 @@
  */
 
 import type { ToolAnnotations } from "../types/index.js";
+import type { ToolAnnotations as SDKToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 
 // =============================================================================
 // Base Annotation Presets
@@ -147,4 +148,14 @@ export const CODEMODE: ToolAnnotations = {
  */
 export function codemode(title: string): ToolAnnotations {
   return { title, ...CODEMODE };
+}
+
+/**
+ * Casts internal annotations to the SDK annotations type.
+ * This bypasses TypeScript excess property checks when registering tools directly
+ * via the SDK (which lacks our custom sensitiveHint annotation), while preserving
+ * the data at runtime for clients that do support it.
+ */
+export function toSDK(annotations: ToolAnnotations): SDKToolAnnotations {
+  return annotations;
 }

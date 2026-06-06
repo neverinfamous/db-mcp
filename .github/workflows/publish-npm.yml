@@ -1,6 +1,6 @@
 name: Publish to NPM
 
-# npm publish is gated behind Docker security checks:
+# pnpm publish is gated behind Docker security checks:
 # - Triggered by docker-publish.yml after Docker Scout + image push succeeds
 # - No manual dispatch — all publishes must pass gatekeeper pipeline
 #
@@ -37,28 +37,23 @@ jobs:
           fi
 
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
+
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a # v4.4.0
+        with:
+          version: 9.15.4
 
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "24.x"
           registry-url: "https://registry.npmjs.org"
-          cache: "npm"
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Check version consistency
-        run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          LOCK_VERSION=$(node -p "require('./package-lock.json').version")
-          if [ "$PKG_VERSION" != "$LOCK_VERSION" ]; then
-            echo "::error::Version mismatch between package.json ($PKG_VERSION) and package-lock.json ($LOCK_VERSION)"
-            exit 1
-          fi
+        run: pnpm install --frozen-lockfile
 
       - name: Read version
         id: version
@@ -72,7 +67,7 @@ jobs:
         env:
           PKG_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          PUBLISHED=$(npm view db-mcp version 2>/dev/null || echo "none")
+          PUBLISHED=$(pnpm view db-mcp version 2>/dev/null || echo "none")
           echo "published=$PUBLISHED" >> $GITHUB_OUTPUT
           if [ "$PUBLISHED" = "$PKG_VERSION" ]; then
             echo "Version $PKG_VERSION already published, skipping"
@@ -84,11 +79,11 @@ jobs:
 
       - name: Build package
         if: steps.check.outputs.skip != 'true'
-        run: npm run build
+        run: pnpm run build
 
       - name: Publish to NPM
         if: steps.check.outputs.skip != 'true'
-        run: npm publish --access public --provenance
+        run: pnpm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -99,7 +94,7 @@ jobs:
           for i in 1 2 3; do
             sleep 30
             echo "Attempt $i: Checking npm registry..."
-            PUBLISHED=$(npm view db-mcp version 2>/dev/null || echo "none")
+            PUBLISHED=$(pnpm view db-mcp version 2>/dev/null || echo "none")
             EXPECTED="${{ steps.version.outputs.version }}"
             if [ "$PUBLISHED" = "$EXPECTED" ]; then
               echo "✅ Published: $PUBLISHED | Expected: $EXPECTED"

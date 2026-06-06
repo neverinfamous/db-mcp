@@ -36,6 +36,7 @@ import { getPromptDefinitions } from "./prompts/index.js";
 import { executeRead, executeWrite, executeGeneral } from "./query-executor.js";
 
 import { isDDL } from "../sqlite-helpers.js";
+import { ReadWriteLock, type ReadWriteLockStats } from "./read-write-lock.js";
 
 import {
   connectSqliteDatabase,
@@ -47,6 +48,8 @@ import {
   fallBackGetIndexes,
   fallBackGetSchema,
 } from "./sqlite-adapter/schema.js";
+
+const DDL_NAME_REGEX = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i;
 
 /**
  * SQLite Database Adapter
@@ -76,6 +79,7 @@ export class SqliteAdapter extends DatabaseAdapter {
   }
 
   private db: Database | null = null;
+  private readonly rwLock = new ReadWriteLock();
 
   protected override config: SqliteConfig | null = null;
   private schemaManager: SchemaManager | null = null;
@@ -96,6 +100,7 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Disconnect from the database
    */
   override async disconnect(): Promise<void> {
+    this.rwLock.dispose();
     if (this.db) {
       await disconnectSqliteDatabase(this.db, this.config);
       this.db = null;
@@ -142,13 +147,18 @@ export class SqliteAdapter extends DatabaseAdapter {
   /**
    * Execute a read-only query
    */
-  override executeReadQuery(
+  override async executeReadQuery(
     sql: string,
     params?: unknown[],
   ): Promise<QueryResult> {
     this.ensureConnected();
     this.validateQuery(sql, true);
-    return executeRead(this.ensureDb(), sql, params);
+    const release = await this.rwLock.acquireRead();
+    try {
+      return await executeRead(this.ensureDb(), sql, params);
+    } finally {
+      release();
+    }
   }
 
   /**
@@ -161,11 +171,17 @@ export class SqliteAdapter extends DatabaseAdapter {
     this.ensureConnected();
     this.validateQuery(sql, false);
 
-    const result = await executeWrite(this.ensureDb(), sql, params);
+    const release = await this.rwLock.acquireWrite();
+    let result;
+    try {
+      result = await executeWrite(this.ensureDb(), sql, params);
+    } finally {
+      release();
+    }
 
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
-      const match = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i.exec(sql);
+      const match = DDL_NAME_REGEX.exec(sql);
       if (match?.[1] && this.schemaManager) {
         this.schemaManager.clearTableCache(match[1]);
       } else {
@@ -187,11 +203,17 @@ export class SqliteAdapter extends DatabaseAdapter {
     this.ensureConnected();
     this.validateQuery(sql, false);
 
-    const result = await executeGeneral(this.ensureDb(), sql, params);
+    const release = await this.rwLock.acquireWrite();
+    let result;
+    try {
+      result = await executeGeneral(this.ensureDb(), sql, params);
+    } finally {
+      release();
+    }
 
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
-      const match = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i.exec(sql);
+      const match = DDL_NAME_REGEX.exec(sql);
       if (match?.[1] && this.schemaManager) {
         this.schemaManager.clearTableCache(match[1]);
       } else {
@@ -206,12 +228,16 @@ export class SqliteAdapter extends DatabaseAdapter {
   /**
    * Execute a SQL script containing multiple statements
    */
-  override executeScript(sql: string): Promise<void> {
+  override async executeScript(sql: string): Promise<void> {
     this.ensureConnected();
-    this.ensureDb().run(sql);
+    const release = await this.rwLock.acquireWrite();
+    try {
+      this.ensureDb().run(sql);
+    } finally {
+      release();
+    }
     this.clearSchemaCache();
     this.emit("schemaChanged");
-    return Promise.resolve();
   }
 
   /**
@@ -297,7 +323,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       geospatial: false, // SpatiaLite not bundled
       transactions: true,
       preparedStatements: true,
-      connectionPooling: false, // sql.js is single-connection
+      connectionPooling: true, // Managed by ReadWriteLock for WASM
     };
   }
 
@@ -408,6 +434,13 @@ export class SqliteAdapter extends DatabaseAdapter {
   }
 
   /**
+   * Get pool statistics
+   */
+  getPoolStats(): ReadWriteLockStats {
+    return this.rwLock.getStats();
+  }
+
+  /**
    * Get the raw database instance (for tools)
    */
   getDatabase(): Database {
@@ -417,8 +450,23 @@ export class SqliteAdapter extends DatabaseAdapter {
   /**
    * Execute raw SQL and return results (for tools)
    */
-  rawQuery(sql: string, params?: unknown[]): Promise<QueryResult> {
-    return executeGeneral(this.ensureDb(), sql, params);
+  async rawQuery(sql: string, params?: unknown[]): Promise<QueryResult> {
+    const trimmed = sql.trim().toUpperCase();
+    const isRead =
+      trimmed.startsWith("SELECT") ||
+      trimmed.startsWith("EXPLAIN") ||
+      (trimmed.startsWith("PRAGMA") &&
+        !sql.includes("="));
+
+    const release = isRead
+      ? await this.rwLock.acquireRead()
+      : await this.rwLock.acquireWrite();
+
+    try {
+      return await executeGeneral(this.ensureDb(), sql, params);
+    } finally {
+      release();
+    }
   }
 }
 

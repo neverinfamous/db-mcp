@@ -14,7 +14,7 @@ describe("MetricsRegistry", () => {
       metrics.recordToolCall("test_tool", i, true, 10);
     }
 
-    const summary = metrics.getSummary() as any;
+    const summary = metrics.getSummary() as unknown as Record<string, unknown>;
     const toolSummary = summary.tools["test_tool"];
 
     expect(toolSummary).toBeDefined();

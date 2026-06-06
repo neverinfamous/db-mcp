@@ -50,6 +50,9 @@
 > [!NOTE]
 > **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
+> [!IMPORTANT]
+> **Testing Code Mode**: Do NOT write test scripts to the filesystem. Pass your JavaScript snippets directly to the `sqlite_execute_code` tool's `code` parameter. Do NOT wrap your tests in monolithic `try/catch` blocks that suppress or transform the server's natural error output. You must allow the server to return its native structured error responses so you can evaluate them against the standards below.
+
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 >
@@ -81,22 +84,33 @@
 
 ### Structured Error Response Pattern
 
-All tools should return errors as structured objects instead of throwing. The expected pattern:
+All tools should return errors as strongly-typed structured objects instead of throwing. The expected pattern:
 
 ```json
-{ "success": false, "error": "Human-readable error message" }
+{
+  "success": false,
+  "error": "Human-readable error message",
+  "code": "VALIDATION_ERROR",
+  "category": "validation",
+  "recoverable": false,
+  "metrics": { ... }
+}
 ```
 
-| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+| Type                 | Source                                                                          | What you see                                                                                                              | Verdict            |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "...", code: "..."}` | Parseable JSON object with `success`, `error`, `code` (e.g., `VALIDATION_ERROR`, `CONFLICT_ERROR`), and `category` fields | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                                      | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field     | Bug — report as ❌ |
 
 ## Naming & Cleanup
 
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  - **Temporary files**: Delete the following test artifacts after testing:
+  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-dump.sql`
+  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db`
+  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-vacuum.db`
 
 ---
 
@@ -196,23 +210,25 @@ All tools should return errors as structured objects instead of throwing. The ex
 33. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_backup.db"})` → structured error
 34. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_file.csv"})` → structured error
 35. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → structured error (path traversal)
+36. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "C:\\Windows\\System32\\system.csv"})` → structured error (ALLOWED_IO_ROOTS boundary rejection)
+37. `sqlite.admin.verifyBackup({backupPath: "C:\\Windows\\System32\\backup.db"})` → structured error (ALLOWED_IO_ROOTS boundary rejection)
 
 ## Phase 8: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-36. Verify that backup/restore/verify, CSV, R-Tree, dump, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
+38. Verify that backup/restore/verify, CSV, R-Tree, dump, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
 
 ## Phase 9: REINDEX & WAL Edge Cases (batched)
 
-37. `sqlite.admin.reindex()` → full DB reindex, verify `durationMs > 0`
-38. `sqlite.admin.reindex({target: "test_products"})` → table-specific, verify success
-39. `sqlite.admin.reindex({target: "idx_orders_status"})` → index-specific, verify success
-40. `sqlite.admin.reindex({target: "../../etc/passwd"})` → structured error (identifier validation rejects non-alphanumeric)
-41. `sqlite.admin.wal({action: "status"})` → verify `journalMode` matches expectation (should be "wal")
-42. `sqlite.admin.wal({action: "enable"})` → already WAL → "already enabled" message, not error
-43. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "PASSIVE"})` → success with `walPages` and `checkpointedPages`
-44. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "TRUNCATE"})` → success, verify pages
+39. `sqlite.admin.reindex()` → full DB reindex, verify `durationMs > 0`
+40. `sqlite.admin.reindex({target: "test_products"})` → table-specific, verify success
+41. `sqlite.admin.reindex({target: "idx_orders_status"})` → index-specific, verify success
+42. `sqlite.admin.reindex({target: "../../etc/passwd"})` → structured error (identifier validation rejects non-alphanumeric)
+43. `sqlite.admin.wal({action: "status"})` → verify `journalMode` matches expectation (should be "wal")
+44. `sqlite.admin.wal({action: "enable"})` → already WAL → "already enabled" message, not error
+45. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "PASSIVE"})` → success with `walPages` and `checkpointedPages`
+46. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "TRUNCATE"})` → success, verify pages
 
 ### Final Cleanup
 

@@ -16,6 +16,17 @@ import { findSuggestion } from "./suggestions.js";
  */
 export function sanitizeErrorMessage(msg: string): string {
   if (!msg || typeof msg !== "string") return msg;
+  
+  // Fast path: if there are no characters commonly used in paths or URLs, skip regexes
+  if (
+    !msg.includes(":") &&
+    !msg.includes("/") &&
+    !msg.includes("\\") &&
+    !msg.includes("=")
+  ) {
+    return msg;
+  }
+
   return msg
     .replace(/[a-zA-Z]:\\[^:\n]*\\/g, "<redacted_path>\\")
     .replace(/(file:|sqlite:|\/)[^:\s]+(\/[^:\s]*)/g, "<redacted_path>")
@@ -74,6 +85,8 @@ const CATEGORY_DEFAULT_CODES: Record<ErrorCategory, string> = {
   [ErrorCategory.AUTHENTICATION]: "AUTHENTICATION_ERROR",
   [ErrorCategory.AUTHORIZATION]: "AUTHORIZATION_ERROR",
   [ErrorCategory.INTERNAL]: "UNKNOWN_ERROR",
+  [ErrorCategory.TIMEOUT]: "TIMEOUT_ERROR",
+  [ErrorCategory.RATE_LIMIT]: "RATE_LIMIT_ERROR",
 };
 
 // =============================================================================

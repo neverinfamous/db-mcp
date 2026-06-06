@@ -59,6 +59,7 @@ export default defineConfig({
         DB_ENCRYPTION_KEY: "",
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
+        ALLOWED_IO_ROOTS: process.cwd(),
       },
     },
     {
@@ -74,6 +75,7 @@ export default defineConfig({
         DB_ENCRYPTION_KEY: "",
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
+        ALLOWED_IO_ROOTS: process.cwd(),
         SPATIALITE_PATH:
           "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite.dll",
         CSV_EXTENSION_PATH: "./extensions/xsv0.dll",

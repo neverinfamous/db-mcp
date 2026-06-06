@@ -10,5 +10,5 @@ export {
   createNativeSqliteAdapter,
 } from "./native-sqlite-adapter.js";
 export { getTransactionTools } from "./tools/transactions.js";
-export { getWindowTools } from "./tools/window.js";
+export { getWindowTools } from "./tools/window/index.js";
 export { getSpatialiteTools } from "./tools/spatialite/index.js";

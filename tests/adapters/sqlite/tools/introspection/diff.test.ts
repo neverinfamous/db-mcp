@@ -63,16 +63,16 @@ describe("Introspection Tools - Schema Diff", () => {
     });
 
     it("should detect added table and modified severity", async () => {
-      const baselineSnapshot = (await tools.get("sqlite_schema_snapshot")?.(
-        {},
-      )) as any;
+      const baselineSnapshot = (await tools.get("sqlite_schema_snapshot")?.({
+        compact: false,
+      })) as any;
 
       // Modify schema
       await adapter.executeWriteQuery("CREATE TABLE new_table (id INTEGER)");
 
-      const targetSnapshot = (await tools.get("sqlite_schema_snapshot")?.(
-        {},
-      )) as any;
+      const targetSnapshot = (await tools.get("sqlite_schema_snapshot")?.({
+        compact: false,
+      })) as any;
 
       const res = (await tools.get("sqlite_schema_diff")?.({
         baseline: baselineSnapshot.snapshot,
@@ -89,16 +89,16 @@ describe("Introspection Tools - Schema Diff", () => {
     });
 
     it("should detect removed view and index, severity high", async () => {
-      const baselineSnapshot = (await tools.get("sqlite_schema_snapshot")?.(
-        {},
-      )) as any;
+      const baselineSnapshot = (await tools.get("sqlite_schema_snapshot")?.({
+        compact: false,
+      })) as any;
 
       await adapter.executeWriteQuery("DROP VIEW v_users");
       await adapter.executeWriteQuery("DROP INDEX idx_users_name");
 
-      const targetSnapshot = (await tools.get("sqlite_schema_snapshot")?.(
-        {},
-      )) as any;
+      const targetSnapshot = (await tools.get("sqlite_schema_snapshot")?.({
+        compact: false,
+      })) as any;
 
       const res = (await tools.get("sqlite_schema_diff")?.({
         baseline: baselineSnapshot.snapshot,
@@ -117,9 +117,9 @@ describe("Introspection Tools - Schema Diff", () => {
     });
 
     it("should detect modified table column", async () => {
-      const baselineSnapshot = (await tools.get("sqlite_schema_snapshot")?.(
-        {},
-      )) as any;
+      const baselineSnapshot = (await tools.get("sqlite_schema_snapshot")?.({
+        compact: false,
+      })) as any;
 
       // SQLite altering columns isn't fully supported via ALTER TABLE type changes,
       // but we can simulate a drop/recreate or just add a column to test 'modified'
@@ -127,9 +127,9 @@ describe("Introspection Tools - Schema Diff", () => {
         "ALTER TABLE users ADD COLUMN age INTEGER",
       );
 
-      const targetSnapshot = (await tools.get("sqlite_schema_snapshot")?.(
-        {},
-      )) as any;
+      const targetSnapshot = (await tools.get("sqlite_schema_snapshot")?.({
+        compact: false,
+      })) as any;
 
       const res = (await tools.get("sqlite_schema_diff")?.({
         baseline: baselineSnapshot.snapshot,
@@ -151,9 +151,9 @@ describe("Introspection Tools - Schema Diff", () => {
     });
 
     it("should allow partial section diffs", async () => {
-      const baselineSnapshot = (await tools.get("sqlite_schema_snapshot")?.(
-        {},
-      )) as any;
+      const baselineSnapshot = (await tools.get("sqlite_schema_snapshot")?.({
+        compact: false,
+      })) as any;
       await adapter.executeWriteQuery("CREATE TABLE partial_test (id INTEGER)");
       await adapter.executeWriteQuery(
         "CREATE INDEX idx_partial ON partial_test(id)",

@@ -15,7 +15,11 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly, write, destructive } from "../../../../utils/annotations.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+  ConflictError,
+} from "../../../../utils/errors/index.js";
 import { resolveAliases } from "../../types.js";
 
 import {
@@ -70,13 +74,42 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
               : [],
         };
         if (Object.keys(input.data).length === 0)
-          throw new Error("data (or values alias) is required");
+          throw new ValidationError("data (or values alias) is required");
       } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
 
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return { ...validationError, rowsAffected: 0 };
+
+      if (input.expectedVersion === undefined) {
+        try {
+          const pragmaCheck = await adapter.executeReadQuery(
+            `PRAGMA table_info(${sanitizeIdentifier(input.table)})`,
+          );
+          const isVersioned = (pragmaCheck.rows ?? []).some(
+            (col: Record<string, unknown>) => col["name"] === "_version",
+          );
+          if (isVersioned) {
+            return {
+              ...formatHandlerError(
+                new ConflictError(
+                  `expectedVersion is required when updating versioned table '${input.table}'`,
+                  "CONFLICT_ERROR",
+                  {
+                    conflictType: "missing_expected_version",
+                    suggestion:
+                      "Use sqlite_check_version to get the current version, then include expectedVersion in your request.",
+                  },
+                ),
+              ),
+              rowsAffected: 0,
+            };
+          }
+        } catch {
+          // Ignore
+        }
+      }
 
       const columns = Object.keys(input.data);
       const values = Object.values(input.data);
@@ -106,11 +139,39 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
                 `${sanitizeIdentifier(c)} = EXCLUDED.${sanitizeIdentifier(c)}`,
             )
             .join(", ");
-          sql += ` ON CONFLICT (${conflictCols}) DO UPDATE SET ${updateSets}`;
+
+          let updateClause = ` ON CONFLICT (${conflictCols}) DO UPDATE SET ${updateSets}`;
+          if (input.expectedVersion !== undefined) {
+            // OCC Guard: only update if the existing version matches expectedVersion.
+            // Using a parameterized query isn't strictly necessary here since it's a number,
+            // but we can just interpolate the validated integer.
+            updateClause += ` WHERE _version = ${input.expectedVersion}`;
+          }
+          sql += updateClause;
         } else {
+          if (input.expectedVersion !== undefined) {
+            return {
+              ...formatHandlerError(
+                new ValidationError(
+                  "expectedVersion requires colsToUpdate (cannot use with DO NOTHING)",
+                ),
+              ),
+              rowsAffected: 0,
+            };
+          }
           sql += ` ON CONFLICT (${conflictCols}) DO NOTHING`;
         }
       } else {
+        if (input.expectedVersion !== undefined) {
+          return {
+            ...formatHandlerError(
+              new ValidationError(
+                "expectedVersion requires explicit conflictColumns for OCC",
+              ),
+            ),
+            rowsAffected: 0,
+          };
+        }
         // Fallback to INSERT OR REPLACE if no conflict columns are provided
         sql = `INSERT OR REPLACE INTO ${safeTable} (${safeColumns.join(", ")}) VALUES (${placeholders})`;
       }
@@ -129,6 +190,24 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
 
       try {
         const result = await adapter.executeWriteQuery(sql, queryParams);
+
+        if (result.rowsAffected === 0 && input.expectedVersion !== undefined) {
+          return {
+            ...formatHandlerError(
+              new ConflictError(
+                `Version conflict during upsert: expected version ${input.expectedVersion}. Re-read the row and retry.`,
+                "CONFLICT_ERROR",
+                {
+                  conflictType: "version_mismatch",
+                  suggestion:
+                    "Re-read the row to get the current version, then retry the update.",
+                },
+              ),
+            ),
+            rowsAffected: 0,
+          };
+        }
+
         const response: {
           success: boolean;
           rowsAffected?: number | undefined;

@@ -19,6 +19,7 @@ import {
 } from "./errors.js";
 import { parseScopes } from "./scopes/index.js";
 import { createModuleLogger, ERROR_CODES } from "../utils/logger/index.js";
+import { ConfigurationError } from "../utils/errors/classes.js";
 
 const logger = createModuleLogger("AUTH");
 
@@ -66,7 +67,7 @@ export class TokenValidator {
       const isLocalDev =
         url.hostname === "localhost" || url.hostname === "127.0.0.1";
       if (!isLocalDev) {
-        throw new Error(
+        throw new ConfigurationError(
           `Security: JWKS URI must use HTTPS in production. ` +
             `Got: ${config.jwksUri}. ` +
             `Set ALLOW_HTTP_JWKS=true to allow HTTP for local testing.`,

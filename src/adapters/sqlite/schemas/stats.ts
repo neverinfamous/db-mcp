@@ -639,9 +639,9 @@ export const StatsSampleSchema = z.object({
     z
       .number()
       .optional()
-      .default(100)
+      .default(20)
       .describe(
-        "Number of random rows to return (default: 100, max: 1000). WARNING: Uses ORDER BY RANDOM() which is O(N) — slow on very large tables.",
+        "Number of random rows to return (default: 20, max: 50). WARNING: Uses ORDER BY RANDOM() which is O(N) — slow on very large tables.",
       ),
   ),
   conditions: z

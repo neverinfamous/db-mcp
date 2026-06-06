@@ -14,12 +14,16 @@ import { readOnly, write } from "../../../../utils/annotations.js";
 import {
   formatHandlerError,
   ValidationError,
+  ConflictError,
 } from "../../../../utils/errors/index.js";
 import { resolveAliases } from "../../types.js";
 import {
   ReadQueryOutputSchema,
   WriteQueryOutputSchema,
 } from "../../schemas/core.js";
+import { buildProgressContext } from "../../../../utils/progress-utils.js";
+import { streamResultRows } from "../../../../utils/stream-utils.js";
+import { sanitizeIdentifier } from "../../../../utils/identifiers.js";
 
 /**
  * Execute a read-only SQL query
@@ -39,6 +43,8 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         query: string;
         params?: unknown[] | undefined;
         cursor?: string | undefined;
+        stream?: boolean | undefined;
+        chunkSize?: number | undefined;
       };
       try {
         input = ReadQuerySchema.parse(resolveAliases(params, { sql: "query" }));
@@ -315,6 +321,28 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           ).toString("base64");
         }
 
+        // Handle streaming if requested and a progressToken is available
+        // Note: Code Mode explicitly degrades gracefully to full buffering.
+        if (input.stream && !_context.isCodeMode) {
+          const progressCtx = buildProgressContext(_context);
+          if (progressCtx) {
+            const chunksEmitted = await streamResultRows(
+              progressCtx,
+              result.rows ?? [],
+              input.chunkSize,
+            );
+            return {
+              success: true,
+              rowCount: result.rows?.length ?? 0,
+              nextCursor,
+              executionTimeMs: result.executionTimeMs,
+              streamed: true,
+              chunksEmitted,
+            };
+          }
+          // Fall back to returning all rows if progress token isn't available
+        }
+
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
@@ -347,7 +375,11 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Write Query"),
     handler: async (params: unknown, _context: RequestContext) => {
-      let input: { query: string; params?: unknown[] | undefined };
+      let input: {
+        query: string;
+        params?: unknown[] | undefined;
+        expectedVersion?: number | undefined;
+      };
       try {
         input = WriteQuerySchema.parse(
           resolveAliases(params, { sql: "query" }),
@@ -436,11 +468,67 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
+      if (input.expectedVersion === undefined) {
+        // Strict Enforcement: Check if any modified table is versioned
+        const tables: string[] = [];
+        const tableRegex =
+          /\b(?:UPDATE|INSERT\s+INTO|DELETE\s+FROM|REPLACE\s+INTO)\s+(?:["'`]?([a-zA-Z0-9_]+)["'`]?)\b/gi;
+        let match;
+        while ((match = tableRegex.exec(input.query)) !== null) {
+          if (match[1]) tables.push(match[1]);
+        }
+
+        for (const tableName of tables) {
+          try {
+            const pragmaCheck = await adapter.executeReadQuery(
+              `PRAGMA table_info(${sanitizeIdentifier(tableName)})`,
+            );
+            const isVersioned = (pragmaCheck.rows ?? []).some(
+              (col: Record<string, unknown>) => col["name"] === "_version",
+            );
+            if (isVersioned) {
+              return {
+                ...formatHandlerError(
+                  new ConflictError(
+                    `expectedVersion is required when updating versioned table '${tableName}'`,
+                    "CONFLICT_ERROR",
+                    {
+                      conflictType: "missing_expected_version",
+                      suggestion:
+                        "Use sqlite_check_version to get the current version, then include expectedVersion in your request.",
+                    },
+                  ),
+                ),
+                rowsAffected: 0,
+              };
+            }
+          } catch {
+            // Ignore table lookup errors here, they will fail naturally during execution
+          }
+        }
+      }
+
       try {
         const result = await adapter.executeWriteQuery(
           input.query,
           input.params,
         );
+
+        if (result.rowsAffected === 0 && input.expectedVersion !== undefined) {
+          return {
+            ...formatHandlerError(
+              new ConflictError(
+                `Version conflict or row not found. expectedVersion ${input.expectedVersion} was provided but 0 rows were affected.`,
+                "CONFLICT_ERROR",
+                {
+                  conflictType: "version_mismatch_or_not_found",
+                  suggestion: "Verify the row exists and the version matches.",
+                },
+              ),
+            ),
+            rowsAffected: 0,
+          };
+        }
 
         return {
           success: true,

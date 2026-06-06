@@ -407,5 +407,35 @@ describe("Transaction Tools", () => {
       expect(result.results[0].statement.length).toBeLessThanOrEqual(103); // 100 + "..."
       expect(result.results[0].statement).toContain("...");
     });
+
+    it("should handle rollback failure when transaction fails to start", async () => {
+      // Mock beginTransaction to throw
+      vi.spyOn(adapter, "beginTransaction").mockImplementation(() => {
+        throw new Error("Cannot start transaction");
+      });
+
+      const result = (await getExecuteTool().handler(
+        { statements: ["SELECT 1"] },
+        mockContext,
+      )) as { success: boolean; message: string };
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("Transaction failed to start: Cannot start transaction");
+    });
+
+    it("should handle rollback failure during rollback", async () => {
+      // Allow beginTransaction but make rollbackTransaction fail
+      vi.spyOn(adapter, "rollbackTransaction").mockImplementation(() => {
+        throw new Error("Rollback exploded");
+      });
+
+      const result = (await getExecuteTool().handler(
+        { statements: ["INVALID SYNTAX"] },
+        mockContext,
+      )) as { success: boolean; message: string };
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("rollback error: Rollback exploded");
+    });
   });
 });

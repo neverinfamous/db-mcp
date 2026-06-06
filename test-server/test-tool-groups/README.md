@@ -6,7 +6,7 @@
 
 | File                                | Group                     | Group Tools         | Notes                                                |
 | ----------------------------------- | ------------------------- | ------------------- | ---------------------------------------------------- |
-| `test-core-data.md`                 | core-data                 | 9                   | Identical Native/WASM                                |
+| `test-core-data.md`                 | core-data                 | 13                  | Identical Native/WASM                                |
 | `test-core-schema.md`               | core-schema               | 12 + Code Mode      | Identical Native/WASM                                |
 | `test-json-read.md`                 | json-read                 | 18 + Code Mode      | Identical Native/WASM                                |
 | `test-json-write.md`                | json-write                | 7                   | Identical Native/WASM                                |
@@ -16,7 +16,7 @@
 | `test-stats-advanced.md`            | stats-advanced            | 6N/0W               | Window functions `[NATIVE ONLY]`                     |
 | `test-vector-read.md`               | vector-read               | 7 + Code Mode       | Identical Native/WASM                                |
 | `test-vector-write.md`              | vector-write              | 4                   | Identical Native/WASM                                |
-| `test-admin-core.md`                | admin-core                | 24N/23W + Code Mode | `dump` is `[NATIVE ONLY]`                            |
+| `test-admin-core.md`                | admin-core                | 23N/22W + Code Mode | `dump` is `[NATIVE ONLY]`                            |
 | `test-admin-extensions.md`          | admin-extensions          | 8                   | CSV, series, rtree                                   |
 | `test-admin-audit.md`               | admin-audit               | 7                   | Audit snapshot management, search, and server config |
 | `test-transactions.md`              | transactions              | 8 + Code Mode       | `[NATIVE ONLY]`                                      |
@@ -26,7 +26,14 @@
 | `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode       | Identical Native/WASM                                |
 | `test-migration.md`                 | migration                 | 6 + Code Mode       | Identical Native/WASM                                |
 
-**Inventory total**: 175 Native / 148 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+**Inventory total**: 177 Native / 150 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+
+## Pre-requisites
+
+1. The testing database MUST be freshly seeded via `node C:\Users\chris\Desktop\db-mcp\test-server\reset-database.mjs` to ensure deterministic results.
+2. The MCP server MUST be started with the `ALLOWED_IO_ROOTS` environment variable configured (e.g., set to the db-mcp repository root), otherwise it will hard-fail to start and block file-based tool tests (like CSV generation or database dumps).
+3. **Session Timeouts**: If using the HTTP transport, note that sessions will strictly expire after 30 minutes of inactivity and have an absolute TTL of 24 hours. Ensure your manual testing flows account for these timeouts.
+4. **Streaming Validation**: When testing `sqlite_read_query`, setting `stream: true` triggers Progress Notification streaming instead of buffering all rows. This requires a client that sends `_meta.progressToken`. If the testing client does not support it, verify that the server gracefully degrades to full buffering without errors.
 
 ## Agent Instructions
 
@@ -40,7 +47,7 @@ When tasked with running tests from this folder, adhere to the following protoco
 ### 2. Validation Targets
 
 - **Happy Path Consistency**: Validate that each tool outputs exactly what is expected from the explicit checklist items given in the prompt.
-- **Structured Error Path**: Ensure domain errors (e.g., nonexistent table) return an object `{"success": false, "error": "..."}`. A raw MCP error indicates a missing try/catch in the handler.
+- **Structured Error Path**: Ensure domain errors (e.g., nonexistent table) return an object `{"success": false, "error": "..."}`. A raw MCP error indicates a missing try/catch in the handler. Rate limits (if triggered) must return a `RateLimitError`.
 - **Zod Exceptions**: Pass `{}` with missing required parameters or invalid types. The response must be a handler error, not a raw MCP `-32602` error.
 - **Payload Limits**: Watch for payload bloat and explicitly log it as a 📦 warning if it risks overflowing context window token limits.
 - **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.

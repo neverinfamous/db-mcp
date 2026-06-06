@@ -74,6 +74,22 @@ describe("Core Tools - DML", () => {
       expect(secondPage.nextCursor).toBeUndefined();
     });
 
+    it("should gracefully ignore stream: true if no progressToken in context", async () => {
+      await adapter.executeWriteQuery("CREATE TABLE stream_test (id INTEGER)");
+      await adapter.executeWriteQuery(
+        "INSERT INTO stream_test VALUES (1), (2), (3)",
+      );
+
+      // Context in these tests does not have _meta.progressToken
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "SELECT * FROM stream_test",
+        stream: true,
+      })) as { rows: unknown[]; streamed?: boolean };
+
+      expect(result.rows).toHaveLength(3);
+      expect(result.streamed).toBeUndefined();
+    });
+
     it("should reject write queries", async () => {
       const result = (await tools.get("sqlite_read_query")?.({
         query: "DROP TABLE users",

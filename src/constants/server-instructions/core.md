@@ -1,9 +1,9 @@
-# db-mcp Help — Core Operations (21 tools)
+# db-mcp Help — Core Operations (25 tools)
 
 ## Basic Queries
 
-- `sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "..." })` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports `cursor` for offset-based pagination (returns `nextCursor`). **Agent Tip:** Avoid `SELECT *` on wide tables with large text/JSON columns to conserve token context; use `sqlite_describe_table` first and select specific columns.
-- `sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
+- `sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "...", stream: true, chunkSize: 10 })` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports `cursor` for offset-based pagination (returns `nextCursor`). Set `stream: true` to return row-by-row chunks via progress notifications instead of full response buffering (requires client progressToken support; gracefully falls back if unavailable). **Agent Tip:** Avoid `SELECT *` on wide tables with large text/JSON columns to conserve token context; use `sqlite_describe_table` first and select specific columns.
+- `sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER). Supports `expectedVersion` for OCC.
 
 ## Tables & Schema
 
@@ -23,12 +23,26 @@
 - `sqlite_create_index({ indexName: "idx_users_email", table: "users", columns: ["email"], unique?: true })` — create a new index
 - `sqlite_drop_index({ indexName: "idx_users_email", ifExists?: true })` — drop an existing index
 
+## Versioning & Concurrency (OCC)
+
+- `sqlite_enable_versioning({ table: "users" })` — add a `_version` column and a BEFORE UPDATE trigger to enforce optimistic concurrency control on a table
+- `sqlite_disable_versioning({ table: "users" })` — remove the `_version` column and concurrency trigger
+- `sqlite_check_version({ table: "users", rowId: 1 })` — get the current `_version` of a row
+- `sqlite_conditional_update({ table: "users", conditions: [{ column: "id", operator: "=", value: 1 }], expectedVersion: 2, data: { name: "Bob" } })` — safely update a row, incrementing `_version` atomically. Will fail if `expectedVersion` does not match
+
 ## Convenience Tools (High-Level Data Operations)
 
-- `sqlite_upsert({ table: "users", data: { id: 1, name: "Alice" }, conflictColumns: ["id"], updateColumns: ["name"], returning: true })` — insert or update a row using `ON CONFLICT` (or `REPLACE` fallback). Supports `returning: true` or array of columns.
+- `sqlite_upsert({ table: "users", data: { id: 1, name: "Alice" }, conflictColumns: ["id"], updateColumns: ["name"], returning: true })` — insert or update a row using `ON CONFLICT` (or `REPLACE` fallback). Supports `returning: true` or array of columns, and `expectedVersion` for OCC.
 - `sqlite_batch_insert({ table: "users", rows: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })` — insert multiple rows in a single batch. Supports `returning: true` or array of columns.
 - `sqlite_count({ table: "users", where?: "status = 'active'" })` — count rows in a table (faster than a full query)
 - `sqlite_exists({ table: "users", where: "email = 'test@example.com'" })` — check if a row exists (stops at first match)
 - `sqlite_truncate({ table: "users" })` — quickly delete all rows from a table (executes `DELETE FROM table`)
 - `sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })` — add or subtract time intervals from a date column. By default returns only the computed column; use `selectColumns` to return additional context.
 - `sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })` — calculate the difference between two date columns. By default returns only the computed column; use `selectColumns` to return additional context.
+
+## ⚠️ Core Gotchas
+
+1. **sqlite_write_query**: DML only (INSERT/UPDATE/DELETE/REPLACE) — use `sqlite_read_query` for SELECT, and dedicated DDL tools for schema modifications.
+2. **sqlite_upsert**: Always specify `conflictColumns` — without it, falls back to `REPLACE` which deletes and re-inserts the row, potentially losing columns not included in `data`.
+3. **Optimistic Concurrency Control (OCC)**: When a table is versioned (`sqlite_enable_versioning`), you MUST supply `expectedVersion` to `sqlite_write_query`, `sqlite_upsert`, and `sqlite_conditional_update`. Omitting it will result in a `ConflictError` to strictly prevent lost updates.
+4. **sqlite_batch_insert**: All rows must have the same keys — inconsistent column sets across rows will cause errors or unexpected NULLs.

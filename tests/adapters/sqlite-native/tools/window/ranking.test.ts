@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { getWindowTools } from "../../../../../src/adapters/sqlite-native/tools/window.js";
+import { getWindowTools } from "../../../../../src/adapters/sqlite-native/tools/window/index.js";
 import { NativeSqliteAdapter } from "../../../../../src/adapters/sqlite-native/native-sqlite-adapter.js";
 import type {
   RequestContext,

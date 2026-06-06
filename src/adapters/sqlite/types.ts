@@ -127,10 +127,26 @@ export interface JsonNormalizationResult {
 
 export function resolveAliases(
   params: unknown,
-  aliasMap: Record<string, string>,
+  aliasMap: Record<string, string> = {},
 ): unknown {
   if (typeof params !== "object" || params === null) return params;
-  const obj = params as Record<string, unknown>;
+
+  // Create a shallow copy to avoid mutating the original input object
+  const obj = { ...(params as Record<string, unknown>) };
+
+  // 1. Universal explicit alias: snake_case to camelCase
+  for (const key of Object.keys(obj)) {
+    if (key.includes("_")) {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter: string) =>
+        letter.toUpperCase(),
+      );
+      if (obj[camelKey] === undefined && obj[key] !== undefined) {
+        obj[camelKey] = obj[key];
+      }
+    }
+  }
+
+  // 2. Explicit aliasMap (legacy support)
   for (const [alias, canonical] of Object.entries(aliasMap)) {
     if (
       (obj[canonical] === undefined || obj[canonical] === "") &&

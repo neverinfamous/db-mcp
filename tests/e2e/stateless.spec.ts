@@ -33,6 +33,10 @@ async function startStatelessServer(): Promise<void> {
     {
       cwd: process.cwd(),
       stdio: "pipe",
+      env: {
+        ...process.env,
+        ALLOWED_IO_ROOTS: process.cwd(),
+      },
     },
   );
 

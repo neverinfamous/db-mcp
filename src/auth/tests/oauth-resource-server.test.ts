@@ -5,7 +5,7 @@
  * metadata generation, scope validation, and configuration.
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   OAuthResourceServer,
   createOAuthResourceServer,
@@ -182,6 +182,31 @@ describe("OAuthResourceServer", () => {
         "Token expired",
       );
       expect(header).toContain('error_description="Token expired"');
+    });
+
+    it("should sanitize quotes in error description", () => {
+      const header = server.getWWWAuthenticateHeader(
+        "invalid_request",
+        'Invalid "user" format',
+      );
+      expect(header).toContain("error_description=\"Invalid 'user' format\"");
+    });
+  });
+
+  describe("getMetadataHandler()", () => {
+    it("should serve metadata json via express handler", () => {
+      const handler = server.getMetadataHandler();
+      const req = {} as any;
+      const res = {
+        setHeader: vi.fn(),
+        json: vi.fn(),
+      } as any;
+      
+      handler(req, res, () => {});
+      
+      expect(res.setHeader).toHaveBeenCalledWith("Content-Type", "application/json");
+      expect(res.setHeader).toHaveBeenCalledWith("Cache-Control", "public, max-age=3600");
+      expect(res.json).toHaveBeenCalled();
     });
   });
 

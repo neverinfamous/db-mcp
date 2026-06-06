@@ -7,13 +7,15 @@ sqlite_integrity_check({ maxErrors: 10 }); // check for corruption
 sqlite_optimize({ analyze: true, reindex: true }); // optimize performance
 sqlite_vacuum(); // reclaim space
 sqlite_analyze({ table: "orders" }); // update statistics for query planner
-sqlite_dbstat({ summarize: true }); // storage stats (⚠️ summarize native-only; WASM returns counts only)
+sqlite_dbstat(); // storage stats (⚠️ summarize native-only; WASM returns counts only)
 sqlite_reindex(); // rebuild all indexes
 sqlite_reindex({ target: "idx_users_email" }); // rebuild specific index
 sqlite_reindex({ target: "orders" }); // rebuild all indexes for a table
 ```
 
 ## Backup/Restore (Native only)
+
+⚠️ Paths must be absolute and within explicitly authorized `ALLOWED_IO_ROOTS`.
 
 ```javascript
 sqlite_backup({ targetPath: "/path/to/backup.db" });
@@ -32,7 +34,7 @@ sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific
 sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
 sqlite_audit_restore_backup({ filename: "snapshot_123.json", dryRun: true }); // restore schema from snapshot
 sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
-sqlite_audit_search({ query: "DROP TABLE", limit: 50 }); // search and filter structured audit logs
+sqlite_audit_search({ tool: "sqlite_drop_table", limit: 10 }); // search and filter structured audit logs
 ```
 
 ## PRAGMA
@@ -43,7 +45,7 @@ sqlite_pragma_settings({ pragma: "cache_size", value: 10000 }); // set value
 sqlite_pragma_table_info({ table: "users" }); // column details
 sqlite_pragma_compile_options({ filter: "FTS" }); // ⚠️ WASM may show FTS3, not FTS5
 sqlite_pragma_database_list(); // list attached databases
-sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB
+sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB (⚠️ subject to ALLOWED_IO_ROOTS)
 sqlite_detach_database({ alias: "archive" }); // detach DB
 sqlite_pragma_optimize(); // run PRAGMA optimize
 ```
@@ -99,7 +101,7 @@ sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }); // 2D:
 
 ## CSV Virtual Tables (Native only)
 
-⚠️ Requires ABSOLUTE file paths
+⚠️ Requires ABSOLUTE file paths that must fall within explicitly authorized `ALLOWED_IO_ROOTS`.
 
 ```javascript
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" }); // analyze CSV structure

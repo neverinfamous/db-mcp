@@ -68,9 +68,9 @@ export class AuditLogger {
   /**
    * Initialization is handled externally by SystemDb.
    */
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async init(): Promise<void> {
-    if (this.stderrMode || !this.config.enabled) return;
+  init(): Promise<void> {
+    if (this.stderrMode || !this.config.enabled) return Promise.resolve();
+    return Promise.resolve();
   }
 
   /**

@@ -18,6 +18,9 @@ import {
   AuthenticationError,
   AuthorizationError,
   TransactionError,
+  TimeoutError,
+  RateLimitError,
+  ConflictError,
 } from "../../src/utils/errors/index.js";
 import { ErrorCategory, DbMcpError } from "../../src/utils/errors/index.js";
 
@@ -99,6 +102,153 @@ describe("TransactionError", () => {
     });
     expect(err.code).toBe("TX_DEADLOCK");
     expect(err.cause).toBe(cause);
+  });
+});
+
+// =============================================================================
+// TimeoutError
+// =============================================================================
+
+describe("TimeoutError", () => {
+  it("should create with default code and category", () => {
+    const err = new TimeoutError("Execution timed out");
+    expect(err).toBeInstanceOf(DbMcpError);
+    expect(err.message).toBe("Execution timed out");
+    expect(err.code).toBe("TIMEOUT_ERROR");
+    expect(err.category).toBe(ErrorCategory.TIMEOUT);
+    expect(err.recoverable).toBe(true);
+  });
+
+  it("should create with custom code", () => {
+    const err = new TimeoutError("Sandbox timeout", "CODEMODE_TIMEOUT");
+    expect(err.code).toBe("CODEMODE_TIMEOUT");
+  });
+
+  it("should include timeoutMs in details", () => {
+    const err = new TimeoutError("Execution timed out", "TIMEOUT_ERROR", {
+      timeoutMs: 5000,
+      details: { script: "test.js" },
+    });
+    expect(err.details).toMatchObject({ timeoutMs: 5000, script: "test.js" });
+  });
+
+  it("should accept cause and suggestion", () => {
+    const cause = new Error("V8 timeout");
+    const err = new TimeoutError("Timed out", "TIMEOUT_ERROR", {
+      suggestion: "Increase timeout",
+      cause,
+    });
+    expect(err.suggestion).toBe("Increase timeout");
+    expect(err.cause).toBe(cause);
+  });
+
+  it("should produce correct toResponse()", () => {
+    const err = new TimeoutError("Timed out");
+    const res = err.toResponse();
+    expect(res.success).toBe(false);
+    expect(res.category).toBe("timeout");
+    expect(res.recoverable).toBe(true);
+  });
+});
+
+// =============================================================================
+// RateLimitError
+// =============================================================================
+
+describe("RateLimitError", () => {
+  it("should create with default code and category", () => {
+    const err = new RateLimitError("Too many requests");
+    expect(err).toBeInstanceOf(DbMcpError);
+    expect(err.message).toBe("Too many requests");
+    expect(err.code).toBe("RATE_LIMIT_ERROR");
+    expect(err.category).toBe(ErrorCategory.RATE_LIMIT);
+    expect(err.recoverable).toBe(true);
+  });
+
+  it("should create with custom code", () => {
+    const err = new RateLimitError("Codemode limited", "CODEMODE_RATE_LIMITED");
+    expect(err.code).toBe("CODEMODE_RATE_LIMITED");
+  });
+
+  it("should include retryAfterMs and limit in details", () => {
+    const err = new RateLimitError("Rate limited", "RATE_LIMIT_ERROR", {
+      retryAfterMs: 60000,
+      limit: 100,
+      details: { clientId: "agent-1" },
+    });
+    expect(err.details).toMatchObject({
+      retryAfterMs: 60000,
+      limit: 100,
+      clientId: "agent-1",
+    });
+  });
+
+  it("should accept suggestion and cause", () => {
+    const cause = new Error("bucket exhausted");
+    const err = new RateLimitError("Limited", "RATE_LIMIT_ERROR", {
+      suggestion: "Wait 60 seconds",
+      cause,
+    });
+    expect(err.suggestion).toBe("Wait 60 seconds");
+    expect(err.cause).toBe(cause);
+  });
+
+  it("should produce correct toResponse()", () => {
+    const err = new RateLimitError("Limited");
+    const res = err.toResponse();
+    expect(res.success).toBe(false);
+    expect(res.category).toBe("rate_limit");
+    expect(res.recoverable).toBe(true);
+  });
+});
+
+// =============================================================================
+// ConflictError
+// =============================================================================
+
+describe("ConflictError", () => {
+  it("should create with default code and category", () => {
+    const err = new ConflictError("Version mismatch");
+    expect(err).toBeInstanceOf(DbMcpError);
+    expect(err.message).toBe("Version mismatch");
+    expect(err.code).toBe("CONFLICT_ERROR");
+    expect(err.category).toBe(ErrorCategory.QUERY);
+    expect(err.recoverable).toBe(true);
+  });
+
+  it("should create with custom code", () => {
+    const err = new ConflictError("Stale write", "OCC_VIOLATION");
+    expect(err.code).toBe("OCC_VIOLATION");
+  });
+
+  it("should include conflictType in details", () => {
+    const err = new ConflictError("Conflict", "CONFLICT_ERROR", {
+      conflictType: "version_mismatch",
+      details: { table: "users", expectedVersion: 3 },
+    });
+    expect(err.details).toMatchObject({
+      conflictType: "version_mismatch",
+      table: "users",
+      expectedVersion: 3,
+    });
+  });
+
+  it("should accept suggestion and cause", () => {
+    const cause = new Error("row modified");
+    const err = new ConflictError("Concurrent update", "CONFLICT_ERROR", {
+      suggestion: "Re-read the current row version and retry",
+      cause,
+    });
+    expect(err.suggestion).toBe("Re-read the current row version and retry");
+    expect(err.cause).toBe(cause);
+  });
+
+  it("should produce correct toResponse()", () => {
+    const err = new ConflictError("Conflict");
+    const res = err.toResponse();
+    expect(res.success).toBe(false);
+    expect(res.category).toBe("query");
+    expect(res.recoverable).toBe(true);
   });
 });
 

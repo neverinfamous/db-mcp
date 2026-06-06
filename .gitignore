@@ -97,7 +97,7 @@ extensions/
 
 # Alternative lock files
 yarn.lock
-pnpm-lock.yaml
+package-lock.json
 
 # Temporary files
 tmp/

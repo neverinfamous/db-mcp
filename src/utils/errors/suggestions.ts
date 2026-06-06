@@ -71,7 +71,7 @@ const ERROR_SUGGESTIONS: {
     code: "COLUMN_NOT_FOUND",
   },
   {
-    pattern: /has no column named/i,
+    pattern: /has no column named\s+(['"]?)([\w.]+)\1/i,
     suggestion:
       "Column not found in target table. Use sqlite_describe_table to verify column names before INSERT or UPDATE.",
     category: ErrorCategory.RESOURCE,
@@ -228,13 +228,13 @@ const ERROR_SUGGESTIONS: {
     pattern: /rate limit exceeded/i,
     suggestion:
       "Wait before retrying. Combine multiple operations into fewer execute_code calls.",
-    category: ErrorCategory.PERMISSION,
+    category: ErrorCategory.RATE_LIMIT,
   },
   {
     pattern: /execution timed out/i,
     suggestion:
       "Reduce code complexity or increase timeout (max 30s). Break into smaller operations.",
-    category: ErrorCategory.QUERY,
+    category: ErrorCategory.TIMEOUT,
   },
   {
     pattern: /sandbox.*not initialized/i,
@@ -269,6 +269,9 @@ const ERROR_SUGGESTIONS: {
   },
 ];
 
+const suggestionCache = new Map<string, ReturnType<typeof findSuggestion>>();
+const MAX_CACHE_SIZE = 1000;
+
 /**
  * Find a suggestion for an error message
  */
@@ -276,15 +279,36 @@ export function findSuggestion(message: string): {
   suggestion: string;
   category?: ErrorCategory | undefined;
   code?: string | undefined;
+  match?: RegExpExecArray | null;
 } | null {
+  const cached = suggestionCache.get(message);
+  if (cached) {
+    // Refresh LRU
+    suggestionCache.delete(message);
+    suggestionCache.set(message, cached);
+    return cached;
+  }
+
+  let result: ReturnType<typeof findSuggestion> = null;
+
   for (const entry of ERROR_SUGGESTIONS) {
-    if (entry.pattern.test(message)) {
-      return {
+    const match = entry.pattern.exec(message);
+    if (match) {
+      result = {
         suggestion: entry.suggestion,
         category: entry.category,
         code: entry.code,
+        match,
       };
+      break;
     }
   }
-  return null;
+
+  if (suggestionCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = suggestionCache.keys().next().value;
+    if (firstKey) suggestionCache.delete(firstKey);
+  }
+  
+  suggestionCache.set(message, result);
+  return result;
 }

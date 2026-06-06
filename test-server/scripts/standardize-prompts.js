@@ -168,7 +168,11 @@ function processDirectory(dirName) {
       : WASM_ALL_COMPATIBLE;
 
     let fileCleanup = "";
-    if (file === "test-codemode-admin.md" || file === "test-admin-core.md") {
+    if (
+      file === "test-codemode-admin.md" ||
+      file === "test-admin-core.md" ||
+      file === "test-codemode-advanced-admin.md"
+    ) {
       fileCleanup = `- **Temporary files**: Delete the following test artifacts after testing:\n  - \`C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-dump.sql\`\n  - \`C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-backup.db\`\n  - \`C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-vacuum-copy.db\``;
     }
 

@@ -113,7 +113,7 @@ export const MigrationStatusOutputSchema = z
 // Input Schemas
 // =============================================================================
 
-export const MigrationInitSchema = z.object({}).default({});
+export const MigrationInitSchema = z.object({}).strict().default({});
 
 export const MigrationRecordSchema = z.object({
   version: z
@@ -243,7 +243,7 @@ export const MigrationHistorySchema = z
   })
   .default({});
 
-export const MigrationStatusSchema = z.object({}).default({});
+export const MigrationStatusSchema = z.object({}).strict().default({});
 
 // =============================================================================
 // Types

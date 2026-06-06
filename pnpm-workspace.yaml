@@ -1,0 +1,8 @@
+packages:
+  - '.'
+
+allowBuilds:
+  better-sqlite3: true
+  better-sqlite3-multiple-ciphers: true
+  esbuild: true
+  isolated-vm: true

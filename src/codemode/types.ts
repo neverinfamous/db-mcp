@@ -20,6 +20,8 @@ export interface SandboxOptions {
   timeoutMs?: number;
   /** CPU time limit in milliseconds (default: 10000) */
   cpuLimitMs?: number;
+  /** Whether to hard-fail if isolated-vm is missing rather than fallback to node:vm (default: true) */
+  strictIsolation?: boolean;
 }
 
 /**
@@ -41,6 +43,7 @@ export const DEFAULT_SANDBOX_OPTIONS: Required<SandboxOptions> = {
   memoryLimitMb: 128,
   timeoutMs: 5000,
   cpuLimitMs: 10000,
+  strictIsolation: true,
 };
 
 /**

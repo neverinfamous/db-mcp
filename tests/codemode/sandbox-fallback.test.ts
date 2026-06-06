@@ -39,7 +39,7 @@ describe("CodeModeSandbox - Node VM Fallback", () => {
   });
 
   beforeEach(() => {
-    sandbox = CodeModeSandbox.create();
+    sandbox = CodeModeSandbox.create({ strictIsolation: false });
   });
 
   afterEach(() => {

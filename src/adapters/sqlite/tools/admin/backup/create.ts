@@ -9,7 +9,10 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
-import { validateSameDirPath } from "../../../../../utils/index.js";
+import {
+  validateSameDirPath,
+  assertSafeIoPath,
+} from "../../../../../utils/index.js";
 import { BackupOutputSchema } from "../../../schemas/admin.js";
 import { BackupSchema, VacuumIntoCopySchema } from "../../../schemas/admin.js";
 import { VacuumIntoCopyOutputSchema } from "../../../schemas/admin.js";
@@ -57,24 +60,40 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      // Security: validate targetPath is within the same directory as the primary DB
-      const pathCheck = validateSameDirPath(
-        input.targetPath,
-        adapter.getConfiguredPath(),
-      );
-      // Hard reject any path traversal attempts (F04 defense in depth)
-      if (input.targetPath.includes("..") || !pathCheck.valid) {
-        return {
-          success: false,
-          error: !pathCheck.valid
-            ? pathCheck.error
-            : "Invalid path: must not contain '..'",
-          code: "SECURITY_ERROR",
-          path: input.targetPath,
-        };
-      }
+      let resolvedPath: string;
+      const allowedIoRoots = adapter.getAllowedIoRoots();
 
-      const resolvedPath = pathCheck.resolvedPath;
+      if (allowedIoRoots !== undefined) {
+        try {
+          assertSafeIoPath(input.targetPath, allowedIoRoots);
+          resolvedPath = nodePath.resolve(input.targetPath);
+        } catch (error: unknown) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Security error",
+            code: "SECURITY_ERROR",
+            path: input.targetPath,
+          };
+        }
+      } else {
+        // Security: validate targetPath is within the same directory as the primary DB
+        const pathCheck = validateSameDirPath(
+          input.targetPath,
+          adapter.getConfiguredPath(),
+        );
+        // Hard reject any path traversal attempts (F04 defense in depth)
+        if (input.targetPath.includes("..") || !pathCheck.valid) {
+          return {
+            success: false,
+            error: !pathCheck.valid
+              ? pathCheck.error
+              : "Invalid path: must not contain '..'",
+            code: "SECURITY_ERROR",
+            path: input.targetPath,
+          };
+        }
+        resolvedPath = pathCheck.resolvedPath;
+      }
       const escapedPath = resolvedPath.replace(/'/g, "''");
       const sql = `VACUUM INTO '${escapedPath}'`;
 
@@ -144,23 +163,39 @@ export function createVacuumIntoTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      // Security: validate outputPath is within the same directory as the primary DB
-      const pathCheck = validateSameDirPath(
-        input.outputPath,
-        adapter.getConfiguredPath(),
-      );
-      // Hard reject any path traversal attempts (F04 defense in depth)
-      if (input.outputPath.includes("..") || !pathCheck.valid) {
-        return {
-          success: false,
-          error: !pathCheck.valid
-            ? pathCheck.error
-            : "Invalid path: must not contain '..'",
-          code: "SECURITY_ERROR",
-        };
-      }
+      let resolvedPath: string;
+      const allowedIoRoots = adapter.getAllowedIoRoots();
 
-      const resolvedPath = pathCheck.resolvedPath;
+      if (allowedIoRoots !== undefined) {
+        try {
+          assertSafeIoPath(input.outputPath, allowedIoRoots);
+          resolvedPath = nodePath.resolve(input.outputPath);
+        } catch (error: unknown) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Security error",
+            code: "SECURITY_ERROR",
+            outputPath: input.outputPath,
+          };
+        }
+      } else {
+        // Security: validate outputPath is within the same directory as the primary DB
+        const pathCheck = validateSameDirPath(
+          input.outputPath,
+          adapter.getConfiguredPath(),
+        );
+        // Hard reject any path traversal attempts (F04 defense in depth)
+        if (input.outputPath.includes("..") || !pathCheck.valid) {
+          return {
+            success: false,
+            error: !pathCheck.valid
+              ? pathCheck.error
+              : "Invalid path: must not contain '..'",
+            code: "SECURITY_ERROR",
+          };
+        }
+        resolvedPath = pathCheck.resolvedPath;
+      }
       const escapedPath = resolvedPath.replace(/'/g, "''");
       const sql = `VACUUM INTO '${escapedPath}'`;
 

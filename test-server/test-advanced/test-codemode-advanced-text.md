@@ -48,6 +48,9 @@
 > [!NOTE]
 > **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
+> [!IMPORTANT]
+> **Testing Code Mode**: Do NOT write test scripts to the filesystem. Pass your JavaScript snippets directly to the `sqlite_execute_code` tool's `code` parameter. Do NOT wrap your tests in monolithic `try/catch` blocks that suppress or transform the server's natural error output. You must allow the server to return its native structured error responses so you can evaluate them against the standards below.
+
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 >
@@ -79,22 +82,30 @@
 
 ### Structured Error Response Pattern
 
-All tools should return errors as structured objects instead of throwing. The expected pattern:
+All tools should return errors as strongly-typed structured objects instead of throwing. The expected pattern:
 
 ```json
-{ "success": false, "error": "Human-readable error message" }
+{
+  "success": false,
+  "error": "Human-readable error message",
+  "code": "VALIDATION_ERROR",
+  "category": "validation",
+  "recoverable": false,
+  "metrics": { ... }
+}
 ```
 
-| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+| Type                 | Source                                                                          | What you see                                                                                                              | Verdict            |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "...", code: "..."}` | Parseable JSON object with `success`, `error`, `code` (e.g., `VALIDATION_ERROR`, `CONFLICT_ERROR`), and `category` fields | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                                      | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field     | Bug — report as ❌ |
 
 ## Naming & Cleanup
 
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -175,9 +186,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 31. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
 32. `sqlite.text.ftsSearch({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` → should gracefully handle malformed FTS syntax without crashing the parser
 33. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
-34. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0, 0, 0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error (COLUMN_NOT_FOUND)
-35. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error (COLUMN_NOT_FOUND)
-36. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 0})` → structured error (COLUMN_NOT_FOUND)
+34. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0, 0, 0], vectorColumn: "embedding"})` → structured error (COLUMN_NOT_FOUND)
+35. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0], vectorColumn: "embedding"})` → structured error (COLUMN_NOT_FOUND)
+36. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", rrfK: 0})` → structured error (COLUMN_NOT_FOUND)
 37. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist and aren't overly large payloads
 
 ## Phase 7: WASM Boundary Verification (batched)

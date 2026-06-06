@@ -137,6 +137,7 @@ sqlite_hybrid_search({
   metric: "cosine",
   limit: 10,
 });
+// ⚠️ Requires an FTS5 table (Native only) and a vector column in the source table
 
 // Sentiment analysis — text analysis (can analyze raw text or database columns)
 sqlite_text_sentiment({ text: "This product is amazing and wonderful!" });

@@ -41,9 +41,7 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  [
-    "admin",
-    `# db-mcp Help — Database Administration (31N/30W tools) + Server Audit (7 tools)
+  ["admin", `# db-mcp Help — Database Administration (31N/30W tools) + Server Audit (7 tools)
 
 ## Maintenance
 
@@ -52,13 +50,15 @@ sqlite_integrity_check({ maxErrors: 10 }); // check for corruption
 sqlite_optimize({ analyze: true, reindex: true }); // optimize performance
 sqlite_vacuum(); // reclaim space
 sqlite_analyze({ table: "orders" }); // update statistics for query planner
-sqlite_dbstat({ summarize: true }); // storage stats (⚠️ summarize native-only; WASM returns counts only)
+sqlite_dbstat(); // storage stats (⚠️ summarize native-only; WASM returns counts only)
 sqlite_reindex(); // rebuild all indexes
 sqlite_reindex({ target: "idx_users_email" }); // rebuild specific index
 sqlite_reindex({ target: "orders" }); // rebuild all indexes for a table
 \`\`\`
 
 ## Backup/Restore (Native only)
+
+⚠️ Paths must be absolute and within explicitly authorized \`ALLOWED_IO_ROOTS\`.
 
 \`\`\`javascript
 sqlite_backup({ targetPath: "/path/to/backup.db" });
@@ -77,7 +77,7 @@ sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific
 sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
 sqlite_audit_restore_backup({ filename: "snapshot_123.json", dryRun: true }); // restore schema from snapshot
 sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
-sqlite_audit_search({ query: "DROP TABLE", limit: 50 }); // search and filter structured audit logs
+sqlite_audit_search({ tool: "sqlite_drop_table", limit: 10 }); // search and filter structured audit logs
 \`\`\`
 
 ## PRAGMA
@@ -88,7 +88,7 @@ sqlite_pragma_settings({ pragma: "cache_size", value: 10000 }); // set value
 sqlite_pragma_table_info({ table: "users" }); // column details
 sqlite_pragma_compile_options({ filter: "FTS" }); // ⚠️ WASM may show FTS3, not FTS5
 sqlite_pragma_database_list(); // list attached databases
-sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB
+sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB (⚠️ subject to ALLOWED_IO_ROOTS)
 sqlite_detach_database({ alias: "archive" }); // detach DB
 sqlite_pragma_optimize(); // run PRAGMA optimize
 \`\`\`
@@ -144,7 +144,7 @@ sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }); // 2D:
 
 ## CSV Virtual Tables (Native only)
 
-⚠️ Requires ABSOLUTE file paths
+⚠️ Requires ABSOLUTE file paths that must fall within explicitly authorized \`ALLOWED_IO_ROOTS\`.
 
 \`\`\`javascript
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" }); // analyze CSV structure
@@ -152,16 +152,13 @@ sqlite_create_csv_table({
   tableName: "csv_data",
   filePath: "/absolute/path/to/data.csv",
 });
-\`\`\``,
-  ],
-  [
-    "core",
-    `# db-mcp Help — Core Operations (21 tools)
+\`\`\``],
+  ["core", `# db-mcp Help — Core Operations (25 tools)
 
 ## Basic Queries
 
-- \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "..." })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports \`cursor\` for offset-based pagination (returns \`nextCursor\`). **Agent Tip:** Avoid \`SELECT *\` on wide tables with large text/JSON columns to conserve token context; use \`sqlite_describe_table\` first and select specific columns.
-- \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
+- \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "...", stream: true, chunkSize: 10 })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports \`cursor\` for offset-based pagination (returns \`nextCursor\`). Set \`stream: true\` to return row-by-row chunks via progress notifications instead of full response buffering (requires client progressToken support; gracefully falls back if unavailable). **Agent Tip:** Avoid \`SELECT *\` on wide tables with large text/JSON columns to conserve token context; use \`sqlite_describe_table\` first and select specific columns.
+- \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER). Supports \`expectedVersion\` for OCC.
 
 ## Tables & Schema
 
@@ -181,19 +178,30 @@ sqlite_create_csv_table({
 - \`sqlite_create_index({ indexName: "idx_users_email", table: "users", columns: ["email"], unique?: true })\` — create a new index
 - \`sqlite_drop_index({ indexName: "idx_users_email", ifExists?: true })\` — drop an existing index
 
+## Versioning & Concurrency (OCC)
+
+- \`sqlite_enable_versioning({ table: "users" })\` — add a \`_version\` column and a BEFORE UPDATE trigger to enforce optimistic concurrency control on a table
+- \`sqlite_disable_versioning({ table: "users" })\` — remove the \`_version\` column and concurrency trigger
+- \`sqlite_check_version({ table: "users", rowId: 1 })\` — get the current \`_version\` of a row
+- \`sqlite_conditional_update({ table: "users", conditions: [{ column: "id", operator: "=", value: 1 }], expectedVersion: 2, data: { name: "Bob" } })\` — safely update a row, incrementing \`_version\` atomically. Will fail if \`expectedVersion\` does not match
+
 ## Convenience Tools (High-Level Data Operations)
 
-- \`sqlite_upsert({ table: "users", data: { id: 1, name: "Alice" }, conflictColumns: ["id"], updateColumns: ["name"], returning: true })\` — insert or update a row using \`ON CONFLICT\` (or \`REPLACE\` fallback). Supports \`returning: true\` or array of columns.
+- \`sqlite_upsert({ table: "users", data: { id: 1, name: "Alice" }, conflictColumns: ["id"], updateColumns: ["name"], returning: true })\` — insert or update a row using \`ON CONFLICT\` (or \`REPLACE\` fallback). Supports \`returning: true\` or array of columns, and \`expectedVersion\` for OCC.
 - \`sqlite_batch_insert({ table: "users", rows: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })\` — insert multiple rows in a single batch. Supports \`returning: true\` or array of columns.
 - \`sqlite_count({ table: "users", where?: "status = 'active'" })\` — count rows in a table (faster than a full query)
 - \`sqlite_exists({ table: "users", where: "email = 'test@example.com'" })\` — check if a row exists (stops at first match)
 - \`sqlite_truncate({ table: "users" })\` — quickly delete all rows from a table (executes \`DELETE FROM table\`)
 - \`sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })\` — add or subtract time intervals from a date column. By default returns only the computed column; use \`selectColumns\` to return additional context.
-- \`sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })\` — calculate the difference between two date columns. By default returns only the computed column; use \`selectColumns\` to return additional context.`,
-  ],
-  [
-    "geo",
-    `# db-mcp Help — Geospatial Operations (11N/4W: 4 basic + 7 SpatiaLite [NATIVE ONLY])
+- \`sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })\` — calculate the difference between two date columns. By default returns only the computed column; use \`selectColumns\` to return additional context.
+
+## ⚠️ Core Gotchas
+
+1. **sqlite_write_query**: DML only (INSERT/UPDATE/DELETE/REPLACE) — use \`sqlite_read_query\` for SELECT, and dedicated DDL tools for schema modifications.
+2. **sqlite_upsert**: Always specify \`conflictColumns\` — without it, falls back to \`REPLACE\` which deletes and re-inserts the row, potentially losing columns not included in \`data\`.
+3. **Optimistic Concurrency Control (OCC)**: When a table is versioned (\`sqlite_enable_versioning\`), you MUST supply \`expectedVersion\` to \`sqlite_write_query\`, \`sqlite_upsert\`, and \`sqlite_conditional_update\`. Omitting it will result in a \`ConflictError\` to strictly prevent lost updates.
+4. **sqlite_batch_insert**: All rows must have the same keys — inconsistent column sets across rows will cause errors or unexpected NULLs.`],
+  ["geo", `# db-mcp Help — Geospatial Operations (11N/4W: 4 basic + 7 SpatiaLite [NATIVE ONLY])
 
 ## Basic Geo (always available — Haversine formula)
 
@@ -298,36 +306,15 @@ sqlite_spatialite_index({
   geometryColumn: "geom",
   action: "create",
 }); // create, drop, or check
-\`\`\``,
-  ],
-  [
-    "gotchas",
-    `# db-mcp Help — Gotchas & Code Mode
+\`\`\``],
+  ["gotchas", `# db-mcp Help — Gotchas & Code Mode
 
-## ⚠️ Critical Gotchas
+## Server-Level Rules
 
-1. **sqlite_write_query**: DML only (INSERT/UPDATE/DELETE/REPLACE) — use \`sqlite_read_query\` for SELECT, and dedicated DDL tools like \`sqlite_create_table\`, \`sqlite_create_trigger\`, and \`sqlite_drop_trigger\` for schema modifications.
-2. **Regex patterns**: Double-escape backslashes (\`\\\\\\\\\`) when passing through JSON/MCP
-3. **FTS5 virtual tables**: \`*_fts\` and shadow tables \`*_fts_*\` are hidden from \`sqlite_list_tables\` for cleaner output
-4. **FTS5 boolean logic**: Uses AND by default — \`"machine learning"\` = rows with BOTH words. Use OR explicitly: \`"machine OR learning"\`
-5. **json_each row multiplication**: Expands arrays to rows — use \`limit\` param for large arrays
-6. **json_group_object without groupByColumn**: Each row creates a key-value pair; duplicate keys result if key values aren't unique
-7. **allowExpressions**: For column extraction ONLY (e.g., \`json_extract\`), NOT aggregate functions — use \`aggregateFunction\` param instead
-8. **sqlite_json_normalize_column**: Defaults to \`preserve\` (maintains original format); use \`outputFormat: 'text'\` to force text
-9. **Fuzzy matching tokenization**: Matches WORD TOKENS by default — \`"laptop"\` matches \`"Laptop Pro 15"\` (distance 0 on first token). Use \`tokenize: false\` for full-string matching
-10. **SpatiaLite distances**: \`nearest_neighbor\`/\`distance_matrix\` return CARTESIAN distance (degrees), not geodetic (km/miles)
-11. **SpatiaLite buffer**: Auto-simplifies output by default (tolerance=0.0001). Use \`simplifyTolerance: 0\` to disable
-12. **sqlite_stats_top_n**: Returns all columns by default which creates large payloads for wide tables — always pass \`selectColumns\` to control output size
-13. **CSV virtual tables**: Require ABSOLUTE file paths
-14. **sqlite_create_series_table**: Creates a REGULAR table (not virtual) — use \`sqlite_drop_table\` to remove
-15. **sqlite_dbstat**: \`summarize\` only works in native; WASM returns counts only
-16. **PRAGMA compile options**: WASM may show FTS3, not FTS5
-17. **Vector tool schemas**: Vector tools use distinct schemas for specific operations. E.g., \`sqlite.vector.dimensions\` requires \`vectorColumn\`. Additionally, \`sqlite.vector.get\` wraps metadata inside a \`metadata\` object (e.g., \`metadata.content\`), and \`sqlite.vector.stats\` returns \`sampleSize\` and \`magnitudeStats\` (not \`count\` and \`stats\`).
-18. **FTS5 trigger cleanup**: Dropping an FTS5 table with \`sqlite_drop_table\` automatically finds and removes the associated \`_ai\`, \`_ad\`, and \`_au\` sync triggers from the source table.
-19. **sqlite_batch_insert**: All rows must have the same keys — inconsistent column sets across rows will cause errors or unexpected NULLs
-20. **sqlite_schema_diff**: \`baseline\` and \`target\` accept either the string \`"current"\` (queries live DB) or an inline snapshot object from a prior \`sqlite_schema_snapshot\` call. At least one side must be \`"current"\` unless doing an offline comparison
-21. **sqlite_upsert**: Always specify \`conflictColumns\` — without it, falls back to \`REPLACE\` which deletes and re-inserts the row, potentially losing columns not included in \`data\`
-22. **Resource Subscriptions**: The \`sqlite://schema\` and \`sqlite://health\` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
+1. **CSV virtual tables & Backups**: Require ABSOLUTE file paths. Operations will be strictly blocked if paths do not fall within the explicitly authorized \`ALLOWED_IO_ROOTS\` directory list. Unconfigured stdio transports default to no filesystem access.
+2. **Resource Subscriptions**: The \`sqlite://schema\` and \`sqlite://health\` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
+3. **HTTP Session Timeouts**: Stateful HTTP sessions automatically expire after 30 minutes of inactivity, or 24 hours total. Sessions are swept automatically; ensure client workflows re-authenticate or handle broken sessions gracefully.
+4. **Structured Errors**: The server returns strongly-typed JSON errors instead of generic stack traces. Execution timeouts surface as recoverable \`TimeoutError\` (category: \`timeout\`). Rate limit violations surface as \`RateLimitError\` (category: \`rate_limit\`). Input/schema rejections surface as \`ValidationError\` (category: \`validation\`). Use this metadata (\`code\`, \`category\`, \`recoverable\`) to programmatically retry or backoff.
 
 ## WASM vs Native
 
@@ -354,22 +341,19 @@ sqlite_spatialite_index({
 **Usage**: \`sqlite_execute_code({ code: "const tables = await sqlite.core.listTables(); return tables;" })\`
 **Discover**: \`sqlite.help()\` for all groups, \`sqlite.<group>.help()\` for methods.
 **Progress**: Use \`await sqlite.reportProgress(current, total, "Message")\` for custom long-running tasks.
-**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.transactions\` (Native-only), \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
+**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.transactions\` (Native-only), \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\` (opt-in)
 
 > **Note**: Code Mode dynamically filters capabilities. In WASM environments, \`sqlite.help()\` will omit unsupported groups (e.g., \`transactions\`) and tools (e.g., FTS5) to accurately reflect the active runtime.
 
 ## Code Mode API Mapping
 
-\`sqlite_group_action\` → \`sqlite.group.action()\` (group prefixes dropped: \`sqlite_json_insert\` → \`sqlite.json.insert()\`)
-**Exception**: \`stats\` and \`migration\` keep their prefix: \`sqlite_stats_basic\` → \`sqlite.stats.statsBasic()\`, \`sqlite_migration_apply\` → \`sqlite.migration.migrationApply()\`
+Code Mode maps standard tools to an object-oriented sandbox API (\`sqlite_group_action\` → \`sqlite.group.action()\`).
 
-**Positional args work**: \`sqlite.core.readQuery("SELECT...")\`, \`sqlite.json.insert("docs", "data", {...})\`
-
-**Discovery**: \`sqlite.help()\` returns all groups and methods. \`sqlite.core.help()\`, \`sqlite.json.help()\` for group-specific methods.`,
-  ],
-  [
-    "introspection",
-    `# db-mcp Help — Schema Introspection (10 tools)
+- **Flexible Parameters**: Parameters are forgiven for casing discrepancies (e.g. \`conflict_columns\` vs \`conflictColumns\`).
+- **Flexible Methods**: Methods mapped into the Code Mode proxy forgive casing discrepancies (e.g. \`sqlite.core.read_query\` executes \`sqlite.core.readQuery()\`).
+- Methods support both an options object and **positional arguments** (e.g. \`sqlite.core.readQuery("SELECT...")\`, \`sqlite.json.insert("docs", "data", {...})\`).
+- **Discovery**: Call \`sqlite.help()\` or \`sqlite.core.help()\` to see available methods directly within the sandbox.`],
+  ["introspection", `# db-mcp Help — Schema Introspection (10 tools)
 
 All introspection tools are **read-only** — they query PRAGMAs and sqlite_master, never modify data.
 
@@ -457,11 +441,9 @@ sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
 ## ⚠️ Gotchas
 
 - \`excludeSystemTables\` defaults to \`true\` — SpatiaLite system tables are hidden for cleaner output. Pass \`false\` to include them
-- \`sqlite_migration_risks\` analyzes DDL text statically — it does NOT execute the statements`,
-  ],
-  [
-    "json",
-    `# db-mcp Help — JSON Operations (25 tools)
+- \`sqlite_migration_risks\` analyzes DDL text statically — it does NOT execute the statements
+- \`sqlite_schema_diff\`: \`baseline\` and \`target\` accept either the string \`"current"\` (queries live DB) or an inline snapshot object from a prior \`sqlite_schema_snapshot\` call. At least one side must be \`"current"\` unless doing an offline comparison.`],
+  ["json", `# db-mcp Help — JSON Operations (25 tools)
 
 ## Collection & CRUD
 
@@ -535,11 +517,8 @@ sqlite_json_group_object({
 
 - \`sqlite_json_storage_info({ table, column })\` — check text vs JSONB format
 - \`sqlite_jsonb_convert({ table, column })\` — convert to JSONB for faster queries
-- \`sqlite_json_normalize_column({ table, column, outputFormat? })\` — normalize JSON (sort keys, compact). ⚠️ Defaults to \`"preserve"\` (maintains original format); use \`outputFormat: "text"\` to force text output`,
-  ],
-  [
-    "migration",
-    `# db-mcp Help — Migration Tracking (6 tools)
+- \`sqlite_json_normalize_column({ table, column, outputFormat? })\` — normalize JSON (sort keys, compact). ⚠️ Defaults to \`"preserve"\` (maintains original format); use \`outputFormat: "text"\` to force text output`],
+  ["migration", `# db-mcp Help — Migration Tracking (6 tools)
 
 ⚠️ Must call \`sqlite_migration_init()\` before using any other migration tool — it creates the tracking table.
 
@@ -581,11 +560,8 @@ sqlite_migration_status();
 ## ⚠️ Gotchas
 
 - Rollback requires \`rollbackSql\` to have been provided when the migration was recorded/applied
-- Migration group is **opt-in** — not included by default. Enable via \`--tool-filter\` flag: use \`dev-schema\` (core+introspection+migration+codemode) or \`full\` (all groups)`,
-  ],
-  [
-    "stats",
-    `# db-mcp Help — Statistical Analysis (23N/17W: 17 core + 6 window [NATIVE ONLY])
+- Migration group is **opt-in** — not included by default. Enable via \`--tool-filter\` flag: use \`dev-schema\` (core+introspection+migration+codemode) or \`full\` (all groups)`],
+  ["stats", `# db-mcp Help — Statistical Analysis (23N/17W: 17 core + 6 window [NATIVE ONLY])
 
 ## Core Statistics (always available)
 
@@ -704,11 +680,8 @@ sqlite_window_moving_avg({
   windowSize: 7,
   selectColumns: ["date"],
 });
-\`\`\``,
-  ],
-  [
-    "text",
-    `# db-mcp Help — Text Processing & FTS5 (20N/15W: 15 text + 5 FTS5 [NATIVE ONLY])
+\`\`\``],
+  ["text", `# db-mcp Help — Text Processing & FTS5 (20N/15W: 15 text + 5 FTS5 [NATIVE ONLY])
 
 ## Full-Text Search / FTS5 (5 tools, Native only)
 
@@ -847,6 +820,7 @@ sqlite_hybrid_search({
   metric: "cosine",
   limit: 10,
 });
+// ⚠️ Requires an FTS5 table (Native only) and a vector column in the source table
 
 // Sentiment analysis — text analysis (can analyze raw text or database columns)
 sqlite_text_sentiment({ text: "This product is amazing and wonderful!" });
@@ -859,11 +833,8 @@ sqlite_text_sentiment({
   returnWords: true,
 });
 // → { sentiment: "neutral", score: 0, matchedPositive: ["great"], matchedNegative: ["slow"] }
-\`\`\``,
-  ],
-  [
-    "transactions",
-    `# db-mcp Help — Transactions (8 tools, Native only)
+\`\`\``],
+  ["transactions", `# db-mcp Help — Transactions (8 tools, Native only)
 
 ## Atomic Execution (preferred for simple cases)
 
@@ -894,11 +865,8 @@ sqlite_transaction_status(); // → { status: "active" | "none", active: true/fa
 
 - Transaction tools are **Native only** — WASM adapter does not support transactions
 - Use \`sqlite_transaction_execute\` for simple multi-statement operations; manual \`begin\`/\`commit\` for complex flows with savepoints
-- \`sqlite_transaction_status\` is read-only and requires only \`read\` scope; all other transaction tools require \`write\` scope`,
-  ],
-  [
-    "vector",
-    `# db-mcp Help — Vector/Semantic Search (11 tools)
+- \`sqlite_transaction_status\` is read-only and requires only \`read\` scope; all other transaction tools require \`write\` scope`],
+  ["vector", `# db-mcp Help — Vector/Semantic Search (11 tools)
 
 \`\`\`javascript
 // Create vector table with metadata columns
@@ -924,6 +892,9 @@ sqlite_vector_stats({ table: "docs", vectorColumn: "emb" }); // returns sampleSi
 // Utility tools for preprocessing
 sqlite_vector_normalize({ vector: [3, 4, 0, 0] }); // returns unit vector [0.6, 0.8, 0, 0]
 sqlite_vector_distance({ vector1: [...], vector2: [...], metric: "cosine" }); // returns { value: <number> }
-\`\`\``,
-  ],
+\`\`\`
+
+## ⚠️ Vector Gotchas
+
+- **Vector tool schemas**: Vector tools use distinct schemas for specific operations. E.g., \`sqlite.vector.dimensions\` requires \`vectorColumn\`. Additionally, \`sqlite_vector_get\` wraps metadata inside a \`metadata\` object (e.g., \`metadata.content\`), and \`sqlite_vector_stats\` returns \`sampleSize\` and \`magnitudeStats\` (not \`count\` and \`stats\`).`],
 ]);

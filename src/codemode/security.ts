@@ -14,6 +14,7 @@ import {
 } from "./types.js";
 import { createClient, type RedisClientType } from "redis";
 import { SENSITIVE_KEY_PATTERN, redactObject } from "../utils/redaction.js";
+import { InternalError } from "../utils/errors/classes.js";
 
 /**
  * Security manager for Code Mode executions
@@ -178,7 +179,7 @@ export class CodeModeSecurityManager {
       const serialized = JSON.stringify(redactedResult);
 
       if (serialized === undefined) {
-        throw new Error("Not serializable");
+        throw new InternalError("Not serializable");
       }
 
       if (serialized.length > this.config.maxResultSize) {

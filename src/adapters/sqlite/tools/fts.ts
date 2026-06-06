@@ -539,6 +539,7 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Determine column index for highlight/snippet (default: 0)
         let columnIndex = 0;
+        let snippetColumnIndex = -1;
         if (input.column) {
           // Look up column index from FTS table structure
           const colResult = await adapter.executeReadQuery(
@@ -551,6 +552,7 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
           );
           if (found >= 0) {
             columnIndex = found;
+            snippetColumnIndex = found;
           }
         }
 
@@ -560,7 +562,7 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Build SELECT with highlight() and snippet()
         const highlightExpr = `highlight("${input.table}", ${String(columnIndex)}, '${startSel}', '${stopSel}')`;
-        const snippetExpr = `snippet("${input.table}", ${String(columnIndex)}, '${startSel}', '${stopSel}', '...', ${String(input.snippetWords)})`;
+        const snippetExpr = `snippet("${input.table}", ${String(snippetColumnIndex)}, '${startSel}', '${stopSel}', '...', ${String(input.snippetWords)})`;
 
         // Handle wildcard query — return all rows without MATCH
         if (input.query === "*" || input.query.trim() === "") {

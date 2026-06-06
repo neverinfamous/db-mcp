@@ -50,6 +50,9 @@
 > [!NOTE]
 > **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
+> [!IMPORTANT]
+> **Testing Code Mode**: Do NOT write test scripts to the filesystem. Pass your JavaScript snippets directly to the `sqlite_execute_code` tool's `code` parameter. Do NOT wrap your tests in monolithic `try/catch` blocks that suppress or transform the server's natural error output. You must allow the server to return its native structured error responses so you can evaluate them against the standards below.
+
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 >
@@ -81,16 +84,23 @@
 
 ### Structured Error Response Pattern
 
-All tools should return errors as structured objects instead of throwing. The expected pattern:
+All tools should return errors as strongly-typed structured objects instead of throwing. The expected pattern:
 
 ```json
-{ "success": false, "error": "Human-readable error message" }
+{
+  "success": false,
+  "error": "Human-readable error message",
+  "code": "VALIDATION_ERROR",
+  "category": "validation",
+  "recoverable": false,
+  "metrics": { ... }
+}
 ```
 
-| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+| Type                 | Source                                                                          | What you see                                                                                                              | Verdict            |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "...", code: "..."}` | Parseable JSON object with `success`, `error`, `code` (e.g., `VALIDATION_ERROR`, `CONFLICT_ERROR`), and `category` fields | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                                      | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field     | Bug — report as ❌ |
 
 ## Naming & Cleanup
 
@@ -124,23 +134,23 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.listVirtualTables`
 - `sqlite.admin.virtualTableInfo`
 - `sqlite.admin.generateSeries`
-- `sqlite.admin.createRtreeTable`
+- `sqlite.admin.createRtreeTable` `[NATIVE ONLY]`
 - `sqlite.admin.createSeriesTable`
-- `sqlite.admin.backup`
-- `sqlite.admin.verifyBackup`
-- `sqlite.admin.restore`
+- `sqlite.admin.backup` `[NATIVE ONLY]`
+- `sqlite.admin.verifyBackup` `[NATIVE ONLY]`
+- `sqlite.admin.restore` `[NATIVE ONLY]`
 - `sqlite.admin.dump` `[NATIVE ONLY]`
 - `sqlite.admin.vacuum`
 - `sqlite.admin.optimize`
 - `sqlite.admin.pragmaOptimize`
-- `sqlite.admin.analyzeCsvSchema`
-- `sqlite.admin.createCsvTable`
+- `sqlite.admin.analyzeCsvSchema` `[NATIVE ONLY]`
+- `sqlite.admin.createCsvTable` `[NATIVE ONLY]`
 
 - `sqlite.admin.reindex`
 - `sqlite.admin.wal`
 - `sqlite.admin.attachDatabase`
 - `sqlite.admin.detachDatabase`
-- `sqlite.admin.vacuumInto`
+- `sqlite.admin.vacuumInto` `[NATIVE ONLY]`
 - `sqlite.admin.dropVirtualTable`
 - _(cross-group helpers used in test procedures)_
 - `sqlite.core.describeTable`
@@ -150,7 +160,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 1: Pragma & Inspection — Happy Paths (batched)
 
-1. `sqlite.admin.pragmaDatabaseList()` → verify database path matches `test.db`
+1. `sqlite.admin.pragmaDatabaseList()` → verify database path matches `test-encrypted.db`
 2. `sqlite.admin.pragmaCompileOptions()` → list of compile options
 3. `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` → filtered to FTS options
 4. `sqlite.admin.pragmaSettings({pragma: "journal_mode"})` → `{value: "wal"}`
@@ -171,7 +181,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 13. `sqlite.admin.listVirtualTables()` → `test_articles_fts` present
 14. `sqlite.admin.virtualTableInfo({tableName: "test_articles_fts"})` → module and column info
 15. `sqlite.admin.generateSeries({start: 1, stop: 5, step: 1})` → 5 values
-16. `sqlite.admin.createRtreeTable({tableName: "temp_cm_rtree", dimensions: 2})` → R-Tree created
+16. `sqlite.admin.createRtreeTable({tableName: "temp_cm_rtree", dimensions: 2})` → Native: R-Tree created. WASM: `{success: false}` with `EXTENSION_MISSING`
 17. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series", start: 1, stop: 10})` → regular table with 10 rows
 18. `sqlite.admin.dropVirtualTable({tableName: "temp_cm_rtree"})` → success (virtual table dropped)
     Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not virtual)
@@ -180,9 +190,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > Use absolute path for backup: `C:\Users\chris\Desktop\db-mcp\test-server\test-backup.db`
 
-19. `sqlite.admin.backup({targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → success
-20. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → integrity verified
-21. `sqlite.admin.restore({sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → restore success
+19. `sqlite.admin.backup({targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → Native: success. WASM: `{success: false}`
+20. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → Native: integrity verified. WASM: `{success: false}`
+21. `sqlite.admin.restore({sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → Native: restore success. WASM: `{success: false}`
 22. `sqlite.admin.dump({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql"})` → success with `path` and `durationMs`
 
 ## Phase 5: Optimization (batched)
@@ -195,50 +205,53 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > Use absolute path: `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv`
 
-26. `sqlite.admin.analyzeCsvSchema({filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → inferred column types
-27. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → virtual table
+26. `sqlite.admin.analyzeCsvSchema({filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → Native: inferred column types. WASM: `{success: false}` with `EXTENSION_MISSING`
+27. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → Native: virtual table. WASM: `{success: false}` with `EXTENSION_MISSING`
 28. Cleanup: drop `temp_cm_csv` (virtual)
 
 ## Phase 8: REINDEX & WAL Management (batched)
 
-30. `sqlite.admin.reindex()` → reindex entire database, success with `durationMs`
-31. `sqlite.admin.reindex({target: "test_products"})` → reindex all indexes on specific table, success
-32. `sqlite.admin.reindex({target: "idx_orders_status"})` → reindex specific index, success
-33. `sqlite.admin.wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
-34. `sqlite.admin.wal({action: "disable"})` → `{success: false}` with `DB_QUERY_FAILED` "database is locked" (expected behavior in Code Mode due to active connections), then `sqlite.admin.wal({action: "enable"})` → `{success: true}` (verifies it remained in WAL)
-35. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
-36. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages`, then `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success
+29. `sqlite.admin.reindex()` → reindex entire database, success with `durationMs`
+30. `sqlite.admin.reindex({target: "test_products"})` → reindex all indexes on specific table, success
+31. `sqlite.admin.reindex({target: "idx_orders_status"})` → reindex specific index, success
+32. `sqlite.admin.wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
+33. `sqlite.admin.wal({action: "disable"})` → Native: `{success: false}` with `DB_QUERY_FAILED` "database is locked" (due to active connections). WASM: `{success: true}` (virtual FS does not enforce connection locks). Then `sqlite.admin.wal({action: "enable"})` → `{success: true}`
+34. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
+35. `sqlite.admin.wal({action: "checkpoint"})` → Native: success with walPages. WASM: `{success: false}` with `DB_QUERY_FAILED` "database table is locked" (due to active Code Mode connection). Then `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
 ## Phase 9: Database Management (batched)
 
 > Use absolute paths where required
 
-37. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Depends on backup file existing from Phase 4. If not present, note dependency. Expect structured success with `alias` and `filepath`.
-38. `sqlite.admin.pragmaDatabaseList()` → verify `temp_attached` appears in attached databases list
-39. `sqlite.admin.detachDatabase({alias: "temp_attached"})` → success with `message`
-40. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
+36. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Depends on backup file existing from Phase 4. If not present, note dependency. Expect structured success with `alias` and `filepath`. (Note: In WASM mode, this succeeds by transparently creating an empty virtual file in the WASM virtual filesystem).
+37. `sqlite.admin.pragmaDatabaseList()` → verify `temp_attached` appears in attached databases list
+38. `sqlite.admin.detachDatabase({alias: "temp_attached"})` → success with `message`
+39. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → Native: success with `outputPath` and `sizeBytes`. WASM: `{success: false}` with `VALIDATION_ERROR`
 
 ## Phase 10: Admin Domain Errors (batched)
 
-🔴 41. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → report behavior
-🔴 42. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_xyz"})` → `{success: false}`
-🔴 43. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → `{success: false}`
-🔴 44. `sqlite.admin.dropView({viewName: "nonexistent_xyz", ifExists: false})` → `{success: false}`
-🔴 45. `sqlite.admin.attachDatabase({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
-🔴 46. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
-🔴 47. `sqlite.admin.detachDatabase({alias: "main"})` → `{success: false}` (cannot detach main)
-🔴 48. `sqlite.admin.detachDatabase({alias: "nonexistent_alias"})` → `{success: false}`
-🔴 49. `sqlite.admin.vacuumInto({outputPath: "../../../tmp/evil.db"})` → `{success: false}` (path traversal rejection)
-🔴 50. `sqlite.admin.dump({outputPath: "../../../tmp/evil.sql"})` → `{success: false}` (path traversal rejection)
-🔴 51. `sqlite.admin.reindex({target: "nonexistent_xyz"})` → `{success: false}` (no such index or table)
-🔴 52. `sqlite.admin.reindex({target: "../../etc/passwd"})` → `{success: false}` (identifier validation)
+🔴 40. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → `{success: false}` with `TABLE_NOT_FOUND` error
+🔴 41. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_xyz"})` → `{success: false}`
+🔴 42. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → `{success: false}`
+🔴 43. `sqlite.admin.dropView({viewName: "nonexistent_xyz", ifExists: false})` → `{success: false}`
+🔴 44. `sqlite.admin.attachDatabase({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
+🔴 45. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
+🔴 46. `sqlite.admin.detachDatabase({alias: "main"})` → `{success: false}` (cannot detach main)
+🔴 47. `sqlite.admin.detachDatabase({alias: "nonexistent_alias"})` → `{success: false}`
+🔴 48. `sqlite.admin.vacuumInto({outputPath: "../../../tmp/evil.db"})` → `{success: false}` (path traversal rejection)
+🔴 49. `sqlite.admin.dump({outputPath: "../../../tmp/evil.sql"})` → `{success: false}` (path traversal rejection)
+🔴 50. `sqlite.admin.reindex({target: "nonexistent_xyz"})` → `{success: false}` (no such index or table)
+🔴 51. `sqlite.admin.reindex({target: "../../etc/passwd"})` → `{success: false}` (identifier validation)
+🔴 52. `sqlite.admin.attachDatabase({filepath: "C:\\Windows\\System32\\calc.exe", alias: "evil"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 53. `sqlite.admin.dump({outputPath: "C:\\Windows\\System32\\dump.sql"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
+🔴 54. `sqlite.admin.vacuumInto({outputPath: "C:\\Windows\\System32\\vacuum.db"})` → `{success: false}` (ALLOWED_IO_ROOTS boundary rejection)
 
 ## Phase 11: Gotcha Edge Cases (batched)
 
-53. `sqlite.admin.generateSeries({start: 1, stop: 10, step: 2})` → 5 values: 1, 3, 5, 7, 9 (non-default step value)
-54. `sqlite.admin.pragmaSettings({pragma: "cache_size", value: "2000"})` → set cache_size, then `sqlite.admin.pragmaSettings({pragma: "cache_size"})` → verify read-back returns the set value
-55. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series_regular", start: 1, stop: 5})` → creates a REGULAR table (not virtual). Verify with `sqlite.core.describeTable({table: "temp_cm_series_regular"})` → success, then `sqlite.core.dropTable({table: "temp_cm_series_regular"})` → success (gotcha #15: use `dropTable`, not `dropVirtualTable`)
-56. `sqlite.admin.dropVirtualTable({tableName: "test_products"})` → `{success: false}` — test_products is a regular table, not a virtual table (domain error)
+55. `sqlite.admin.generateSeries({start: 1, stop: 10, step: 2})` → 5 values: 1, 3, 5, 7, 9 (non-default step value)
+56. `sqlite.admin.pragmaSettings({pragma: "cache_size", value: "2000"})` → set cache_size, then `sqlite.admin.pragmaSettings({pragma: "cache_size"})` → verify read-back returns the set value
+57. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series_regular", start: 1, stop: 5})` → creates a REGULAR table (not virtual). Verify with `sqlite.core.describeTable({table: "temp_cm_series_regular"})` → success, then `sqlite.core.dropTable({table: "temp_cm_series_regular"})` → success (gotcha #15: use `dropTable`, not `dropVirtualTable`)
+58. `sqlite.admin.dropVirtualTable({tableName: "test_products"})` → `{success: false}` — test_products is a regular table, not a virtual table (domain error)
 
 ## Phase 12: Multi-Step Workflow
 
@@ -286,33 +299,33 @@ return { failures, success: failures.length === 0 };
 
 ## Phase 13: Zod Validation Sweep
 
-🔴 57. `sqlite.admin.backup({})` → `{success: false}`
-🔴 58. `sqlite.admin.restore({})` → `{success: false}`
-🔴 59. `sqlite.admin.verifyBackup({})` → `{success: false}`
-🔴 60. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
-🔴 61. `sqlite.admin.pragmaSettings({})` → `{success: false}`
+🔴 59. `sqlite.admin.backup({})` → `{success: false}`
+🔴 60. `sqlite.admin.restore({})` → `{success: false}`
+🔴 61. `sqlite.admin.verifyBackup({})` → `{success: false}`
+🔴 62. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
+🔴 63. `sqlite.admin.pragmaSettings({})` → `{success: false}`
 
-🔴 63. `sqlite.admin.createView({})` → `{success: false}`
-🔴 64. `sqlite.admin.dropView({})` → `{success: false}`
-🔴 65. `sqlite.admin.virtualTableInfo({})` → `{success: false}`
-🔴 66. `sqlite.admin.dropVirtualTable({})` → `{success: false}`
-🔴 67. `sqlite.admin.createCsvTable({})` → `{success: false}`
-🔴 68. `sqlite.admin.analyzeCsvSchema({})` → `{success: false}`
-🔴 69. `sqlite.admin.createRtreeTable({})` → `{success: false}`
-🔴 70. `sqlite.admin.createSeriesTable({})` → `{success: false}`
-🔴 71. `sqlite.admin.generateSeries({})` → `{success: false}`
-🔴 72. `sqlite.admin.dbstat({})` → `{success: false}` or success (no required params)
-🔴 73. `sqlite.admin.attachDatabase({})` → `{success: false}` handler error
-🔴 74. `sqlite.admin.detachDatabase({})` → `{success: false}` handler error
-🔴 75. `sqlite.admin.vacuumInto({})` → `{success: false}` handler error
-🔴 76. `sqlite.admin.dump({})` → `{success: false}` handler error
-🔴 77. `sqlite.admin.reindex({})` → success (target is optional — reindexes entire database)
-🔴 78. `sqlite.admin.wal({})` → `{success: false}` handler error (action is required)
+🔴 64. `sqlite.admin.createView({})` → `{success: false}`
+🔴 65. `sqlite.admin.dropView({})` → `{success: false}`
+🔴 66. `sqlite.admin.virtualTableInfo({})` → `{success: false}`
+🔴 67. `sqlite.admin.dropVirtualTable({})` → `{success: false}`
+🔴 68. `sqlite.admin.createCsvTable({})` → `{success: false}`
+🔴 69. `sqlite.admin.analyzeCsvSchema({})` → `{success: false}`
+🔴 70. `sqlite.admin.createRtreeTable({})` → `{success: false}`
+🔴 71. `sqlite.admin.createSeriesTable({})` → `{success: false}`
+🔴 72. `sqlite.admin.generateSeries({})` → `{success: false}`
+🔴 73. `sqlite.admin.dbstat({})` → `{success: false}` or success (no required params)
+🔴 74. `sqlite.admin.attachDatabase({})` → `{success: false}` handler error
+🔴 75. `sqlite.admin.detachDatabase({})` → `{success: false}` handler error
+🔴 76. `sqlite.admin.vacuumInto({})` → `{success: false}` handler error
+🔴 77. `sqlite.admin.dump({})` → `{success: false}` handler error
+🔴 78. `sqlite.admin.reindex({})` → success (target is optional — reindexes entire database)
+🔴 79. `sqlite.admin.wal({})` → `{success: false}` handler error (action is required)
 
 ## Phase 14: Wrong-Type Numeric Coercion
 
-🔴 79. `sqlite.admin.generateSeries({start: "abc", stop: 5, step: 1})` → handler error, NOT raw MCP `-32602`
-🔴 80. `sqlite.admin.createSeriesTable({tableName: "temp_cm_coerce", start: "abc", stop: 5})` → handler error, NOT raw MCP
+🔴 80. `sqlite.admin.generateSeries({start: "abc", stop: 5, step: 1})` → handler error, NOT raw MCP `-32602`
+🔴 81. `sqlite.admin.createSeriesTable({tableName: "temp_cm_coerce", start: "abc", stop: 5})` → handler error, NOT raw MCP
 
 ---
 

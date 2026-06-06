@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: May 29, 2026
+> Last updated: June 3, 2026
 
 ---
 
@@ -63,6 +63,7 @@ src/
 │   ├── identifiers.ts              # SQL identifier validation/sanitization (table names, columns)
 
 │   ├── progress-utils.ts           # MCP progress notification helpers
+│   ├── stream-utils.ts             # MCP streaming result chunks utility
 │   ├── resource-annotations.ts     # MCP resource annotation helpers
 │   ├── where-clause.ts             # WHERE clause builder/validator
 │   ├── validate-path.ts            # Path traversal validation (shared by attach_database, vacuum_into, dump)
@@ -70,7 +71,7 @@ src/
 │   ├── errors/                     # Error class hierarchy (see § Error Classes below)
 │   │   ├── base.ts                 # DbMcpError (abstract base) — auto-refines generic codes via suggestions
 │   │   ├── categories.ts           # ErrorCategory enum + ErrorResponse interface
-│   │   ├── classes.ts              # 8 concrete error subclasses
+│   │   ├── classes.ts              # 14 concrete error subclasses
 │   │   ├── error-response-fields.ts # ErrorResponseFields mixin (SSoT, re-exported from format.ts)
 │   │   ├── format.ts               # formatHandlerError() — structured {success:false} builder
 │   │   ├── suggestions.ts          # Error suggestion helpers (typo hints, table/column suggestions)
@@ -142,6 +143,7 @@ src/
 │   │
 │   ├── sqlite/                     # ── WASM adapter (sql.js) ──
 │   │   ├── sqlite-adapter.ts       # SqliteAdapter class (extends DatabaseAdapter)
+│   │   ├── read-write-lock.ts      # Reader-writer lock for HTTP request serialization
 │   │   ├── query-executor.ts       # WASM query execution
 │   │   ├── schema-manager.ts       # Schema cache + metadata (TTL-based)
 │   │   ├── json-utils.ts           # JSON column detection and normalization
@@ -184,6 +186,7 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `core/alter-table.ts`                     | 1     | `sqlite_alter_table`                                                                                                                                                                               |
 |                   | `core/constraints.ts`                     | 1     | `sqlite_list_constraints`                                                                                                                                                                          |
 |                   | `core/datetime.ts`                        | 2     | `sqlite_date_add`, `sqlite_date_diff`                                                                                                                                                              |
+|                   | `core/versioning.ts`                      | 4     | `sqlite_enable_versioning`, `sqlite_disable_versioning`, `sqlite_check_version`, `sqlite_conditional_update`                                                                                       |
 | **json**          | `json-operations/crud.ts`                 | 7     | `sqlite_json_valid`, `sqlite_json_extract`, `sqlite_json_set`, `sqlite_json_remove`, `sqlite_json_type`, `sqlite_json_array_length`, `sqlite_json_array_append`                                    |
 |                   | `json-operations/query.ts`                | 4     | `sqlite_json_keys`, `sqlite_json_each`, `sqlite_json_group_array`, `sqlite_json_group_object`                                                                                                      |
 |                   | `json-operations/transform.ts`            | 4     | `sqlite_json_pretty`, `sqlite_jsonb_convert`, `sqlite_json_storage_info`, `sqlite_json_normalize_column`                                                                                           |
@@ -328,7 +331,10 @@ DbMcpError (base.ts)
 ├── AuthenticationError          code: AUTHENTICATION_ERROR   category: authentication
 ├── AuthorizationError           code: AUTHORIZATION_ERROR    category: authorization
 ├── TransactionError             code: TRANSACTION_ERROR      category: query            recoverable: true
-└── ExtensionNotAvailableError   code: EXTENSION_MISSING      category: config           accepts: extensionName
+├── ExtensionNotAvailableError   code: EXTENSION_MISSING      category: config           accepts: extensionName
+├── TimeoutError                 code: TIMEOUT_ERROR          category: timeout          recoverable: true   accepts: timeoutMs
+├── RateLimitError               code: RATE_LIMIT_ERROR       category: rate_limit       recoverable: true   accepts: retryAfterMs, limit
+└── ConflictError                code: CONFLICT_ERROR         category: query            recoverable: true   accepts: conflictType
 ```
 
 **Usage pattern** — all tool handlers:
@@ -406,7 +412,7 @@ catch (error) {
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                                                            |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                                                        |
-| `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                                                                  |
+| `test-server/reset-database.mjs`             | Reset script — drops + re-seeds `test.db`                                                                                                                  |
 | `test-server/tool-reference.md`              | Tool inventory (174N/148W group+audit; 178N/152W MCP total) with [Tool Count Taxonomy](test-server/tool-reference.md#tool-count-taxonomy) and descriptions |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                                                            |
 | `test-server/test-tool-groups/`              | 20 self-contained test prompts — sub-group granularity (e.g., core-data, core-schema). Direct calls only.                                                  |

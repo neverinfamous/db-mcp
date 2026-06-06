@@ -42,39 +42,82 @@ export function createDependencyGraphTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DependencyGraphSchema.parse(params);
+
+        if (input.table) {
+          const tableCheck = await adapter.executeReadQuery(
+            `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`,
+            [input.table],
+          );
+          if ((tableCheck.rows?.length ?? 0) === 0) {
+            return {
+              success: false,
+              error: `Table '${input.table}' does not exist`,
+              code: "TABLE_NOT_FOUND",
+              category: "resource",
+              suggestion:
+                "Table not found. Run sqlite_list_tables to see available tables.",
+              recoverable: false,
+            };
+          }
+        }
+
         const includeRowCounts = input.includeRowCounts !== false;
         const { nodes, edges } = await buildForeignKeyGraph(adapter, {
           excludeSystemTables: input.excludeSystemTables,
           includeRowCounts,
         });
 
+        let finalNodes = nodes;
+        let finalEdges = edges;
+
+        if (input.table) {
+          const connected = new Set<string>([input.table]);
+          let added = true;
+          while (added) {
+            added = false;
+            for (const e of edges) {
+              if (connected.has(e.from) && !connected.has(e.to)) {
+                connected.add(e.to);
+                added = true;
+              } else if (connected.has(e.to) && !connected.has(e.from)) {
+                connected.add(e.from);
+                added = true;
+              }
+            }
+          }
+          finalNodes = nodes.filter((n) => connected.has(n.table));
+          finalEdges = edges.filter(
+            (e) => connected.has(e.from) && connected.has(e.to),
+          );
+        }
+
         // Build adjacency for cycle detection
         const adjacency = new Map<string, string[]>();
-        for (const node of nodes) {
+        for (const node of finalNodes) {
           adjacency.set(node.table, []);
         }
-        for (const edge of edges) {
+        for (const edge of finalEdges) {
           adjacency.get(edge.from)?.push(edge.to);
         }
 
         const cycles = detectCycles(
           adjacency,
-          nodes.map((n) => n.table),
+          finalNodes.map((n) => n.table),
         );
 
         // Identify root tables (referenced by others but don't reference anything)
         // and leaf tables (reference others but aren't referenced themselves).
         // Isolated tables (no FK relationships at all) are excluded from both
         // to keep the sets disjoint and semantically meaningful.
-        const referencedTables = new Set(edges.map((e) => e.to));
-        const referencingTables = new Set(edges.map((e) => e.from));
-        const rootTables = nodes
+        const referencedTables = new Set(finalEdges.map((e) => e.to));
+        const referencingTables = new Set(finalEdges.map((e) => e.from));
+        const rootTables = finalNodes
           .filter(
             (n) =>
               referencedTables.has(n.table) && !referencingTables.has(n.table),
           )
           .map((n) => n.table);
-        const leafTables = nodes
+        const leafTables = finalNodes
           .filter(
             (n) =>
               referencingTables.has(n.table) && !referencedTables.has(n.table),
@@ -84,15 +127,15 @@ export function createDependencyGraphTool(
         const nodesOnly = input.nodesOnly === true;
         return {
           success: true,
-          nodes: nodes.map((n) => ({
+          nodes: finalNodes.map((n) => ({
             table: n.table,
             ...(includeRowCounts ? { rowCount: n.rowCount } : {}),
           })),
-          ...(!nodesOnly ? { edges } : {}),
+          ...(!nodesOnly ? { edges: finalEdges } : {}),
           circularDependencies: cycles.length > 0 ? cycles : undefined,
           stats: {
-            totalTables: nodes.length,
-            totalRelationships: edges.length,
+            totalTables: finalNodes.length,
+            totalRelationships: finalEdges.length,
             rootTables,
             leafTables,
           },

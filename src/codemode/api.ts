@@ -26,6 +26,10 @@ import {
   KEEP_PREFIX_GROUPS,
 } from "./api-constants.js";
 import { scopesGrantToolAccess } from "../auth/scopes/enforcement.js";
+import {
+  ValidationError,
+  AuthorizationError,
+} from "../utils/errors/classes.js";
 
 /**
  * Convert tool name to camelCase method name.
@@ -92,7 +96,7 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
         return { [paramMapping[0]]: arg };
       }
 
-      throw new Error(
+      throw new ValidationError(
         `Positional arguments are not supported for method: ${methodName}. Please use an options object.`,
       );
     }
@@ -103,7 +107,7 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
   // Multi-arg: use positional parameter mapping
   const paramMapping = POSITIONAL_PARAM_MAP[methodName];
   if (paramMapping === undefined) {
-    throw new Error(
+    throw new ValidationError(
       `Positional arguments are not supported for method: ${methodName}. Please use an options object.`,
     );
   }
@@ -186,7 +190,7 @@ function createGroupApi(
     api[methodName] = async (...args: unknown[]) => {
       if (baseContext?.auth !== undefined) {
         if (!scopesGrantToolAccess(baseContext.auth.scopes ?? [], tool.name)) {
-          throw new Error(
+          throw new AuthorizationError(
             `Forbidden: Required scope for tool '${tool.name}' not granted.`,
           );
         }
@@ -203,6 +207,7 @@ function createGroupApi(
           ? { progressToken: baseContext.progressToken }
           : {}),
         ...(baseContext?.auth !== undefined ? { auth: baseContext.auth } : {}),
+        isCodeMode: true,
       };
 
       const result = await tool.handler(normalizedParams, context);

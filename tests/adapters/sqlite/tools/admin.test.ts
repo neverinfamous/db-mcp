@@ -484,4 +484,100 @@ describe("Admin Tools", () => {
       expect(result.success).toBe(false);
     });
   });
+
+  describe("sqlite_pragma_table_info edge cases", () => {
+    it("should return false if table does not exist or has no columns", async () => {
+      const result = (await tools.get("sqlite_pragma_table_info")?.({
+        table: "nonexistent_table_xyz",
+      })) as { success: boolean; table: string; columns: []; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.table).toBe("nonexistent_table_xyz");
+      expect(result.columns).toHaveLength(0);
+      expect(result.error).toContain("not found or has no columns");
+    });
+  });
+
+  describe("sqlite_attach_database and sqlite_detach_database", () => {
+    it("should reject attaching as main or temp", async () => {
+      const resultMain = (await tools.get("sqlite_attach_database")?.({
+        filepath: "some.db",
+        alias: "main",
+      })) as { success: boolean; error: string };
+      expect(resultMain.success).toBe(false);
+      expect(resultMain.error).toContain("reserved alias");
+
+      const resultTemp = (await tools.get("sqlite_attach_database")?.({
+        filepath: "some.db",
+        alias: "temp",
+      })) as { success: boolean; error: string };
+      expect(resultTemp.success).toBe(false);
+    });
+
+    it("should reject detaching main or temp", async () => {
+      const resultMain = (await tools.get("sqlite_detach_database")?.({
+        alias: "main",
+      })) as { success: boolean; error: string };
+      expect(resultMain.success).toBe(false);
+      expect(resultMain.error).toContain("reserved schema");
+    });
+
+    it("should reject setting unsafe pragma", async () => {
+      const result = (await tools.get("sqlite_pragma_settings")?.({
+        pragma: "foreign_keys",
+        value: 1
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Mutating PRAGMA 'foreign_keys' is not permitted");
+    });
+
+    it("should write allowed pragma safely", async () => {
+      const result = (await tools.get("sqlite_pragma_settings")?.({
+        pragma: "cache_size",
+        value: -2000
+      })) as { success: boolean; pragma: string; newValue: unknown };
+      expect(result.success).toBe(true);
+      expect(result.pragma).toBe("cache_size");
+      // Could verify value was set correctly if needed
+    });
+  });
+
+  describe("Error branches for PRAGMA tools", () => {
+    it("should handle error in sqlite_pragma_compile_options", async () => {
+      // Temporarily mock the adapter to throw
+      const originalExecute = adapter.executeReadQuery;
+      adapter.executeReadQuery = () => Promise.reject(new Error("simulated error"));
+      const result = (await tools.get("sqlite_pragma_compile_options")?.({})) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("simulated error");
+      adapter.executeReadQuery = originalExecute;
+    });
+
+    it("should handle error in sqlite_pragma_database_list", async () => {
+      const originalExecute = adapter.executeReadQuery;
+      adapter.executeReadQuery = () => Promise.reject(new Error("simulated error list"));
+      const result = (await tools.get("sqlite_pragma_database_list")?.({})) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("simulated error list");
+      adapter.executeReadQuery = originalExecute;
+    });
+
+    it("should handle error in sqlite_pragma_optimize", async () => {
+      const originalExecute = adapter.executeQuery;
+      adapter.executeQuery = () => Promise.reject(new Error("simulated error opt"));
+      const result = (await tools.get("sqlite_pragma_optimize")?.({})) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("simulated error opt");
+      adapter.executeQuery = originalExecute;
+    });
+
+    it("should handle error in pragma schema invalid format", async () => {
+      const result = (await tools.get("sqlite_pragma_settings")?.({
+        // Missing pragma field
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      // Schema validation error
+    });
+  });
 });
+

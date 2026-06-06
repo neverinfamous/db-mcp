@@ -8,7 +8,7 @@ You must run these scripts from the project root using Node. Ensure you have bui
 
 ```bash
 # Run from the project root:
-npm run build
+pnpm run build
 
 # 1. Test tool annotations and total tool count (Native Mode)
 node test-server/scripts/test-tool-annotations.mjs
@@ -19,22 +19,30 @@ node test-server/scripts/test-help-resources.mjs
 # 3. Test prompts registration and validation
 node test-server/scripts/test-prompts.mjs
 
-# 4. Test Code Mode progress notifications
+# 4. Test Progress Notifications (including chunked query streaming)
 node test-server/scripts/test-progress.mjs
 
 # 5. Test resource subscriptions and notifications
 node test-server/scripts/test-subscriptions-raw.mjs
 node test-server/scripts/test-subscriptions-sdk.mjs
+
+# 6. Test tool output schema presence
+node test-server/scripts/verify-schemas.mjs
+
+# 7. Test strict Zod validation boundary
+node test-server/scripts/test-zod-errors.mjs
 ```
 
 ## What they verify
 
-- **test-tool-annotations.mjs**: Spins up the server in Native Mode (`--sqlite-native --audit-log stderr --audit-backup`) and verifies that all 175 MCP total tools (172 inventory + 3 built-in) are properly exposed, and that they all contain the required `openWorldHint: false` annotation for local database safety.
+- **test-tool-annotations.mjs**: Spins up the server in Native Mode (`--sqlite-native --audit-log stderr --audit-backup`) and verifies that all 181 MCP total tools (177 inventory + 4 built-in) are properly exposed, and that they all contain the required `openWorldHint: false` annotation for local database safety.
 - **test-help-resources.mjs**: Starts the server with multiple `--tool-filter` configurations to verify that the core instructions remain slim (within context limits) and that the correct `sqlite://help/{group}` resources are dynamically registered only when their respective tool groups are enabled.
 - **test-prompts.mjs**: Starts the server and verifies that all 10 MCP prompts are successfully registered via `prompts/list`, and performs functional execution checks on `prompts/get` handling required vs. optional arguments, payload structure correctness, and proper JSON-RPC error rendering.
-- **test-progress.mjs**: Starts the server, executes a custom JavaScript busy-wait loop inside `sqlite_execute_code` that invokes the internal `sqlite.reportProgress` binding, and verifies that the exact number of expected `notifications/progress` JSON-RPC events are successfully emitted.
+- **test-progress.mjs**: Starts the server and verifies that progress notifications are successfully emitted across 8 supported tools. This includes a custom JavaScript busy-wait loop inside `sqlite_execute_code`, several long-running database operations (vacuum, backup, restore, dump, optimize, migration_apply), and the chunked row streaming behavior of `sqlite_read_query` (`stream: true`).
 - **test-subscriptions-raw.mjs**: Connects to the server over `stdio` without the official MCP SDK to manually test raw JSON-RPC subscription handling and verify that subscriptions are successfully registered and notifications are emitted despite the stateless `stdio` environment.
 - **test-subscriptions-sdk.mjs**: Connects to the server using the official MCP SDK to test subscription capabilities using the official Client SDK.
+- **verify-schemas.mjs**: Validates that all tools (except `sqlite_execute_code`) correctly serialize an `outputSchema` definition for client ingestion.
+- **test-zod-errors.mjs**: Invokes the server and intentionally passes invalid argument types to verify that the SDK-level Zod validation exceptions are properly intercepted and formatted as standard `VALIDATION_ERROR` responses rather than leaking internal `-32602` error traces.
 
 ## Utilities
 

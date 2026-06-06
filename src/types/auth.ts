@@ -108,4 +108,9 @@ export interface RequestContext {
    * Client IP address for rate limiting fallback
    */
   clientIp?: string | undefined;
+
+  /**
+   * Whether the request is originating from Code Mode execution
+   */
+  isCodeMode?: boolean;
 }

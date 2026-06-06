@@ -7,7 +7,13 @@ import {
   createModuleLogger,
 } from "../../../utils/logger/index.js";
 import type { HttpTransportState } from "../types.js";
-import { JSONRPC_SERVER_ERROR, JSONRPC_INTERNAL_ERROR } from "../types.js";
+import {
+  JSONRPC_SERVER_ERROR,
+  JSONRPC_INTERNAL_ERROR,
+  SESSION_TIMEOUT_MS,
+  SESSION_SWEEP_INTERVAL_MS,
+  SESSION_ABSOLUTE_TTL_MS,
+} from "../types.js";
 import { asIncoming, asServerResponse } from "../type-adapters.js";
 import { DbMcpError } from "../../../utils/errors/base.js";
 import { ErrorCategory } from "../../../utils/errors/categories.js";
@@ -45,9 +51,21 @@ function isValidSessionId(id: string | undefined): id is string {
 }
 
 /**
+ * Helper to update session activity timestamp
+ */
+export function touchSession(
+  state: HttpTransportState,
+  sessionId: string,
+): void {
+  state.sessionLastActivity.set(sessionId, Date.now());
+}
+
+/**
  * Set up stateful mode endpoints with session management and SSE
  */
-export function setupStatefulEndpoints(state: HttpTransportState): void {
+export function setupStatefulEndpoints(
+  state: HttpTransportState,
+): ReturnType<typeof setInterval> {
   if (!state.app || !state.mcpServer) {
     throw new DbMcpError(
       "Transport or server not initialized",
@@ -57,6 +75,43 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
   }
 
   const server = state.mcpServer;
+
+  // Session timeout sweep interval
+  const sessionSweepTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [sid, lastActivity] of state.sessionLastActivity) {
+      const idleMs = now - lastActivity;
+      if (idleMs <= SESSION_TIMEOUT_MS) continue;
+      if ((state.sessionLocks.get(sid) ?? 0) > 0) continue; // Skip if locked (in-flight request)
+
+      // Expire idle Streamable HTTP sessions
+      if (state.transports.has(sid)) {
+        logger.info("Expiring idle HTTP session", {
+          code: "HTTP_SESSION_EXPIRE",
+          sessionId: sid,
+          idleMinutes: Math.round(idleMs / 60_000),
+        });
+        const t = state.transports.get(sid);
+        if (t) {
+          void t.close(); // the onclose handler will clean up maps
+        }
+      }
+
+      // Expire idle Legacy SSE sessions
+      if (state.sseTransports.has(sid)) {
+        logger.info("Expiring idle SSE session", {
+          code: "SSE_SESSION_EXPIRE",
+          sessionId: sid,
+          idleMinutes: Math.round(idleMs / 60_000),
+        });
+        const t = state.sseTransports.get(sid);
+        if (t) {
+          void t.close(); // the onclose handler will clean up maps
+        }
+      }
+    }
+  }, SESSION_SWEEP_INTERVAL_MS);
+  sessionSweepTimer.unref();
 
   state.app.post("/mcp", (req: Request, res: Response): void => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
@@ -116,10 +171,26 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
             });
             return;
           }
+
+          // Enforce Absolute TTL
+          const createdAt = state.sessionCreatedAt.get(sessionId) ?? Date.now();
+          if (Date.now() - createdAt > SESSION_ABSOLUTE_TTL_MS) {
+            res.status(401).json({
+              jsonrpc: "2.0",
+              error: {
+                code: JSONRPC_SERVER_ERROR,
+                message: "Unauthorized: Session absolute TTL expired",
+              },
+              id: null,
+            });
+            return;
+          }
+
+          touchSession(state, sessionId);
           httpTransport = existingTransport;
         } else if (sessionId === undefined && isNewSessionRequest(req.body)) {
           const maxSessions = state.config.maxSessions ?? 1000;
-          if (state.transports.size >= maxSessions) {
+          if (state.transports.size + state.sseTransports.size >= maxSessions) {
             res.status(429).json({
               jsonrpc: "2.0",
               error: {
@@ -140,6 +211,8 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
                 sessionId: sid,
               });
               state.transports.set(sid, newTransport);
+              touchSession(state, sid);
+              state.sessionCreatedAt.set(sid, Date.now());
               // H-2: Bind session to the authenticated identity that created it
               state.sessionOwners.set(sid, req.auth?.sub);
             },
@@ -154,6 +227,9 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
               });
               state.transports.delete(sid);
               state.sessionOwners.delete(sid);
+              state.sessionLastActivity.delete(sid);
+              state.sessionCreatedAt.delete(sid);
+              state.sessionLocks.delete(sid);
 
               // Clean up subscriptions
               if ("subscriptionManager" in server) {
@@ -219,11 +295,29 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
               release();
             }
           });
-          await newTransport.handleRequest(
-            asIncoming(req),
-            asServerResponse(res),
-            req.body as unknown,
-          );
+
+          const activeSid = newTransport.sessionId;
+          try {
+            if (activeSid) {
+              const count = state.sessionLocks.get(activeSid) ?? 0;
+              state.sessionLocks.set(activeSid, count + 1);
+            }
+            await newTransport.handleRequest(
+              asIncoming(req),
+              asServerResponse(res),
+              req.body as unknown,
+            );
+          } finally {
+            if (activeSid) {
+              const count = state.sessionLocks.get(activeSid) ?? 0;
+              if (count > 1) {
+                state.sessionLocks.set(activeSid, count - 1);
+              } else {
+                state.sessionLocks.delete(activeSid);
+              }
+              touchSession(state, activeSid);
+            }
+          }
           return;
         } else {
           res.status(400).json({
@@ -238,11 +332,28 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
         }
 
         if (httpTransport !== undefined) {
-          await httpTransport.handleRequest(
-            asIncoming(req),
-            asServerResponse(res),
-            req.body as unknown,
-          );
+          const activeSid = sessionId;
+          try {
+            if (activeSid) {
+              const count = state.sessionLocks.get(activeSid) ?? 0;
+              state.sessionLocks.set(activeSid, count + 1);
+            }
+            await httpTransport.handleRequest(
+              asIncoming(req),
+              asServerResponse(res),
+              req.body as unknown,
+            );
+          } finally {
+            if (activeSid) {
+              const count = state.sessionLocks.get(activeSid) ?? 0;
+              if (count > 1) {
+                state.sessionLocks.set(activeSid, count - 1);
+              } else {
+                state.sessionLocks.delete(activeSid);
+              }
+              touchSession(state, activeSid);
+            }
+          }
         }
       } catch (error: unknown) {
         logger.error("Error handling MCP request", {
@@ -283,6 +394,15 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
       return;
     }
 
+    // Enforce Absolute TTL
+    const createdAt = state.sessionCreatedAt.get(sessionId) ?? Date.now();
+    if (Date.now() - createdAt > SESSION_ABSOLUTE_TTL_MS) {
+      res.status(401).send("Unauthorized: Session absolute TTL expired");
+      return;
+    }
+
+    touchSession(state, sessionId);
+
     const lastEventId = req.headers["last-event-id"];
     if (lastEventId !== undefined) {
       logger.debug("Client reconnecting with Last-Event-ID", {
@@ -293,7 +413,24 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
     }
 
     if (httpTransport !== undefined) {
-      void httpTransport.handleRequest(asIncoming(req), asServerResponse(res));
+      void (async () => {
+        try {
+          const count = state.sessionLocks.get(sessionId) ?? 0;
+          state.sessionLocks.set(sessionId, count + 1);
+          await httpTransport.handleRequest(
+            asIncoming(req),
+            asServerResponse(res),
+          );
+        } finally {
+          const count = state.sessionLocks.get(sessionId) ?? 0;
+          if (count > 1) {
+            state.sessionLocks.set(sessionId, count - 1);
+          } else {
+            state.sessionLocks.delete(sessionId);
+          }
+          touchSession(state, sessionId);
+        }
+      })();
     }
   });
 
@@ -323,7 +460,26 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
     });
 
     if (httpTransport !== undefined) {
-      void httpTransport.handleRequest(asIncoming(req), asServerResponse(res));
+      void (async () => {
+        try {
+          const count = state.sessionLocks.get(sessionId) ?? 0;
+          state.sessionLocks.set(sessionId, count + 1);
+          await httpTransport.handleRequest(
+            asIncoming(req),
+            asServerResponse(res),
+          );
+        } finally {
+          const count = state.sessionLocks.get(sessionId) ?? 0;
+          if (count > 1) {
+            state.sessionLocks.set(sessionId, count - 1);
+          } else {
+            state.sessionLocks.delete(sessionId);
+          }
+          touchSession(state, sessionId);
+        }
+      })();
     }
   });
+
+  return sessionSweepTimer;
 }

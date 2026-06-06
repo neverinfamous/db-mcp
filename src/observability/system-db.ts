@@ -2,6 +2,7 @@ import type { Database } from "better-sqlite3";
 import { logger } from "../utils/logger/index.js";
 import { dirname } from "path";
 import { mkdirSync } from "fs";
+import { InternalError } from "../utils/errors/classes.js";
 
 export interface SystemDbConfig {
   dbPath: string;
@@ -100,7 +101,7 @@ export class SystemDb {
 
   getDb(): Database {
     if (!this.db) {
-      throw new Error("SystemDb not initialized");
+      throw new InternalError("SystemDb not initialized");
     }
     return this.db;
   }

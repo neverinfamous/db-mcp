@@ -15,6 +15,7 @@ import { adminFs, readOnly } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
   validateSameDirPath,
+  assertSafeIoPath,
 } from "../../../../utils/index.js";
 import {
   formatHandlerError,
@@ -63,34 +64,63 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
-        // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
-        const resolvedPath = nodePath.resolve(input.backupPath);
+        let escapedPath: string;
+        const allowedIoRoots = adapter.getAllowedIoRoots();
 
-        // Security: validate backupPath is within the same directory as the primary DB
-        const pathCheck = validateSameDirPath(
-          input.backupPath,
-          adapter.getConfiguredPath(),
-        );
-        if (!pathCheck.valid) {
-          return {
-            ...formatHandlerError(new ValidationError(pathCheck.error)),
-            backupPath: input.backupPath,
-          };
-        }
+        if (allowedIoRoots !== undefined) {
+          try {
+            assertSafeIoPath(input.backupPath, allowedIoRoots);
+            const resolvedPath = nodePath.resolve(input.backupPath);
+            if (!fs.existsSync(resolvedPath)) {
+              return {
+                ...formatHandlerError(
+                  new ValidationError(
+                    `Backup file not found: ${input.backupPath}`,
+                    "FILE_NOT_FOUND",
+                  ),
+                ),
+                backupPath: input.backupPath,
+              };
+            }
+            escapedPath = resolvedPath.replace(/'/g, "''");
+          } catch (error: unknown) {
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : "Security error",
+              code: "SECURITY_ERROR",
+              backupPath: input.backupPath,
+            };
+          }
+        } else {
+          // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
+          const resolvedPath = nodePath.resolve(input.backupPath);
 
-        if (!fs.existsSync(resolvedPath)) {
-          return {
-            ...formatHandlerError(
-              new ValidationError(
-                `Backup file not found: ${input.backupPath}`,
-                "FILE_NOT_FOUND",
+          // Security: validate backupPath is within the same directory as the primary DB
+          const pathCheck = validateSameDirPath(
+            input.backupPath,
+            adapter.getConfiguredPath(),
+          );
+          if (!pathCheck.valid) {
+            return {
+              ...formatHandlerError(new ValidationError(pathCheck.error)),
+              backupPath: input.backupPath,
+            };
+          }
+
+          if (!fs.existsSync(resolvedPath)) {
+            return {
+              ...formatHandlerError(
+                new ValidationError(
+                  `Backup file not found: ${input.backupPath}`,
+                  "FILE_NOT_FOUND",
+                ),
               ),
-            ),
-            backupPath: input.backupPath,
-          };
-        }
+              backupPath: input.backupPath,
+            };
+          }
 
-        const escapedPath = resolvedPath.replace(/'/g, "''");
+          escapedPath = resolvedPath.replace(/'/g, "''");
+        }
 
         // Attach backup database temporarily
         try {
