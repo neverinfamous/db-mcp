@@ -43,7 +43,6 @@
 - Missing `PROJECT_REGISTRY` and `TEAM_DB_PATH` variables in `mcp-config-example.json` and `.env.example`.
 - `ci-health-monitor` failing in strict mode by updating `issues: write` permission to `issues: read` and explicitly adding `add-comment` to safe-outputs.
 - Enforced single quotes in YAML frontmatter for agentic workflows and recompiled locks.
-- Synchronized tool counts and versions in `DOCKER_README.md` and `SECURITY.md`.
 - Refactored `ErrorCategory` enum to a literal union type.
 - Enforced strict parsing (`.strict()`) on empty schema objects in migration, admin, and transaction tools.
 - Typecast isolated `any` types to `unknown` in admin schemas and metrics tests.
