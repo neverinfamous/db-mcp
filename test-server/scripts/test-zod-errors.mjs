@@ -39,6 +39,18 @@ const tests = [
       },
     },
   },
+  {
+    name: "sqlite_server_config (SDK boundary type mismatch)",
+    payload: {
+      jsonrpc: "2.0",
+      id: 3,
+      method: "tools/call",
+      params: {
+        name: "sqlite_server_config",
+        arguments: { setting: 123 },
+      },
+    },
+  },
 ];
 
 let currentTestIdx = 0;

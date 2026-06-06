@@ -15,6 +15,9 @@ async function verify() {
       ":memory:",
       "--allowed-io-roots",
       __dirname,
+      "--audit-log",
+      "stderr",
+      "--audit-backup",
     ],
   });
 
