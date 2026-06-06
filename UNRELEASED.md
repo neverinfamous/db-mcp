@@ -4,82 +4,78 @@
 
 - Contextual `README.md` files to core directories (`.agents`, `.github`, `config`, `extensions`, `scripts`, `src`, `tests`).
 - `TimeoutError`, `RateLimitError`, and `ConflictError` typed error classes.
-- WASM adapter request serialization via reader-writer lock for concurrent HTTP requests.
-- `stream: true` and `chunkSize` parameters to `sqlite_read_query` for streaming large result sets.
-- `ALLOWED_IO_ROOTS` sandbox via env var and CLI flag to restrict filesystem operations.
-- HTTP stateful session enforcement with 30-minute idle timeout, 24-hour absolute TTL, and in-flight request locks.
+- WASM adapter request serialization via reader-writer lock.
+- `stream: true` and `chunkSize` parameters to `sqlite_read_query`.
+- `ALLOWED_IO_ROOTS` sandbox via env var and CLI flag.
+- HTTP stateful session enforcement with 30-minute idle timeout and in-flight request locks.
 - Optimistic Concurrency Control (OCC) tools in the `core` group: `sqlite_enable_versioning`, `sqlite_disable_versioning`, `sqlite_check_version`, and `sqlite_conditional_update`.
 - Automatic `snake_case` to `camelCase` parameter mapping in validation schemas and the Code Mode V8 proxy.
-- `verify-schemas.mjs`, `test-zod-errors.mjs`, and `test-tool-annotations.mjs` to `test-server/scripts/` to validate protocol-level `outputSchema` definitions, SDK validation boundaries, and Tool annotations (`openWorldHint`, `sensitiveHint`, etc).
+- Test scripts `verify-schemas.mjs`, `test-zod-errors.mjs`, and `test-tool-annotations.mjs`.
 
 ### Changed
 
-- Removed deprecated `worker` Code Mode isolation options from `.env.example` and corrected default `CODE_MODE_MAX_RESULT_SIZE` limit documentation to match actual 10MB runtime default.
-- **Dependency Updates**: Updated GitHub Actions (`trufflehog`, `gh-aw-actions`, `gitleaks-action`, `download-artifact`, `checkout`) and npm packages.
-- Updated `prompt-template.md` to strictly clarify Code Mode testing rules (enforcing direct payload injection and prohibiting monolithic `try/catch` wrappers) and propagated to all 22 test scripts.
-- Surface Code Mode errors as structured typed errors instead of generic internals.
-- HTTP rate limit responses now return structured JSON with `code`, `category`, `suggestion`, and `recoverable` fields.
+- Deprecated `worker` Code Mode isolation options in `.env.example`.
+- Updated default `CODE_MODE_MAX_RESULT_SIZE` limit documentation to match 10MB runtime default.
+- Updated dependencies: GitHub Actions and npm packages.
+- Clarified Code Mode testing rules in `prompt-template.md` and test scripts.
+- Surfaced Code Mode errors as structured typed errors instead of generic internals.
+- Returned structured JSON for HTTP rate limit responses.
 - `sqlite_write_query` and `sqlite_upsert` require an `expectedVersion` parameter for version-enabled tables.
 - Bumped `isolated-vm` to `7.0.0` for Node.js 26 compatibility.
 - Migrated package manager from `npm` to `pnpm` (v9.15.4) and updated `Dockerfile`.
 - Simplified `gotchas.md` by moving tool-specific instructions to native tool group URIs.
-- Consolidated and expanded agent prompts and E2E tests to validate `ALLOWED_IO_ROOTS`, OCC, and chunked streaming.
+- Expanded agent prompts and E2E tests to validate `ALLOWED_IO_ROOTS`, OCC, and chunked streaming.
 - Split complex tool handlers (`audit-tools.ts`, `window.ts`) into sub-modules and grouped exports via barrel files.
-- Extracted inner-loop RegExp constants, added match extraction caching, and simplified string error heuristics to reduce error serialization overhead.
-- Optimized `ReadWriteLock` under high-concurrency WASM loads with queue-head indexing and enforced reader-writer fairness boundaries.
-- Accelerated Code Mode AST parsing with an LRU cache and single-pass batched script API injections inside `isolated-vm`.
-- Replaced generic `Error` classes with domain-specific errors (`ValidationError`, `ConfigurationError`, etc.) in core logic.
+- Optimized error serialization overhead by extracting RegExp constants and adding match extraction caching.
+- Optimized `ReadWriteLock` for WASM concurrency.
+- Accelerated Code Mode AST parsing with an LRU cache.
+- Replaced generic `Error` classes with domain-specific errors in core logic.
 - Updated server instructions (`gotchas.md`) to formally document structured `ValidationError` responses.
-- Added `(opt-in)` annotation to `sqlite.migration` in Code Mode groups list to match the `(Native-only)` pattern.
-- Added cross-group dependency note to `sqlite_hybrid_search` in `text.md`.
-- Standardized test prompts to enforce strict sequential numbering and aligned error reporting architecture checks.
-- Optimized `sqlite_schema_snapshot` to use `compact: true` by default to reduce LLM context token consumption.
-- Optimized `sqlite_stats_sample` by reducing the default `sampleSize` from 100 to 20 and the maximum cap from 1000 to 50, significantly reducing payload size and LLM context token consumption.
-- Optimized `sqlite_transaction_execute` payload by truncating the returned `results` array to a maximum of 50 items and omitting excess successful execution details, significantly reducing LLM context token consumption.
-- Optimized `sqlite_dbstat` payload by changing the default value of the `summarize` parameter from `false` to `true`, preventing excessive raw page-level payloads and reducing LLM context token consumption.
-- Optimized `sqlite_audit_search` payload by reducing the default `limit` from 50 to 10, significantly reducing payload size and LLM context token consumption.
-- Converted `test-server/reset-database.ps1` to `reset-database.mjs` (Node.js) for improved cross-platform Docker testing, and updated all documentation references.
+- Added `(opt-in)` annotation to `sqlite.migration` in Code Mode groups list.
+- Optimized `sqlite_schema_snapshot` to use `compact: true` by default.
+- Reduced `sqlite_stats_sample` default `sampleSize` to 20 and max cap to 50.
+- Truncated `sqlite_transaction_execute` results array to a maximum of 50 items.
+- Changed `sqlite_dbstat` default `summarize` to `true`.
+- Reduced `sqlite_audit_search` default limit to 10.
+- Converted `test-server/reset-database.ps1` to `reset-database.mjs`.
+- Refactored `ErrorCategory` enum to a literal union type.
 
 ### Fixed
 
-- Fixed `reset-database.ps1` failing to clean up orphaned SQLite Write-Ahead Log (`-wal`) and Shared Memory (`-shm`) files during test environment resets.
-- `sqlite_read_query` now degrades gracefully to full buffering and correctly returns `rows` when `stream: true` is requested inside Code Mode.
-- Removed redundant plural `test-tools-annotations.mjs` script in favor of the official singular `test-tool-annotations.mjs` script, and updated test documentation.
+- Clean up orphaned SQLite Write-Ahead Log (`-wal`) and Shared Memory (`-shm`) files during test environment resets.
+- `sqlite_read_query` degrades gracefully to full buffering in Code Mode when `stream: true` is requested.
 - Missing `PROJECT_REGISTRY` and `TEAM_DB_PATH` variables in `mcp-config-example.json` and `.env.example`.
-- `ci-health-monitor` failing in strict mode by updating `issues: write` permission to `issues: read` and explicitly adding `add-comment` to safe-outputs.
-- Enforced single quotes in YAML frontmatter for agentic workflows and recompiled locks.
-- Refactored `ErrorCategory` enum to a literal union type.
+- `ci-health-monitor` permissions in strict mode.
+- Enforced single quotes in YAML frontmatter for agentic workflows.
 - Enforced strict parsing (`.strict()`) on empty schema objects in migration, admin, and transaction tools.
 - Typecast isolated `any` types to `unknown` in admin schemas and metrics tests.
-- Refactored `logger.ts` to be fully synchronous to resolve ESLint suppressions.
-- Removed unused `zod-to-json-schema` dependency and `error` variable in lock disposal.
+- Refactored `logger.ts` to be fully synchronous.
+- Removed unused `zod-to-json-schema` dependency.
 - Code Mode sandbox timeouts now correctly throw `TimeoutError`.
 - Native addon crashes during Vitest by changing the execution pool from `threads` to `forks`.
 - False-positive Promise rejections in `sqlite-adapter-methods.test.ts`.
-- Updated outdated `Last updated` date in `test-server/code-map.md`.
 - Synced `AUDIT_REDACT` default to `true` in `.env.example` and `mcp-config-example.json`.
-- Synced `tool-reference.md` to the `db-mcp.wiki` repository to ensure accurate tool counts and schemas.
-- Configured `ALLOWED_IO_ROOTS` in test scripts to automatically silence fallback sandbox warnings when executing the stdio transport.
-- Generation script README exclusion now uses case-insensitive prefix matching (`readme*`).
+- Configured `ALLOWED_IO_ROOTS` in test scripts to automatically silence fallback sandbox warnings.
+- Generation script README exclusion now uses case-insensitive prefix matching.
 - Removed unused devDependency `rimraf` from `package.json`.
-- Refactored vector tool handlers to throw proper `ValidationError` and `ResourceNotFoundError` subclasses instead of returning raw error objects, ensuring structured responses include `category` and `recoverable` properties.
-- Fixed missing error codes and categories for structured error responses in the `admin-audit` tool group, ensuring `sqlite_server_config` and backup tools meet the Structured Error Response Pattern requirements.
-- Fixed `sqlite_cascade_simulator` schema to case-insensitively parse the `operation` parameter instead of failing Zod validation on lowercase inputs.
-- Fixed `sqlite_schema_diff` schema to dynamically coerce empty array payloads (`[]`) into empty schema snapshot objects, fixing validation errors for empty baseline/target inputs.
-- Fixed `sqlite_dependency_graph` to accept an optional `table` parameter, properly validate its existence, and filter the returned graph to only include nodes and edges connected to the specified table.
-- Standardized the output format of the `json-write` tool group by ensuring `sqlite_json_set`, `sqlite_json_remove`, and `sqlite_json_array_append` return a descriptive `message` field on successful execution.
-- Fixed `findSuggestion` regex pattern for missing column errors (`has no column named`) to correctly capture the column name, surfacing it in structured error responses instead of returning `unknown`.
-- Added `.strict()` to `BeginTransactionSchema`, `SavepointSchema`, and `ExecuteInTransactionSchema` in the `transactions` tool group to enforce strict Zod validation and prevent silent parameter ignoring.
-- Fixed `DisableVersioningSchema` to set `ifExists` to `false` by default, ensuring `sqlite_disable_versioning` properly throws a structured validation error instead of failing silently when invoked on a nonexistent table.
-- Fixed `sqlite_fts_headline` to correctly extract the context snippet across all columns when the `column` parameter is omitted, instead of defaulting to the first column and returning inaccurate, duplicate excerpts.
-- Fixed `sqlite_analyze_csv_schema` to return structured errors with `category: "security"` instead of `"validation"` when rejecting filesystem paths outside allowed IO roots.
-- Fixed `sqlite_virtual_table_info` to correctly return structured error fields (`category`, `recoverable`) when the virtual table is not found.
-- Fixed `sqlite_audit_search` documentation in `admin.md` by replacing the non-existent `query` parameter with `tool` and matching the new default limit.
+- Structured error responses in vector tool handlers.
+- Structured error responses in the `admin-audit` tool group.
+- Case-insensitive `operation` parsing in `sqlite_cascade_simulator`.
+- Coerce empty arrays in `sqlite_schema_diff` schema.
+- Optional `table` parameter filtering in `sqlite_dependency_graph`.
+- Descriptive messages in `json-write` output.
+- `findSuggestion` regex pattern for missing column errors.
+- Strict validation in `transactions` tool schemas.
+- `ifExists` default in `DisableVersioningSchema`.
+- Context extraction in `sqlite_fts_headline` when `column` is omitted.
+- Structured error category in `sqlite_analyze_csv_schema` for IO rejections.
+- Structured error fields in `sqlite_virtual_table_info`.
+- `sqlite_audit_search` documentation parameter naming.
 
 ### Security
 
-- **Hard Gate**: Code Mode strictly fail-closes if `isolated-vm` native bindings fail to load (configurable via `CODE_MODE_STRICT_ISOLATION`), preventing insecure fallbacks to `node:vm`.
+- **Hard Gate**: Code Mode strictly fail-closes if `isolated-vm` native bindings fail to load.
 - **Hard Gate**: HTTP transports fail to start if `ALLOWED_IO_ROOTS` is omitted.
-- Stdio transport defaults to no filesystem access (empty `ALLOWED_IO_ROOTS`) if omitted.
+- Stdio transport defaults to no filesystem access if omitted.
 - Hardened all filesystem-touching tools to use symlink-aware realpath resolution (`assertSafeIoPath`).
 - Sessions exceeding timeout limits are automatically expired and cleaned up.

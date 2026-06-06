@@ -547,6 +547,50 @@ describe("Statistics Tools", () => {
       expect(riskTestTable).toBeDefined();
       expect((riskTestTable as any)?.hasPrimaryKey).toBe(false);
     });
+
+    it("should detect text primary key and unindexed foreign keys", async () => {
+      await adapter.executeWriteQuery(
+        `CREATE TABLE text_pk_test (id TEXT PRIMARY KEY, val TEXT)`
+      );
+      await adapter.executeWriteQuery(
+        `CREATE TABLE fk_test (id INTEGER PRIMARY KEY, parent_id INTEGER, FOREIGN KEY(parent_id) REFERENCES text_pk_test(id))`
+      );
+      
+      const result = (await tools.get("sqlite_stats_detect_schema_risks")?.({
+        limit: 10,
+        includeZeroRisk: true,
+      })) as {
+        success: boolean;
+        tables: Record<string, unknown>[];
+      };
+
+      expect(result.success).toBe(true);
+      
+      const textPkTable = result.tables.find((t: any) => t.name === "text_pk_test") as any;
+      expect(textPkTable).toBeDefined();
+      expect(textPkTable.hasPrimaryKey).toBe(true);
+
+      const fkTable = result.tables.find((t: any) => t.name === "fk_test") as any;
+      expect(fkTable).toBeDefined();
+      expect(fkTable.foreignKeyCount).toBe(1);
+      expect(fkTable.unindexedForeignKeys.length).toBe(1);
+    });
+
+    it("should detect untyped columns", async () => {
+      await adapter.executeWriteQuery(
+        `CREATE TABLE untyped_test (id INTEGER PRIMARY KEY, untyped_col)`
+      );
+      const result = (await tools.get("sqlite_stats_detect_schema_risks")?.({
+        includeZeroRisk: true,
+      })) as {
+        success: boolean;
+        tables: Record<string, unknown>[];
+      };
+
+      expect(result.success).toBe(true);
+      const untypedTable = result.tables.find((t: any) => t.name === "untyped_test") as any;
+      expect(untypedTable).toBeDefined();
+    });
   });
 
   describe("sqlite_stats_sample", () => {

@@ -313,7 +313,7 @@ describe("registerResourceImpl", () => {
     );
   });
 
-  it("should register a template resource with {param}", () => {
+  it("should register a template resource with {param}", async () => {
     const resource: ResourceDefinition = {
       name: "table_schema",
       uri: "sqlite://table/{tableName}",
@@ -330,6 +330,11 @@ describe("registerResourceImpl", () => {
       expect.objectContaining({ description: "Table schema" }),
       expect.any(Function),
     );
+
+    const handler = server.registerResource.mock.calls[0]?.[3] as Function;
+    const result = await handler(new URL("sqlite://table/users"), { tableName: "users" });
+    
+    expect(result.contents[0].text).toBe(JSON.stringify({ columns: [] }, null, 2));
   });
 
   it("should use custom mimeType when provided", () => {
