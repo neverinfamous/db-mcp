@@ -40,17 +40,42 @@ export function registerAuditSearchTool(
       }),
     },
     async (args: unknown) => {
-      const authCtx = getAuthContext();
-      if (
-        authCtx &&
-        !scopesGrantToolAccess(authCtx.scopes, "sqlite_audit_search")
-      ) {
-        throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
-      }
-
-      let parsed;
       try {
-        parsed = AuditSearchSchema.parse(args ?? {});
+        const authCtx = getAuthContext();
+        if (
+          authCtx &&
+          !scopesGrantToolAccess(authCtx.scopes, "sqlite_audit_search")
+        ) {
+          throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
+        }
+
+        const parsed = AuditSearchSchema.parse(args ?? {});
+        const { entries, totalCount } = await auditLogger.search(parsed);
+
+        const result = {
+          success: true,
+          entries,
+          count: entries.length,
+          totalCount,
+        };
+
+        const tokenEstimate = Math.ceil(
+          Buffer.byteLength(JSON.stringify(result), "utf8") / 4,
+        );
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(
+                { ...result, _meta: { tokenEstimate } },
+                null,
+                2,
+              ),
+            },
+          ],
+          structuredContent: result as unknown as Record<string, unknown>,
+        };
       } catch (error: unknown) {
         const structured = formatHandlerError(error);
         return {
@@ -64,33 +89,6 @@ export function registerAuditSearchTool(
           structuredContent: structured as unknown as Record<string, unknown>,
         };
       }
-
-      const { entries, totalCount } = await auditLogger.search(parsed);
-
-      const result = {
-        success: true,
-        entries,
-        count: entries.length,
-        totalCount,
-      };
-
-      const tokenEstimate = Math.ceil(
-        Buffer.byteLength(JSON.stringify(result), "utf8") / 4,
-      );
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(
-              { ...result, _meta: { tokenEstimate } },
-              null,
-              2,
-            ),
-          },
-        ],
-        structuredContent: result as unknown as Record<string, unknown>,
-      };
     },
   );
 

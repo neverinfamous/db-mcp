@@ -55,15 +55,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check version consistency
-        run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          LOCK_VERSION=$(node -p "require('./package.json').version")
-          if [ "$PKG_VERSION" != "$LOCK_VERSION" ]; then
-            echo "::error::Version mismatch between package.json ($PKG_VERSION) and package-lock.json ($LOCK_VERSION)"
-            exit 1
-          fi
-
       - name: Read version
         id: version
         run: |
