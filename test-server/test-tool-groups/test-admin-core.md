@@ -123,12 +123,12 @@ All tools should return errors as strongly-typed structured objects instead of t
 - `sqlite_drop_view`
 - `sqlite_dbstat`
 - `sqlite_vacuum`
-- `sqlite_backup`
+- `sqlite_backup` [NATIVE ONLY]
 - `sqlite_analyze`
 - `sqlite_integrity_check`
 - `sqlite_optimize`
-- `sqlite_restore`
-- `sqlite_verify_backup`
+- `sqlite_restore` [NATIVE ONLY]
+- `sqlite_verify_backup` [NATIVE ONLY]
 - `sqlite_index_stats`
 - `sqlite_pragma_compile_options`
 - `sqlite_pragma_database_list`
@@ -138,8 +138,8 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 - `sqlite_attach_database`
 - `sqlite_detach_database`
-- `sqlite_vacuum_into`
-- `sqlite_dump [NATIVE ONLY]`
+- `sqlite_vacuum_into` [NATIVE ONLY]
+- `sqlite_dump` [NATIVE ONLY]
 - `sqlite_reindex`
 - `sqlite_wal`
 - _(Code Mode executor)_
@@ -162,10 +162,10 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 ## Phase 2: Backup/Restore (batched)
 
-13. `sqlite_backup({targetPath: "<absolute-path>/test-server/test-backup.db"})` → success with backup file info (⚠️ use absolute path — relative paths resolve from IDE CWD)
-14. `sqlite_verify_backup({backupPath: "<absolute-path>/test-server/test-backup.db"})` → integrity verified
-15. `sqlite_restore({sourcePath: "<absolute-path>/test-server/test-backup.db"})` → restore from backup, verify success
-16. `sqlite_dump({outputPath: "<absolute-path>/test-server/test-dump.sql"})` → success with `path` and `durationMs`
+13. `sqlite_backup({targetPath: "<absolute-path>/test-server/test-backup.db"})` → success with backup file info (⚠️ use absolute path — relative paths resolve from IDE CWD) [NATIVE ONLY]
+14. `sqlite_verify_backup({backupPath: "<absolute-path>/test-server/test-backup.db"})` → integrity verified [NATIVE ONLY]
+15. `sqlite_restore({sourcePath: "<absolute-path>/test-server/test-backup.db"})` → restore from backup, verify success [NATIVE ONLY]
+16. `sqlite_dump({outputPath: "<absolute-path>/test-server/test-dump.sql"})` → success with `path` and `durationMs` [NATIVE ONLY]
 17. Cleanup: note backup file location for manual removal if desired
 
 ## Phase 3: Database Management (batched)
@@ -173,7 +173,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 18. `sqlite_attach_database({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Expect structured success with `alias` and `filepath`. (Requires test-backup.db from step 13)
 19. `sqlite_pragma_database_list()` → verify `temp_attached` appears in attached databases list
 20. `sqlite_detach_database({alias: "temp_attached"})` → success with `message`
-21. `sqlite_vacuum_into({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
+21. `sqlite_vacuum_into({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes` [NATIVE ONLY]
 
 ## Phase 4: View Management (batched)
 
