@@ -108,9 +108,9 @@ All tools should return errors as strongly-typed structured objects instead of t
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
   - **Temporary files**: Delete the following test artifacts after testing:
-  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql`
-  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db`
-  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db`
+  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-dump.sql`
+  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db`
+  - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-vacuum.db`
 
 ---
 
