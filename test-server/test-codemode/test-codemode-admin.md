@@ -230,7 +230,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 ## Phase 10: Admin Domain Errors (batched)
 
-🔴 40. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → report behavior
+🔴 40. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → `{success: false}` with `TABLE_NOT_FOUND` error
 🔴 41. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_xyz"})` → `{success: false}`
 🔴 42. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → `{success: false}`
 🔴 43. `sqlite.admin.dropView({viewName: "nonexistent_xyz", ifExists: false})` → `{success: false}`
