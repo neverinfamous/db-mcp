@@ -11,6 +11,7 @@
 - Optimistic Concurrency Control (OCC) tools in the `core` group: `sqlite_enable_versioning`, `sqlite_disable_versioning`, `sqlite_check_version`, and `sqlite_conditional_update`.
 - Automatic `snake_case` to `camelCase` parameter mapping in validation schemas and the Code Mode V8 proxy.
 - Test scripts `verify-schemas.mjs`, `test-zod-errors.mjs`, and `test-tool-annotations.mjs`.
+- Comprehensive vitest coverage suites for HTTP session initialization, system db, OAuth resource server, vector schemas, and SpatiaLite loader to achieve >90% overall project coverage.
 
 ### Changed
 
