@@ -247,7 +247,7 @@ for (const g of groups) {
 return results;
 ```
 
-Expected: All 10 groups return >0 methods. **WASM**: `transactions` returns 0 methods — adjust assertion to allow this.
+Expected: All 10 groups return >0 methods. **WASM**: `transactions` returns an error (`Cannot read properties of undefined (reading 'help')`) — adjust assertion to allow this.
 
 ### 2.4 — Method aliases resolve
 
