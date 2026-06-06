@@ -46,9 +46,9 @@ jobs:
 
       - name: Verify lockfile integrity
         run: |
-          echo "Lockfile SHA-256: $(sha256sum package-lock.json | cut -d' ' -f1)"
-          git diff --exit-code package-lock.json || {
-            echo "::error::package-lock.json has been modified outside of git"
+          echo "Lockfile SHA-256: $(sha256sum pnpm-lock.yaml | cut -d' ' -f1)"
+          git diff --exit-code pnpm-lock.yaml || {
+            echo "::error::pnpm-lock.yaml has been modified outside of git"
             exit 1
           }
 
@@ -56,7 +56,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Rebuild better-sqlite3 (explicitly allowed)
-        run: pnpm rebuild better-sqlite3 --ignore-scripts=false
+        run: pnpm rebuild better-sqlite3
 
       - name: Run ESLint
         run: pnpm run lint
@@ -99,7 +99,7 @@ jobs:
 
       - name: Run pnpm audit (production only)
         timeout-minutes: 10
-        run: pnpm audit --omit=dev --audit-level=moderate
+        run: pnpm audit --prod --audit-level=moderate
 
   # Smoke test: verify the Docker image builds and starts successfully
   # Catches dependency resolution failures that only surface after npm prune (#149)

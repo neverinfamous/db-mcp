@@ -36,7 +36,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Rebuild better-sqlite3 (explicitly allowed)
-        run: pnpm rebuild better-sqlite3 --ignore-scripts=false
+        run: pnpm rebuild better-sqlite3
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
