@@ -217,7 +217,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 32. `sqlite.admin.wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
 33. `sqlite.admin.wal({action: "disable"})` → Native: `{success: false}` with `DB_QUERY_FAILED` "database is locked" (due to active connections). WASM: `{success: true}` (virtual FS does not enforce connection locks). Then `sqlite.admin.wal({action: "enable"})` → `{success: true}`
 34. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
-35. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages`, then `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success
+35. `sqlite.admin.wal({action: "checkpoint"})` → Native: success with walPages. WASM: `{success: false}` with `DB_QUERY_FAILED` "database table is locked" (due to active Code Mode connection). Then `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
 ## Phase 9: Database Management (batched)
 
