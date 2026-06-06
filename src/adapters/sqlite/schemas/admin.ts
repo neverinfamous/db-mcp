@@ -215,8 +215,8 @@ export const AuditSearchSchema = z.object({
       .min(1)
       .max(1000)
       .optional()
-      .default(50)
-      .describe("Maximum number of entries to return (default 50)"),
+      .default(10)
+      .describe("Maximum number of entries to return (default 10)"),
   ),
   offset: z.preprocess(
     coerceNumber,

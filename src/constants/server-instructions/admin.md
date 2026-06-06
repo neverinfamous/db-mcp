@@ -34,7 +34,7 @@ sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific
 sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
 sqlite_audit_restore_backup({ filename: "snapshot_123.json", dryRun: true }); // restore schema from snapshot
 sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
-sqlite_audit_search({ query: "DROP TABLE", limit: 50 }); // search and filter structured audit logs
+sqlite_audit_search({ tool: "sqlite_drop_table", limit: 10 }); // search and filter structured audit logs
 ```
 
 ## PRAGMA

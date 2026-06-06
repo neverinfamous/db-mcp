@@ -35,6 +35,7 @@
 - Optimized `sqlite_stats_sample` by reducing the default `sampleSize` from 100 to 20 and the maximum cap from 1000 to 50, significantly reducing payload size and LLM context token consumption.
 - Optimized `sqlite_transaction_execute` payload by truncating the returned `results` array to a maximum of 50 items and omitting excess successful execution details, significantly reducing LLM context token consumption.
 - Optimized `sqlite_dbstat` payload by changing the default value of the `summarize` parameter from `false` to `true`, preventing excessive raw page-level payloads and reducing LLM context token consumption.
+- Optimized `sqlite_audit_search` payload by reducing the default `limit` from 50 to 10, significantly reducing payload size and LLM context token consumption.
 
 ### Fixed
 
@@ -70,6 +71,7 @@
 - Fixed `sqlite_fts_headline` to correctly extract the context snippet across all columns when the `column` parameter is omitted, instead of defaulting to the first column and returning inaccurate, duplicate excerpts.
 - Fixed `sqlite_analyze_csv_schema` to return structured errors with `category: "security"` instead of `"validation"` when rejecting filesystem paths outside allowed IO roots.
 - Fixed `sqlite_virtual_table_info` to correctly return structured error fields (`category`, `recoverable`) when the virtual table is not found.
+- Fixed `sqlite_audit_search` documentation in `admin.md` by replacing the non-existent `query` parameter with `tool` and matching the new default limit.
 
 ### Security
 
