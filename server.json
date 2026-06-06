@@ -3,19 +3,19 @@
   "name": "io.github.neverinfamous/db-mcp",
   "title": "db-mcp (SQLite MCP Server)",
   "description": "Secure SQLite MCP server with V8 Isolate Sandbox, 170+ tools, OAuth 2.1, and audit logging.",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "db-mcp",
-      "version": "4.0.0",
+      "version": "5.0.0",
       "transport": {
         "type": "stdio"
       }
     },
     {
       "registryType": "oci",
-      "identifier": "docker.io/writenotenow/db-mcp:v4.0.0",
+      "identifier": "docker.io/writenotenow/db-mcp:v5.0.0",
       "transport": {
         "type": "stdio"
       }
