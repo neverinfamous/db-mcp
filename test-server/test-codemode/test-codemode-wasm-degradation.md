@@ -144,7 +144,7 @@ const help = await sqlite.help();
 return { groups: help.groups, totalMethods: help.totalMethods };
 ```
 
-Expected: `totalMethods` should be significantly less than 167 (the Native count). The exact WASM count depends on adapter registration but should be approximately 141.
+Expected: `totalMethods` should be significantly less than the Native count. The exact WASM count depends on adapter registration but should be approximately 190.
 
 ### 1.2 — Transactions group is completely omitted
 
@@ -181,7 +181,7 @@ return {
 };
 ```
 
-Expected: `spatialMethods` is empty. Only 4 Haversine methods remain: `distance`, `nearby`, `boundingBox`, `cluster`.
+Expected: `spatialMethods` is empty. Only 6 Haversine methods remain: `bbox`, `boundingBox`, `cluster`, `distance`, `near`, `nearby`.
 
 ### 1.5 — FTS5 absent from text
 
