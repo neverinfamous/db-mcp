@@ -16,7 +16,7 @@
 | `tool-groups-list.md`        | —     | **Canonical tool inventory** — all 10 groups + codemode. See `tool-reference.md` for the [Tool Count Taxonomy](tool-reference.md#tool-count-taxonomy).         | Reference / auditing                                                                |
 | `tool-reference.md`          | ~18KB | **Complete Tool Reference** — all tools organized by group with [Tool Count Taxonomy](tool-reference.md#tool-count-taxonomy) defining scope labels.            | Reference                                                                           |
 | [`code-map.md`](code-map.md) | ~12KB | **Source Code Map** — Directory tree, handler→tool mapping, type/schema locations, error hierarchy, constants, architecture patterns.                          | When debugging source code or making changes                                        |
-| `reset-database.ps1`         | ~11KB | PowerShell script to delete + re-seed `test.db` from `test-database.sql`. Verifies row counts.                                                                 | After migration group testing or if data is polluted                                |
+| `reset-database.mjs`         | ~8KB  | Node.js script to delete + re-seed `test.db` from `test-database.sql`. Verifies row counts.                                                                    | After migration group testing or if data is polluted                                |
 | `test-database.sql`          | ~21KB | Seed SQL (DDL + DML) for all `test_*` tables                                                                                                                   | Reference only — reset script consumes this                                         |
 | `sample.csv`                 | <1KB  | CSV fixture for `sqlite_create_csv_table` / `sqlite_analyze_csv_schema` testing                                                                                | Used by admin group checklist                                                       |
 
@@ -51,7 +51,7 @@
 | **Error item prefix**          | All error-path checklist items use 🔴 prefix to distinguish from happy-path items                                          |
 | **Code mode**                  | Don't pass `readonly: true` unless specifically testing read-only filtering                                                |
 | **Post-test**                  | Clean up temps → plan fixes → implement → lint+typecheck → changelog → commit (no push) → re-test fixes                    |
-| **Database reset**             | Run `.\reset-database.ps1` after migration testing or data pollution                                                       |
+| **Database reset**             | Run `node reset-database.mjs` after migration testing or data pollution                                                       |
 
 ## WASM Parity Protocol
 

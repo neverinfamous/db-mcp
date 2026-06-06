@@ -182,7 +182,7 @@ For WASM testing only:
 
 ### Final Cleanup
 
-Drop `stress_*` tables (if created) using `sqlite.core.dropTable({table: "..."})`. (Note: SpatiaLite index shadow tables like `idx_stress_*` will be automatically cleaned up by `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1`). Confirm `test_locations` count is still 15.
+Drop `stress_*` tables (if created) using `sqlite.core.dropTable({table: "..."})`. (Note: SpatiaLite index shadow tables like `idx_stress_*` will be automatically cleaned up by `node C:\Users\chris\Desktop\db-mcp\test-server\reset-database.mjs`). Confirm `test_locations` count is still 15.
 
 ---
 

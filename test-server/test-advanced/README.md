@@ -8,7 +8,7 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 
 1. Basic deterministic tool group checklists (located in `../test-tool-groups/*.md`) MUST be successfully passed before running these advanced tests.
 2. Code Mode basic tests (located in `../test-codemode/*.md`) MUST be successfully passed.
-3. The testing database MUST be freshly seeded via `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to ensure deterministic results.
+3. The testing database MUST be freshly seeded via `node C:\Users\chris\Desktop\db-mcp\test-server\reset-database.mjs` to ensure deterministic results.
 4. The MCP server MUST be started with the `ALLOWED_IO_ROOTS` environment variable configured (e.g., set to the db-mcp repository root), otherwise it will hard-fail to start and block file-based tool tests (like CSV generation or database dumps).
 5. **Session Timeouts**: If using the HTTP transport, note that sessions will strictly expire after 30 minutes of inactivity and have an absolute TTL of 24 hours. Ensure your manual testing flows account for these timeouts.
 6. **Streaming Validation**: When testing `sqlite.core.readQuery`, setting `stream: true` instructs the server to stream results. Since Code Mode doesn't expose the client's `_meta.progressToken`, verify that the system gracefully degrades to full buffering without throwing errors.

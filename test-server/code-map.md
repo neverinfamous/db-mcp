@@ -412,7 +412,7 @@ catch (error) {
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                                                            |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                                                        |
-| `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                                                                  |
+| `test-server/reset-database.mjs`             | Reset script — drops + re-seeds `test.db`                                                                                                                  |
 | `test-server/tool-reference.md`              | Tool inventory (174N/148W group+audit; 178N/152W MCP total) with [Tool Count Taxonomy](test-server/tool-reference.md#tool-count-taxonomy) and descriptions |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                                                            |
 | `test-server/test-tool-groups/`              | 20 self-contained test prompts — sub-group granularity (e.g., core-data, core-schema). Direct calls only.                                                  |

@@ -37,6 +37,7 @@
 - Optimized `sqlite_transaction_execute` payload by truncating the returned `results` array to a maximum of 50 items and omitting excess successful execution details, significantly reducing LLM context token consumption.
 - Optimized `sqlite_dbstat` payload by changing the default value of the `summarize` parameter from `false` to `true`, preventing excessive raw page-level payloads and reducing LLM context token consumption.
 - Optimized `sqlite_audit_search` payload by reducing the default `limit` from 50 to 10, significantly reducing payload size and LLM context token consumption.
+- Converted `test-server/reset-database.ps1` to `reset-database.mjs` (Node.js) for improved cross-platform Docker testing, and updated all documentation references.
 
 ### Fixed
 
