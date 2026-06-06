@@ -147,7 +147,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 ## Phase 1: PRAGMA Diagnostics (batched)
 
-1. `sqlite_pragma_database_list` → verify database path matches `test-encrypted.db`
+1. `sqlite_pragma_database_list` → verify database path matches `test-encrypted.db` (or a virtual WASM path)
 2. `sqlite_index_stats` → verify index statistics for test database
 3. `sqlite_dbstat({summarize: true})` → per-table storage metrics
 4. `sqlite_integrity_check` → `ok` result
@@ -190,7 +190,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 ## Phase 6: WAL Management (batched)
 
 28. `sqlite_wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
-29. `sqlite_wal({action: "disable"})` → `{success: false, error: "Write query failed: database is locked"}` (expected domain error since MCP server holds active connections to WAL DB), then `sqlite_wal({action: "enable"})` → `{success: true}` (verifies WAL is still enabled)
+29. `sqlite_wal({action: "disable"})` → `{success: false, error: "Write query failed: database is locked"}` (expected domain error since MCP server holds active connections to WAL DB in native; in WASM this succeeds), then `sqlite_wal({action: "enable"})` → `{success: true}` (verifies WAL is still enabled, or re-enabled in WASM)
 30. `sqlite_wal({action: "enable"})` → `{success: true, message: "WAL mode is already enabled"}` (already in WAL)
 31. `sqlite_wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`, then `sqlite_wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 

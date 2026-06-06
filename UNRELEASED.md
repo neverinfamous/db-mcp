@@ -57,7 +57,6 @@
 - Configured `ALLOWED_IO_ROOTS` in test scripts to automatically silence fallback sandbox warnings when executing the stdio transport.
 - Generation script README exclusion now uses case-insensitive prefix matching (`readme*`).
 - Removed unused devDependency `rimraf` from `package.json`.
-- Fixed inaccurate Native-only tool counts in advanced test suite READMEs and prompt instructions.
 - Refactored vector tool handlers to throw proper `ValidationError` and `ResourceNotFoundError` subclasses instead of returning raw error objects, ensuring structured responses include `category` and `recoverable` properties.
 - Fixed missing error codes and categories for structured error responses in the `admin-audit` tool group, ensuring `sqlite_server_config` and backup tools meet the Structured Error Response Pattern requirements.
 - Fixed `sqlite_cascade_simulator` schema to case-insensitively parse the `operation` parameter instead of failing Zod validation on lowercase inputs.
@@ -65,7 +64,6 @@
 - Fixed `sqlite_dependency_graph` to accept an optional `table` parameter, properly validate its existence, and filter the returned graph to only include nodes and edges connected to the specified table.
 - Standardized the output format of the `json-write` tool group by ensuring `sqlite_json_set`, `sqlite_json_remove`, and `sqlite_json_array_append` return a descriptive `message` field on successful execution.
 - Fixed `findSuggestion` regex pattern for missing column errors (`has no column named`) to correctly capture the column name, surfacing it in structured error responses instead of returning `unknown`.
-- Fixed missing `column` parameter in `sqlite_json_insert` test instructions in `test-codemode-advanced-json.md`.
 - Added `.strict()` to `BeginTransactionSchema`, `SavepointSchema`, and `ExecuteInTransactionSchema` in the `transactions` tool group to enforce strict Zod validation and prevent silent parameter ignoring.
 - Fixed `DisableVersioningSchema` to set `ifExists` to `false` by default, ensuring `sqlite_disable_versioning` properly throws a structured validation error instead of failing silently when invoked on a nonexistent table.
 - Fixed `sqlite_fts_headline` to correctly extract the context snippet across all columns when the `column` parameter is omitted, instead of defaulting to the first column and returning inaccurate, duplicate excerpts.
