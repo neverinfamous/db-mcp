@@ -4,7 +4,7 @@ import {
   createSqliteAdapter,
 } from "../../../src/adapters/sqlite/sqlite-adapter.js";
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 
 describe("WASM Adapter Concurrency", () => {
   let adapter: SqliteAdapter;

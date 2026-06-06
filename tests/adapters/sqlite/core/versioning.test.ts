@@ -3,7 +3,7 @@ import {
   createTestAdapter,
   type TestAdapter,
 } from "../../../utils/test-adapter.js";
-import { ConflictError } from "../../../../src/utils/errors/index.js";
+
 
 describe("Core Tools - Versioning", () => {
   let adapter: TestAdapter;

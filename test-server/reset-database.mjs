@@ -1,5 +1,5 @@
 import { existsSync, rmSync, readdirSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
-import { join, dirname, basename, resolve } from 'node:path';
+import { join, dirname } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';

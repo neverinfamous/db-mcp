@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { SystemDb } from "../../../src/observability/system-db.js";
 import { InternalError } from "../../../src/utils/errors/classes.js";
-import fs from "fs";
-import path from "path";
+
 
 vi.mock("better-sqlite3", () => {
   return {

@@ -4,11 +4,7 @@ import {
   touchSession,
 } from "../../src/transports/http/sessions/stateful.js";
 import type { HttpTransportState } from "../../src/transports/http/types.js";
-import {
-  SESSION_TIMEOUT_MS,
-  SESSION_SWEEP_INTERVAL_MS,
-  SESSION_ABSOLUTE_TTL_MS,
-} from "../../src/transports/http/types.js";
+import { SESSION_SWEEP_INTERVAL_MS } from "../../src/transports/http/types.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
