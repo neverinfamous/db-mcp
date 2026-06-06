@@ -134,12 +134,12 @@ All tools should return errors as strongly-typed structured objects instead of t
 2. `sqlite_virtual_table_info({tableName: "test_articles_fts"})` → verify module and column info (Native)
 3. `sqlite_generate_series({start: 1, stop: 5, step: 1})` → 5 values
 4. `sqlite_create_rtree_table({tableName: "temp_rtree_test", dimensions: 2})` → R-Tree virtual table created with 2D bounding box columns
-5. `sqlite_create_series_table({tableName: "temp_series_test", start: 1, stop: 10})` → regular table created with 10 rows (not a virtual table — see gotcha #14)
+5. `sqlite_create_series_table({tableName: "temp_series_test", start: 1, stop: 10})` → regular table created with 10 rows (not a virtual table)
 6. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_rtree_test"})` and `sqlite_drop_table({table: "temp_series_test"})` (series is a regular table — use core `sqlite_drop_table`)
 
 **CSV:**
 
-7. `sqlite_analyze_csv_schema({filePath: "<absolute-path>/test-server/sample.csv"})` → inferred column types (⚠️ CSV requires absolute paths — see gotcha #13)
+7. `sqlite_analyze_csv_schema({filePath: "<absolute-path>/test-server/sample.csv"})` → inferred column types (⚠️ CSV requires absolute paths — see Server-Level Rule #1 in gotchas.md)
 8. `sqlite_create_csv_table({tableName: "temp_csv_test", filePath: "<absolute-path>/test-server/sample.csv"})` → virtual table created
 9. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_csv_test"})`
 
