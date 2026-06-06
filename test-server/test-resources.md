@@ -283,12 +283,13 @@ For manual data validation, use the `read_resource` tool:
 # Uri: "<resource-uri>"
 ```
 
-For testing subscription mechanics, execute the automated Node scripts:
+For testing subscription mechanics and tool annotations, execute the automated Node scripts:
 
 ```bash
 # From project root:
 node test-server/scripts/test-subscriptions-raw.mjs
 node test-server/scripts/test-subscriptions-sdk.mjs
+node test-server/scripts/test-tool-annotations.mjs
 ```
 
 ### Pass/Fail Criteria

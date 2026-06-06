@@ -10,7 +10,7 @@
 - HTTP stateful session enforcement with 30-minute idle timeout, 24-hour absolute TTL, and in-flight request locks.
 - Optimistic Concurrency Control (OCC) tools in the `core` group: `sqlite_enable_versioning`, `sqlite_disable_versioning`, `sqlite_check_version`, and `sqlite_conditional_update`.
 - Automatic `snake_case` to `camelCase` parameter mapping in validation schemas and the Code Mode V8 proxy.
-- `verify-schemas.mjs` and `test-zod-errors.mjs` to `test-server/scripts/` to validate protocol-level `outputSchema` definitions and SDK validation boundaries.
+- `verify-schemas.mjs`, `test-zod-errors.mjs`, and `test-tool-annotations.mjs` to `test-server/scripts/` to validate protocol-level `outputSchema` definitions, SDK validation boundaries, and Tool annotations (`openWorldHint`, `sensitiveHint`, etc).
 
 ### Changed
 
@@ -40,6 +40,7 @@
 
 - Fixed `reset-database.ps1` failing to clean up orphaned SQLite Write-Ahead Log (`-wal`) and Shared Memory (`-shm`) files during test environment resets.
 - `sqlite_read_query` now degrades gracefully to full buffering and correctly returns `rows` when `stream: true` is requested inside Code Mode.
+- Removed redundant plural `test-tools-annotations.mjs` script in favor of the official singular `test-tool-annotations.mjs` script, and updated test documentation.
 - Missing `PROJECT_REGISTRY` and `TEAM_DB_PATH` variables in `mcp-config-example.json` and `.env.example`.
 - `ci-health-monitor` failing in strict mode by updating `issues: write` permission to `issues: read` and explicitly adding `add-comment` to safe-outputs.
 - Enforced single quotes in YAML frontmatter for agentic workflows and recompiled locks.
