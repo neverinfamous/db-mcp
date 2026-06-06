@@ -142,7 +142,7 @@ jobs:
       - name: Smoke test — HTTP transport starts
         run: |
           docker run --rm -d --name pr-smoke -p 3000:3000 pr-smoke-test:latest \
-            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite /tmp/test.db
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --allowed-io-roots /tmp --sqlite /tmp/test.db
           sleep 5
           if ! docker ps --filter name=pr-smoke --format '{{.Status}}' | grep -q "Up"; then
             echo "❌ Docker smoke test failed — container crashed (${{ matrix.platform }})"
@@ -163,7 +163,7 @@ jobs:
         run: |
           # Verify better-sqlite3 native bindings load correctly
           docker run --rm -d --name pr-smoke-native -p 3001:3000 pr-smoke-test:latest \
-            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite-native /tmp/test.db
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --allowed-io-roots /tmp --sqlite-native /tmp/test.db
           sleep 5
           if ! docker ps --filter name=pr-smoke-native --format '{{.Status}}' | grep -q "Up"; then
             echo "❌ Native SQLite smoke test failed (${{ matrix.platform }})"
