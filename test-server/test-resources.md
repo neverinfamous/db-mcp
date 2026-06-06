@@ -1,6 +1,6 @@
 # db-mcp Resource Testing Plan
 
-Please test all db-mcp resources (10 data + up to 9 help) using the test database (test-server/test.db) and concisely report any issues.
+Please test all db-mcp resources (11 data + up to 11 help) using the test database (test-server/test.db) and concisely report any issues.
 
 ## Resources to Test
 
@@ -16,6 +16,7 @@ Please test all db-mcp resources (10 data + up to 9 help) using the test databas
 | 8   | sqlite_compile_options | sqlite://compile_options     | Static    | SQLite compile-time build options          |
 | 9   | sqlite_pragma          | sqlite://pragma              | Static    | Runtime PRAGMA config snapshot             |
 | 10  | sqlite_audit           | sqlite://audit               | Static    | Audit log access (if enabled)              |
+| 11  | sqlite_metrics         | sqlite://metrics             | Static    | Streaming metrics, percentiles, token usage|
 
 ---
 
@@ -163,7 +164,19 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 10. Help Resources — On-Demand Reference Documentation
+### 11. sqlite_metrics — Observability Metrics
+
+**URI:** `sqlite://metrics`  
+**Test:** Read the metrics resource.
+
+**Expected Output:**
+
+- JSON with streaming metrics summary
+- Should include latency percentiles (e.g., p50, p95, p99) and token usage details
+
+---
+
+### 12. Help Resources — On-Demand Reference Documentation
 
 **Test A — sqlite://help (always registered):**
 
@@ -183,12 +196,14 @@ Verify that group-specific help resources are only registered when the correspon
 
 | Resource                    | URI                           | Registered When             |
 | --------------------------- | ----------------------------- | --------------------------- |
+| `sqlite_help_core`          | `sqlite://help/core`          | core group enabled          |
 | `sqlite_help_json`          | `sqlite://help/json`          | json group enabled          |
 | `sqlite_help_text`          | `sqlite://help/text`          | text group enabled          |
 | `sqlite_help_stats`         | `sqlite://help/stats`         | stats group enabled         |
 | `sqlite_help_vector`        | `sqlite://help/vector`        | vector group enabled        |
 | `sqlite_help_geo`           | `sqlite://help/geo`           | geo group enabled           |
 | `sqlite_help_admin`         | `sqlite://help/admin`         | admin group enabled         |
+| `sqlite_help_transactions`  | `sqlite://help/transactions`  | transactions group enabled  |
 | `sqlite_help_introspection` | `sqlite://help/introspection` | introspection group enabled |
 | `sqlite_help_migration`     | `sqlite://help/migration`     | migration group enabled     |
 
@@ -207,7 +222,7 @@ Call `tools/list` and verify that tools accurately report their `openWorldHint` 
 
 ---
 
-### 11. Resource Subscriptions & Live Updates
+### 13. Resource Subscriptions & Live Updates
 
 > **Note:** Resource subscriptions are fully supported over both HTTP and STDIO transports. Although the STDIO transport operates statelessly (no persistent `sessionId`), the server explicitly manages it as a singleton session to enable live update notifications.
 
@@ -291,9 +306,9 @@ node test-server/scripts/test-subscriptions-sdk.mjs
 
 | Metric                    | Value                                        |
 | ------------------------- | -------------------------------------------- |
-| Data resources to test    | 10                                           |
-| Help resources to test    | 1 (sqlite://help) + up to 8 group-specific   |
-| Static resources          | 9                                            |
+| Data resources to test    | 11                                           |
+| Help resources to test    | 1 (sqlite://help) + up to 10 group-specific  |
+| Static resources          | 10                                           |
 | Templated resources       | 1 (sqlite_table_schema with URI parameter)   |
 | Protocol validation tests | 2 (help resource content + tool annotations) |
 | Error cases to test       | 1 (nonexistent table in template)            |

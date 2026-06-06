@@ -14,6 +14,7 @@
 
 ### Changed
 
+- Updated `test-resources.md` testing plan to include the new `sqlite://metrics` observability resource and the missing `core` and `transactions` group help resources.
 - Updated `prompt-template.md` to strictly clarify Code Mode testing rules (enforcing direct payload injection and prohibiting monolithic `try/catch` wrappers) and propagated to all 22 test scripts.
 - Surface Code Mode errors as structured typed errors instead of generic internals.
 - HTTP rate limit responses now return structured JSON with `code`, `category`, `suggestion`, and `recoverable` fields.
