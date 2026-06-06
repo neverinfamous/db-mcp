@@ -19,6 +19,7 @@ import {
   AuditRestoreBackupOutputSchema,
 } from "../../../adapters/sqlite/schemas/admin.js";
 import { redactSqlLiterals, validateDdl } from "./helpers.js";
+import { toSDK } from "../../../utils/annotations.js";
 
 /**
  * Register audit backup tools for snapshot management.
@@ -39,12 +40,13 @@ export function registerAuditBackupTools(
         "List pre-mutation DDL snapshots captured before destructive operations. Returns metadata for each snapshot including timestamp, tool, target, and size.",
       inputSchema: AuditListBackupsSchema,
       outputSchema: AuditListBackupsOutputSchema,
-      annotations: {
+      annotations: toSDK({
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
         openWorldHint: false,
-      },
+        sensitiveHint: true,
+      }),
     },
     async (args: unknown) => {
       const authCtx = getAuthContext();
@@ -116,12 +118,13 @@ export function registerAuditBackupTools(
           .describe("Snapshot filename from sqlite_audit_list_backups results"),
       }),
       outputSchema: AuditGetBackupOutputSchema,
-      annotations: {
+      annotations: toSDK({
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
         openWorldHint: false,
-      },
+        sensitiveHint: true,
+      }),
     },
     async (args: unknown) => {
       const authCtx = getAuthContext();
@@ -191,12 +194,13 @@ export function registerAuditBackupTools(
       description:
         "Apply retention policy to audit backup snapshots. Deletes snapshots exceeding age or count limits.",
       outputSchema: AuditCleanupOutputSchema,
-      annotations: {
+      annotations: toSDK({
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: true,
         openWorldHint: false,
-      },
+        sensitiveHint: true,
+      }),
     },
     async () => {
       const authCtx = getAuthContext();
@@ -243,12 +247,13 @@ export function registerAuditBackupTools(
           ),
       }),
       outputSchema: AuditDiffBackupOutputSchema,
-      annotations: {
+      annotations: toSDK({
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
         openWorldHint: false,
-      },
+        sensitiveHint: true,
+      }),
     },
     async (args: unknown) => {
       const authCtx = getAuthContext();
@@ -461,12 +466,13 @@ export function registerAuditBackupTools(
           .describe("If true, returns the DDL without executing it (boolean)"),
       }),
       outputSchema: AuditRestoreBackupOutputSchema,
-      annotations: {
+      annotations: toSDK({
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: false,
         openWorldHint: false,
-      },
+        sensitiveHint: true,
+      }),
     },
     async (args: unknown) => {
       const authCtx = getAuthContext();

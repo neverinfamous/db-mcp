@@ -12,6 +12,7 @@ import {
   AuditSearchSchema,
   AuditSearchOutputSchema,
 } from "../../../adapters/sqlite/schemas/admin.js";
+import { toSDK } from "../../../utils/annotations.js";
 
 /**
  * Register the sqlite_audit_search tool.
@@ -30,12 +31,13 @@ export function registerAuditSearchTool(
         "Search and filter structured audit logs from the System Database. Returns recent tool invocations, outcomes, token estimates, and parameters.",
       inputSchema: AuditSearchSchema,
       outputSchema: AuditSearchOutputSchema,
-      annotations: {
+      annotations: toSDK({
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
         openWorldHint: false,
-      },
+        sensitiveHint: true,
+      }),
     },
     async (args: unknown) => {
       const authCtx = getAuthContext();

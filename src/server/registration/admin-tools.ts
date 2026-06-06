@@ -9,6 +9,7 @@ import {
 import { getAuthContext } from "../../auth/auth-context.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
+import { toSDK } from "../../utils/annotations.js";
 
 /**
  * Register administrative tools
@@ -35,12 +36,13 @@ export function registerAdminTools(server: McpServer): void {
             "The new value for the setting (e.g., 'debug', 'info', 'warning')",
           ),
       }),
-      annotations: {
+      annotations: toSDK({
         readOnlyHint: false,
         destructiveHint: false,
         idempotentHint: false,
         openWorldHint: false,
-      },
+        sensitiveHint: true,
+      }),
     },
     (args: unknown) => {
       const authCtx = getAuthContext();
