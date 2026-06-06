@@ -101,9 +101,9 @@ $totalSteps = if ($SkipVerify) { 2 } else { 3 }
 # ============================================================================
 Write-Step "1" $totalSteps "Cleaning up test artifacts and deleting database..."
 
-# Remove backup .db files left by sqlite_backup tests
-$backupFiles = Get-ChildItem -Path $ScriptDir -Filter "*.db" -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -ne "test.db" }
+# Remove backup .db files and WAL/SHM artifacts left by tests
+$backupFiles = Get-ChildItem -Path $ScriptDir -Filter "*.db*" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match "\.db(-wal|-shm|-journal)?$" -and $_.Name -ne "test.db" }
 if ($backupFiles) {
     foreach ($bf in $backupFiles) {
         Remove-Item $bf.FullName -Force -ErrorAction SilentlyContinue

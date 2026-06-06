@@ -38,6 +38,7 @@
 
 ### Fixed
 
+- Fixed `reset-database.ps1` failing to clean up orphaned SQLite Write-Ahead Log (`-wal`) and Shared Memory (`-shm`) files during test environment resets.
 - `sqlite_read_query` now degrades gracefully to full buffering and correctly returns `rows` when `stream: true` is requested inside Code Mode.
 - Missing `PROJECT_REGISTRY` and `TEAM_DB_PATH` variables in `mcp-config-example.json` and `.env.example`.
 - `ci-health-monitor` failing in strict mode by updating `issues: write` permission to `issues: read` and explicitly adding `add-comment` to safe-outputs.
