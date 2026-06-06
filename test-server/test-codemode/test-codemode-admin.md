@@ -134,23 +134,23 @@ All tools should return errors as strongly-typed structured objects instead of t
 - `sqlite.admin.listVirtualTables`
 - `sqlite.admin.virtualTableInfo`
 - `sqlite.admin.generateSeries`
-- `sqlite.admin.createRtreeTable`
+- `sqlite.admin.createRtreeTable` `[NATIVE ONLY]`
 - `sqlite.admin.createSeriesTable`
-- `sqlite.admin.backup`
-- `sqlite.admin.verifyBackup`
-- `sqlite.admin.restore`
+- `sqlite.admin.backup` `[NATIVE ONLY]`
+- `sqlite.admin.verifyBackup` `[NATIVE ONLY]`
+- `sqlite.admin.restore` `[NATIVE ONLY]`
 - `sqlite.admin.dump` `[NATIVE ONLY]`
 - `sqlite.admin.vacuum`
 - `sqlite.admin.optimize`
 - `sqlite.admin.pragmaOptimize`
-- `sqlite.admin.analyzeCsvSchema`
-- `sqlite.admin.createCsvTable`
+- `sqlite.admin.analyzeCsvSchema` `[NATIVE ONLY]`
+- `sqlite.admin.createCsvTable` `[NATIVE ONLY]`
 
 - `sqlite.admin.reindex`
 - `sqlite.admin.wal`
 - `sqlite.admin.attachDatabase`
 - `sqlite.admin.detachDatabase`
-- `sqlite.admin.vacuumInto`
+- `sqlite.admin.vacuumInto` `[NATIVE ONLY]`
 - `sqlite.admin.dropVirtualTable`
 - _(cross-group helpers used in test procedures)_
 - `sqlite.core.describeTable`
@@ -181,7 +181,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 13. `sqlite.admin.listVirtualTables()` → `test_articles_fts` present
 14. `sqlite.admin.virtualTableInfo({tableName: "test_articles_fts"})` → module and column info
 15. `sqlite.admin.generateSeries({start: 1, stop: 5, step: 1})` → 5 values
-16. `sqlite.admin.createRtreeTable({tableName: "temp_cm_rtree", dimensions: 2})` → R-Tree created
+16. `sqlite.admin.createRtreeTable({tableName: "temp_cm_rtree", dimensions: 2})` → Native: R-Tree created. WASM: `{success: false}` with `EXTENSION_MISSING`
 17. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series", start: 1, stop: 10})` → regular table with 10 rows
 18. `sqlite.admin.dropVirtualTable({tableName: "temp_cm_rtree"})` → success (virtual table dropped)
     Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not virtual)
@@ -190,9 +190,9 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 > Use absolute path for backup: `C:\Users\chris\Desktop\db-mcp\test-server\test-backup.db`
 
-19. `sqlite.admin.backup({targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → success
-20. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → integrity verified
-21. `sqlite.admin.restore({sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → restore success
+19. `sqlite.admin.backup({targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → Native: success. WASM: `{success: false}`
+20. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → Native: integrity verified. WASM: `{success: false}`
+21. `sqlite.admin.restore({sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → Native: restore success. WASM: `{success: false}`
 22. `sqlite.admin.dump({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql"})` → success with `path` and `durationMs`
 
 ## Phase 5: Optimization (batched)
@@ -205,8 +205,8 @@ All tools should return errors as strongly-typed structured objects instead of t
 
 > Use absolute path: `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv`
 
-26. `sqlite.admin.analyzeCsvSchema({filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → inferred column types
-27. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → virtual table
+26. `sqlite.admin.analyzeCsvSchema({filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → Native: inferred column types. WASM: `{success: false}` with `EXTENSION_MISSING`
+27. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → Native: virtual table. WASM: `{success: false}` with `EXTENSION_MISSING`
 28. Cleanup: drop `temp_cm_csv` (virtual)
 
 ## Phase 8: REINDEX & WAL Management (batched)
@@ -226,7 +226,7 @@ All tools should return errors as strongly-typed structured objects instead of t
 36. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Depends on backup file existing from Phase 4. If not present, note dependency. Expect structured success with `alias` and `filepath`. (Note: In WASM mode, this succeeds by transparently creating an empty virtual file in the WASM virtual filesystem).
 37. `sqlite.admin.pragmaDatabaseList()` → verify `temp_attached` appears in attached databases list
 38. `sqlite.admin.detachDatabase({alias: "temp_attached"})` → success with `message`
-39. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
+39. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → Native: success with `outputPath` and `sizeBytes`. WASM: `{success: false}` with `VALIDATION_ERROR`
 
 ## Phase 10: Admin Domain Errors (batched)
 
