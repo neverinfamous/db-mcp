@@ -14,6 +14,7 @@
 
 ### Changed
 
+- Removed deprecated `worker` Code Mode isolation options from `.env.example` and corrected default `CODE_MODE_MAX_RESULT_SIZE` limit documentation to match actual 10MB runtime default.
 - **Dependency Updates**: Updated GitHub Actions (`trufflehog`, `gh-aw-actions`, `gitleaks-action`, `download-artifact`, `checkout`) and npm packages.
 - Updated `prompt-template.md` to strictly clarify Code Mode testing rules (enforcing direct payload injection and prohibiting monolithic `try/catch` wrappers) and propagated to all 22 test scripts.
 - Surface Code Mode errors as structured typed errors instead of generic internals.
