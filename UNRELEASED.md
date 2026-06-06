@@ -68,6 +68,7 @@
 - Fixed `DisableVersioningSchema` to set `ifExists` to `false` by default, ensuring `sqlite_disable_versioning` properly throws a structured validation error instead of failing silently when invoked on a nonexistent table.
 - Fixed `sqlite_fts_headline` to correctly extract the context snippet across all columns when the `column` parameter is omitted, instead of defaulting to the first column and returning inaccurate, duplicate excerpts.
 - Fixed `sqlite_analyze_csv_schema` to return structured errors with `category: "security"` instead of `"validation"` when rejecting filesystem paths outside allowed IO roots.
+- Fixed `sqlite_virtual_table_info` to correctly return structured error fields (`category`, `recoverable`) when the virtual table is not found.
 
 ### Security
 

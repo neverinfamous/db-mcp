@@ -39,6 +39,8 @@ export function createVirtualTableInfoTool(
             sql: "",
             error: `Virtual table '${input.tableName}' not found`,
             code: "TABLE_NOT_FOUND",
+            category: "resource",
+            recoverable: false,
           };
         }
 
