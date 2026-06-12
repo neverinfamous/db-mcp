@@ -52,7 +52,12 @@ mcp.stdout.on("data", (data) => {
     const lines = output.split("\n");
     const responseLine = lines.find((line) => line.includes(`"id":"list"`));
     if (responseLine) {
-      const parsed = JSON.parse(responseLine);
+      let parsed;
+      try {
+        parsed = JSON.parse(responseLine);
+      } catch (e) {
+        return; // Wait for the rest of the chunk
+      }
       tools = parsed.result?.tools || [];
       console.log(`Found ${tools.length} tools. Generating boundary tests...`);
 
@@ -61,7 +66,21 @@ mcp.stdout.on("data", (data) => {
         if (!schema || !schema.properties) continue;
 
         const props = Object.keys(schema.properties);
-        if (props.length === 0) continue; // No arguments to break
+        if (props.length === 0) {
+          tests.push({
+            name: `${tool.name} (unexpected extra argument)`,
+            payload: {
+              jsonrpc: "2.0",
+              id: tests.length + 1,
+              method: "tools/call",
+              params: {
+                name: tool.name,
+                arguments: { unexpected_field: "should_fail" },
+              },
+            },
+          });
+          continue;
+        }
 
         // Pick the first property to break
         const propName = props[0];
@@ -114,9 +133,11 @@ mcp.stdout.on("data", (data) => {
     const test = tests[currentTestIdx];
     if (!test) return;
 
-    if (output.includes(`"id":${test.payload.id}`)) {
+    const expectedId = test.payload.id;
+    const idRegex = new RegExp(`"id"\\s*:\\s*${expectedId}(\\s*[},])`);
+    if (idRegex.test(output)) {
       const lines = output.split("\n");
-      const responseLine = lines.find((line) => line.includes(`"id":${test.payload.id}`));
+      const responseLine = lines.find((line) => idRegex.test(line));
 
       if (responseLine) {
         try {
