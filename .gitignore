@@ -103,3 +103,4 @@ package-lock.json
 tmp/
 temp/
 *.tmp
+.playwright-results.json

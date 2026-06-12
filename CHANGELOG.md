@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/neverinfamous/db-mcp/compare/v5.0.0...HEAD)
+## [Unreleased](https://github.com/neverinfamous/db-mcp/compare/v5.0.1...HEAD)
+
+## [5.0.1](https://github.com/neverinfamous/db-mcp/releases/tag/v5.0.1) - 2026-06-12
+
+### Changed
+
+**Dependency Updates**
+- Bumped `@types/node` from 25.9.1 to 25.9.3
+- Bumped `typescript-eslint` from 8.60.1 to 8.61.0
+- Bumped `github/gh-aw-actions` from 0.64.2 to 0.79.7
+- Bumped `pnpm/action-setup` to `fc06bc1257f339d1d5d8b3a19a8cae5388b55320`
+
+### Security
+
+- Resolved Alpine OpenSSL CVEs (CVE-2026-34182, etc.) in Docker base image by fetching latest edge packages during build.
 
 ## [5.0.0](https://github.com/neverinfamous/db-mcp/releases/tag/v5.0.0) - 2026-06-06
 

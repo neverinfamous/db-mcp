@@ -1,6 +1,6 @@
 {
   "name": "db-mcp",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "SQLite MCP Server — Secure Database Administration & Observability with Code Mode. True V8 Isolate Sandbox Unifying 170+ Specialized Tools with Highly Optimized Payloads for 70–90% Token Savings. Includes Dynamic Tool Filtering, Dual-Transport HTTP/SSE, OAuth 2.1 Auth, Granular Access Control, Audit Logging, & Deterministic Error Handling.",
   "mcpName": "io.github.neverinfamous/db-mcp",
   "type": "module",
@@ -81,7 +81,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.3",
     "@types/sql.js": "^1.4.11",
     "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^10.4.1",
@@ -90,7 +90,7 @@
     "tsup": "^8.5.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.1",
+    "typescript-eslint": "^8.61.0",
     "vitest": "^4.1.8"
   },
   "optionalDependencies": {
