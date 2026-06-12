@@ -331,28 +331,26 @@ export function setupStatefulEndpoints(
           return;
         }
 
-        if (httpTransport !== undefined) {
-          const activeSid = sessionId;
-          try {
-            if (activeSid) {
-              const count = state.sessionLocks.get(activeSid) ?? 0;
-              state.sessionLocks.set(activeSid, count + 1);
+        const activeSid = sessionId;
+        try {
+          if (activeSid) {
+            const count = state.sessionLocks.get(activeSid) ?? 0;
+            state.sessionLocks.set(activeSid, count + 1);
+          }
+          await httpTransport.handleRequest(
+            asIncoming(req),
+            asServerResponse(res),
+            req.body as unknown,
+          );
+        } finally {
+          if (activeSid) {
+            const count = state.sessionLocks.get(activeSid) ?? 0;
+            if (count > 1) {
+              state.sessionLocks.set(activeSid, count - 1);
+            } else {
+              state.sessionLocks.delete(activeSid);
             }
-            await httpTransport.handleRequest(
-              asIncoming(req),
-              asServerResponse(res),
-              req.body as unknown,
-            );
-          } finally {
-            if (activeSid) {
-              const count = state.sessionLocks.get(activeSid) ?? 0;
-              if (count > 1) {
-                state.sessionLocks.set(activeSid, count - 1);
-              } else {
-                state.sessionLocks.delete(activeSid);
-              }
-              touchSession(state, activeSid);
-            }
+            touchSession(state, activeSid);
           }
         }
       } catch (error: unknown) {
@@ -412,26 +410,24 @@ export function setupStatefulEndpoints(
       });
     }
 
-    if (httpTransport !== undefined) {
-      void (async () => {
-        try {
-          const count = state.sessionLocks.get(sessionId) ?? 0;
-          state.sessionLocks.set(sessionId, count + 1);
-          await httpTransport.handleRequest(
-            asIncoming(req),
-            asServerResponse(res),
-          );
-        } finally {
-          const count = state.sessionLocks.get(sessionId) ?? 0;
-          if (count > 1) {
-            state.sessionLocks.set(sessionId, count - 1);
-          } else {
-            state.sessionLocks.delete(sessionId);
-          }
-          touchSession(state, sessionId);
+    void (async () => {
+      try {
+        const count = state.sessionLocks.get(sessionId) ?? 0;
+        state.sessionLocks.set(sessionId, count + 1);
+        await httpTransport.handleRequest(
+          asIncoming(req),
+          asServerResponse(res),
+        );
+      } finally {
+        const count = state.sessionLocks.get(sessionId) ?? 0;
+        if (count > 1) {
+          state.sessionLocks.set(sessionId, count - 1);
+        } else {
+          state.sessionLocks.delete(sessionId);
         }
-      })();
-    }
+        touchSession(state, sessionId);
+      }
+    })();
   });
 
   state.app.delete("/mcp", (req: Request, res: Response): void => {
@@ -459,26 +455,24 @@ export function setupStatefulEndpoints(
       sessionId,
     });
 
-    if (httpTransport !== undefined) {
-      void (async () => {
-        try {
-          const count = state.sessionLocks.get(sessionId) ?? 0;
-          state.sessionLocks.set(sessionId, count + 1);
-          await httpTransport.handleRequest(
-            asIncoming(req),
-            asServerResponse(res),
-          );
-        } finally {
-          const count = state.sessionLocks.get(sessionId) ?? 0;
-          if (count > 1) {
-            state.sessionLocks.set(sessionId, count - 1);
-          } else {
-            state.sessionLocks.delete(sessionId);
-          }
-          touchSession(state, sessionId);
+    void (async () => {
+      try {
+        const count = state.sessionLocks.get(sessionId) ?? 0;
+        state.sessionLocks.set(sessionId, count + 1);
+        await httpTransport.handleRequest(
+          asIncoming(req),
+          asServerResponse(res),
+        );
+      } finally {
+        const count = state.sessionLocks.get(sessionId) ?? 0;
+        if (count > 1) {
+          state.sessionLocks.set(sessionId, count - 1);
+        } else {
+          state.sessionLocks.delete(sessionId);
         }
-      })();
-    }
+        touchSession(state, sessionId);
+      }
+    })();
   });
 
   return sessionSweepTimer;
