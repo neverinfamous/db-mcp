@@ -1,2 +1,11 @@
 ## [Unreleased]
 
+### Security
+- Resolved Alpine OpenSSL CVEs (CVE-2026-34182, etc.) in Docker base image by fetching latest edge packages during build.
+
+### Changed
+**Dependency Updates**
+- Bumped `@types/node` from 25.9.1 to 25.9.3
+- Bumped `typescript-eslint` from 8.60.1 to 8.61.0
+- Bumped `github/gh-aw-actions` from 0.64.2 to 0.79.7
+- Bumped `pnpm/action-setup` to `fc06bc1257f339d1d5d8b3a19a8cae5388b55320`
